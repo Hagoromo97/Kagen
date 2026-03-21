@@ -667,6 +667,12 @@ body {
 .fcal-switch.p-highlight .p-inputswitch-slider {
   background: var(--primary) !important;
 }
+.fcal-switch-sidebar.p-highlight .p-inputswitch-slider {
+  background: #16a34a !important;
+}
+.dark .fcal-switch-sidebar.p-highlight .p-inputswitch-slider {
+  background: #22c55e !important;
+}
 .fcal-switch-md.p-highlight .p-inputswitch-slider::before {
   left: calc(2.75rem - 1.125rem - 3px) !important;   /* trackW - thumbSz - pad */
 }

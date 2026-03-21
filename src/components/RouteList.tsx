@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import bgDark from "../../icon/darkm.jpeg"
 import bgLight from "../../icon/lightm.jpeg"
-import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, SlidersHorizontal, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
+import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, SlidersHorizontal, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
@@ -297,9 +297,20 @@ const getAvailableDeliveryLabels = (route?: Route): string[] => {
 // ── Route card color palette (from Settings → Route Colours, stored in localStorage) ──
 const DEFAULT_ROUTE_COLORS = ['#374151', '#7c3aed', '#0891b2', '#16a34a', '#dc2626', '#d97706']
 const LS_ROUTE_COLORS = 'fcalendar_route_colors'
+const LS_MAP_STYLE = 'fcalendar_map_style'
 const getRouteColorPalette = (): string[] => {
   try { const v = localStorage.getItem(LS_ROUTE_COLORS); if (v) return JSON.parse(v) } catch { /**/ }
   return DEFAULT_ROUTE_COLORS
+}
+
+const getMapStyle = (): 'google-streets' | 'google-satellite' | 'osm' => {
+  try {
+    const v = localStorage.getItem(LS_MAP_STYLE)
+    if (v === 'google-streets' || v === 'google-satellite' || v === 'osm') return v
+  } catch {
+    /**/
+  }
+  return 'google-streets'
 }
 
 export function RouteList() {
@@ -587,11 +598,17 @@ export function RouteList() {
   const [mapSettingsOpen, setMapSettingsOpen] = useState(false)
   const [mapSettingsTab, setMapSettingsTab] = useState<'route' | 'markerpoly'>('route')
   const [mapRefitToken, setMapRefitToken] = useState(0)
+  const [mapResizeToken, setMapResizeToken] = useState(0)
   const [showPolyline, setShowPolyline] = useState(false)
   const [markerStyle, setMarkerStyle] = useState<'pin' | 'dot' | 'ring'>('pin')
+  const [mapStyle, setMapStyle] = useState<'google-streets' | 'google-satellite' | 'osm'>(getMapStyle)
   const [kmMode, setKmMode] = useState<'direct' | 'step'>('direct')
   const [kmStartPoint, setKmStartPoint] = useState<{ lat: number; lng: number }>(DEFAULT_MAP_CENTER)
   const [sortConflictPending, setSortConflictPending] = useState<SortType | null>(null)
+
+  useEffect(() => {
+    try { localStorage.setItem(LS_MAP_STYLE, mapStyle) } catch { /**/ }
+  }, [mapStyle])
 
   // Column Customize
   const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS)
@@ -1018,10 +1035,24 @@ export function RouteList() {
   const doSave = useCallback(async () => {
     // Snapshot before state for changelog
     const before = routesSnapshotRef.current
+
+    // Determine which routes actually changed so the API only updates their updated_at
+    const changedRouteIds: string[] = []
+    routes.forEach(route => {
+      const old = before.find(r => r.id === route.id)
+      if (!old) { changedRouteIds.push(route.id); return }
+      const hasMetaChange = old.name !== route.name || old.code !== route.code ||
+                            old.shift !== route.shift || (old.color ?? null) !== (route.color ?? null)
+      const hasPtsChange  = JSON.stringify(old.deliveryPoints) !== JSON.stringify(route.deliveryPoints)
+      const hasLabelChange = JSON.stringify(toCustomLabels(old.labels).slice().sort()) !==
+                             JSON.stringify(toCustomLabels(route.labels).slice().sort())
+      if (hasMetaChange || hasPtsChange || hasLabelChange) changedRouteIds.push(route.id)
+    })
+
     const res = await fetch('/api/routes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ routes }),
+      body: JSON.stringify({ routes, changedRouteIds }),
     })
     const data = await res.json()
     if (!data.success) throw new Error(data.error || 'Save failed')
@@ -1696,9 +1727,9 @@ export function RouteList() {
                   return (
                   <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'hsl(var(--card))', backdropFilter: 'blur(16px)' }}>
                     {/* Header */}
-                    <div style={{ padding: '1rem 1.25rem 0.75rem', background: 'hsl(var(--background))', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ padding: '1rem 1.25rem 0.75rem', background: 'hsl(var(--background))', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem', flexShrink: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
                           Changelog
                           {cl && !cl.loading && cl.entries.length > 0 && (
                             <span style={{ fontSize: '0.65rem', fontWeight: 700, background: markerColor, color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{cl.entries.length}</span>
@@ -1882,7 +1913,7 @@ export function RouteList() {
               </div>{/* end sliding track */}
             </div>{/* end card */}
 
-                  <Dialog open={detailDialogOpen && route.id === currentRouteId} onOpenChange={(open) => { if (!open) { setDetailDialogOpen(false); setDetailFullscreen(false); setDialogView('table'); setSelectedRows([]); setCombinedRouteIds(new Set([currentRouteId])); setShowPolyline(false); setMapRefitToken(0) } }}>
+                  <Dialog open={detailDialogOpen && route.id === currentRouteId} onOpenChange={(open) => { if (!open) { setDetailDialogOpen(false); setDetailFullscreen(false); setDialogView('table'); setSelectedRows([]); setCombinedRouteIds(new Set([currentRouteId])); setShowPolyline(false); setMapRefitToken(0); setMapResizeToken(0) } }}>
                   <DialogContent
                     className={`p-0 gap-0 flex flex-col overflow-hidden duration-300 ease-in-out ${
                       detailFullscreen
@@ -1917,26 +1948,32 @@ export function RouteList() {
                             }
                           }}
                           title={dialogView === 'map' ? 'Map Settings' : 'Table Settings'}
-                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                          className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                         >
-                          <SlidersHorizontal className="size-4" />
+                          <Cog className="size-[15px]" />
                         </button>
                         {/* Map / Table toggle */}
                         <button
-                          onClick={() => setDialogView(v => v === 'table' ? 'map' : 'table')}
+                          onClick={() => {
+                            setDialogView(v => v === 'table' ? 'map' : 'table')
+                            setMapResizeToken(t => t + 1)
+                          }}
                           title={dialogView === 'table' ? 'Switch to Map' : 'Switch to Table'}
-                          className="shrink-0 flex items-center justify-center transition-colors"
+                          className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg transition-colors hover:bg-muted/60"
                           style={{ color: dialogView === 'map' ? markerColor : 'hsl(var(--muted-foreground))' }}
                         >
-                          {dialogView === 'table' ? <MapPinned className="size-4" /> : <TableProperties className="size-4" />}
+                          {dialogView === 'table' ? <MapPinned className="size-[15px]" /> : <TableProperties className="size-[15px]" />}
                         </button>
                         {/* Fullscreen */}
                         <button
-                          onClick={() => setDetailFullscreen(f => !f)}
+                          onClick={() => {
+                            setDetailFullscreen(f => !f)
+                            if (dialogView === 'map') setMapResizeToken(t => t + 1)
+                          }}
                           title={detailFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                          className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                         >
-                          {detailFullscreen ? <Shrink className="size-4" /> : <Expand className="size-4" />}
+                          {detailFullscreen ? <Shrink className="size-[15px]" /> : <Expand className="size-[15px]" />}
                         </button>
                       </div>
                     </div>
@@ -1944,7 +1981,7 @@ export function RouteList() {
                     <div className="flex-1 overflow-auto scroll-smooth">
                     {dialogView === 'map' ? (
                       <div className="h-full min-h-[400px] relative">
-                        <DeliveryMap deliveryPoints={combinedDeliveryPoints} scrollZoom={true} showPolyline={showPolyline} markerStyle={markerStyle} startPoint={kmStartPoint} refitToken={mapRefitToken} />
+                        <DeliveryMap deliveryPoints={combinedDeliveryPoints} scrollZoom={true} showPolyline={showPolyline} markerStyle={markerStyle} mapStyle={mapStyle} startPoint={kmStartPoint} refitToken={mapRefitToken} resizeToken={mapResizeToken} />
                         <button
                           onClick={() => {
                             setCombinedRouteIds(new Set([route.id]))
@@ -2993,6 +3030,30 @@ export function RouteList() {
                   </div>
                 </div>
 
+                <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+                  <p className="text-xs font-semibold">Map Style</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { value: 'google-streets', label: 'Google Streets' },
+                      { value: 'google-satellite', label: 'Satellite' },
+                      { value: 'osm', label: 'OSM' },
+                    ] as const).map(option => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setMapStyle(option.value)}
+                        className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                          mapStyle === option.value
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-background hover:bg-muted/40 transition-colors cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -3087,41 +3148,50 @@ export function RouteList() {
       {/* ── Settings Modal ──────────────────────────────────────────── */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="w-[92vw] max-w-lg h-[68vh] max-h-[560px] overflow-hidden flex flex-col gap-0 p-0">
-          <div className="px-6 pt-5 pb-0 shrink-0">
-            <DialogHeader className="text-center items-center">
-              <DialogTitle className="text-sm font-bold">Table Settings</DialogTitle>
-              <DialogDescription className="text-xs">Customize how the table looks and behaves</DialogDescription>
-            </DialogHeader>
+          <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
+                <TableProperties className="size-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-sm font-bold leading-tight">Table Settings</DialogTitle>
+                <DialogDescription className="text-xs mt-0.5">Customize how the table looks and behaves</DialogDescription>
+              </div>
+            </div>
           </div>
 
           {/* Tab Menu */}
-          <div className="flex justify-center border-b border-border shrink-0 px-6 mt-3">
+          <div className="px-4 pt-3 border-b border-border shrink-0">
+            <div className="grid grid-cols-3 gap-2">
             {(['column', 'row', 'sorting'] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setSettingsMenu(m)}
-                className={`px-4 py-2.5 text-xs font-semibold capitalize border-b-2 transition-colors ${
+                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
                   settingsMenu === m
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
                 }`}
               >
-                {m === 'column' ? 'Column Customize' : m === 'row' ? 'Row Customize' : 'Sorting'}
+                {m === 'column' ? 'Column' : m === 'row' ? 'Row' : 'Sorting'}
               </button>
             ))}
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4">
 
             {/* ── COLUMN CUSTOMIZE ── */}
             {settingsMenu === 'column' && (
-              <div className="p-6 space-y-4">
-                <p className="text-[13px] text-muted-foreground">Toggle visibility and reorder columns.</p>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-border bg-background p-3">
+                  <p className="text-xs text-muted-foreground">Toggle visibility and reorder columns.</p>
+                </div>
                 <div className="space-y-2.5">
                   {draftColumns.map((col, idx) => {
                     if ((col.key === 'lat' || col.key === 'lng') && !isEditMode) return null
                     return (
-                    <div key={col.key} className="flex items-center gap-3 p-3.5 rounded-lg border border-border bg-muted/20">
+                    <div key={col.key} className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-background">
                       <input
                         type="checkbox"
                         checked={col.visible}
@@ -3162,8 +3232,10 @@ export function RouteList() {
 
             {/* ── ROW CUSTOMIZE ── */}
             {settingsMenu === 'row' && (
-              <div className="p-6 space-y-4">
-                <p className="text-[11px] text-muted-foreground">Input a position number to reorder rows. No duplicates allowed.</p>
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border bg-background p-3">
+                  <p className="text-[11px] text-muted-foreground">Input a position number to reorder rows. No duplicates allowed.</p>
+                </div>
                 {rowOrderError && (
                   <p className="text-[11px] text-destructive font-medium">{rowOrderError}</p>
                 )}
@@ -3177,7 +3249,7 @@ export function RouteList() {
                     </div>
                   )}
                   {draftRowOrder.map((row) => (
-                    <div key={row.code} className="flex items-center gap-3 p-3.5 rounded-lg border border-border bg-muted/20">
+                    <div key={row.code} className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-background">
                       <div className="relative w-16 shrink-0">
                         <Input
                           value={row.position}
@@ -3204,10 +3276,12 @@ export function RouteList() {
 
             {/* ── SORTING ── */}
             {settingsMenu === 'sorting' && (
-              <div className="p-6 space-y-5">
+              <div className="space-y-4">
                 {/* Sort by Column */}
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sort by Column</p>
+                  <div className="rounded-xl border border-border bg-background p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sort by Column</p>
+                  </div>
                   <div className="rounded-xl border border-border overflow-hidden bg-background">
                     {([
                       { key: 'code'     as ColumnKey, label: 'Code' },
@@ -3248,8 +3322,10 @@ export function RouteList() {
 
                 {/* My Sort List */}
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">My Sort List</p>
-                  <p className="text-xs text-muted-foreground">Saved custom row orders — specific to this route only.</p>
+                  <div className="rounded-xl border border-border bg-background p-3 space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">My Sort List</p>
+                    <p className="text-xs text-muted-foreground">Saved custom row orders - specific to this route only.</p>
+                  </div>
                   {savedRowOrders.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground text-sm bg-muted/20 rounded-xl border border-border/50">
                       <p>No saved sort orders yet.</p>
@@ -3302,7 +3378,7 @@ export function RouteList() {
           </div>
 
           {/* ── Footer Buttons ── */}
-          <div className="border-t border-border pt-4 px-6 pb-6 shrink-0 bg-background">
+          <div className="px-5 py-3.5 border-t border-border shrink-0 bg-background">
             {settingsMenu === 'column' && (
               <div className="flex items-center gap-3">
                 {columnsHasSaved && (

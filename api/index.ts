@@ -241,25 +241,19 @@ async function handleRoutes(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ success: true, data: routes });
   }
   if (req.method === 'POST') {
-    const { routes } = req.body;
+    const { routes, changedRouteIds } = req.body;
     if (!Array.isArray(routes)) return res.status(400).json({ success: false, error: 'routes array diperlukan' });
+    const changedIds: string[] = Array.isArray(changedRouteIds) ? changedRouteIds : [];
     const ids = routes.map((r: { id: string }) => r.id);
     if (ids.length > 0) { await sql`DELETE FROM routes WHERE id != ALL(${ids}::text[])`; }
     else { await sql`DELETE FROM routes`; }
     for (const route of routes) {
+      const isChanged = changedIds.includes(route.id);
       await sql`INSERT INTO routes (id, name, code, shift, delivery_points, color, updated_at)
         VALUES (${route.id}, ${route.name}, ${route.code}, ${route.shift}, ${JSON.stringify(route.deliveryPoints)}, ${route.color ?? null}, NOW())
         ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, code=EXCLUDED.code, shift=EXCLUDED.shift,
           delivery_points=EXCLUDED.delivery_points, color=EXCLUDED.color,
-          updated_at=CASE
-            WHEN routes.name IS DISTINCT FROM EXCLUDED.name
-              OR routes.code IS DISTINCT FROM EXCLUDED.code
-              OR routes.shift IS DISTINCT FROM EXCLUDED.shift
-              OR routes.delivery_points IS DISTINCT FROM EXCLUDED.delivery_points
-              OR routes.color IS DISTINCT FROM EXCLUDED.color
-            THEN NOW()
-            ELSE routes.updated_at
-          END`;
+          updated_at=CASE WHEN ${isChanged} THEN NOW() ELSE routes.updated_at END`;
     }
     return res.status(200).json({ success: true });
   }

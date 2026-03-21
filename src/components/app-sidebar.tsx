@@ -264,7 +264,7 @@ export function AppSidebar({
             {mode === "dark" ? "Dark Mode" : "Light Mode"}
           </span>
           <span onClick={e => e.stopPropagation()}>
-            <Switch size="sm" checked={mode === "dark"} onCheckedChange={toggleMode} />
+            <Switch size="sm" className="fcal-switch-sidebar" checked={mode === "dark"} onCheckedChange={toggleMode} />
           </span>
         </div>
         {/* Edit Mode toggle */}
@@ -277,7 +277,7 @@ export function AppSidebar({
           <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-primary" : ""}`} style={!isEditMode ? { color: "#6366F1" } : undefined} />
           <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>Edit Mode</span>
           <span onClick={e => e.stopPropagation()}>
-            <Switch size="sm" checked={isEditMode} onCheckedChange={handleEditModeToggle} />
+            <Switch size="sm" className="fcal-switch-sidebar" checked={isEditMode} onCheckedChange={handleEditModeToggle} />
           </span>
         </div>
         <Separator className="mx-1" />

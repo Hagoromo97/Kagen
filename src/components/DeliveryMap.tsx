@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 
@@ -27,9 +27,32 @@ interface DeliveryMapProps {
   scrollZoom?: boolean
   showPolyline?: boolean
   markerStyle?: "pin" | "dot" | "ring"
+  mapStyle?: "google-streets" | "google-satellite" | "osm"
   startPoint?: { lat: number; lng: number }
   refitToken?: number
+  resizeToken?: number
 }
+
+const TILE_CONFIG = {
+  "google-streets": {
+    attribution: "Map data © Google",
+    url: "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    subdomains: ["mt0", "mt1", "mt2", "mt3"],
+    maxZoom: 20,
+  },
+  "google-satellite": {
+    attribution: "Map data © Google",
+    url: "https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+    subdomains: ["mt0", "mt1", "mt2", "mt3"],
+    maxZoom: 20,
+  },
+  osm: {
+    attribution: "&copy; OpenStreetMap contributors",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c"],
+    maxZoom: 19,
+  },
+} as const
 
 function createPinIcon(color: string, active = false): L.Icon {
   // Use the standard Leaflet marker images but tinted via a coloured shadow trick
@@ -79,10 +102,21 @@ function createMarkerIcon(style: "pin" | "dot" | "ring", color: string, active =
   return createPinIcon(color, active)
 }
 
+const markerIconCache = new Map<string, L.Icon | L.DivIcon>()
+
+function getCachedMarkerIcon(style: "pin" | "dot" | "ring", color: string, active = false): L.Icon | L.DivIcon {
+  const key = `${style}|${color}|${active ? 1 : 0}`
+  const cached = markerIconCache.get(key)
+  if (cached) return cached
+  const created = createMarkerIcon(style, color, active)
+  markerIconCache.set(key, created)
+  return created
+}
+
 /** Fits map bounds whenever validPoints changes */
 function BoundsController({ points, startPoint, refitToken }: { points: DeliveryPoint[]; startPoint?: { lat: number; lng: number }; refitToken?: number }) {
   const map = useMap()
-  useMemo(() => {
+  useEffect(() => {
     if (points.length === 0 && !startPoint) return
 
     if (points.length === 0 && startPoint) {
@@ -97,33 +131,51 @@ function BoundsController({ points, startPoint, refitToken }: { points: Delivery
       if (startPoint) bounds.extend([startPoint.lat, startPoint.lng])
       map.fitBounds(bounds, { padding: [40, 40] })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points, startPoint, refitToken])
   return null
 }
 
-export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", startPoint, refitToken = 0 }: DeliveryMapProps) {
+function ResizeController({ resizeToken }: { resizeToken?: number }) {
+  const map = useMap()
+
+  useEffect(() => {
+    // Fullscreen/container transitions need delayed invalidation so Leaflet recalculates final size.
+    map.invalidateSize(false)
+    const t1 = window.setTimeout(() => map.invalidateSize(false), 120)
+    const t2 = window.setTimeout(() => map.invalidateSize(false), 280)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [map, resizeToken])
+
+  return null
+}
+
+export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", mapStyle = "google-streets", startPoint, refitToken = 0, resizeToken = 0 }: DeliveryMapProps) {
   const [activeCode, setActiveCode] = useState<string | null>(null)
+  const tiles = TILE_CONFIG[mapStyle]
 
   const validPoints = useMemo(
     () => deliveryPoints.filter(p => p.latitude !== 0 && p.longitude !== 0),
     [deliveryPoints]
   )
+  const deferredPoints = useDeferredValue(validPoints)
 
   const center = useMemo((): [number, number] => {
     if (startPoint) return [startPoint.lat, startPoint.lng]
-    if (validPoints.length === 0) return [3.15, 101.65]
+    if (deferredPoints.length === 0) return [3.15, 101.65]
     return [
-      validPoints.reduce((s, p) => s + p.latitude,  0) / validPoints.length,
-      validPoints.reduce((s, p) => s + p.longitude, 0) / validPoints.length,
+      deferredPoints.reduce((s, p) => s + p.latitude,  0) / deferredPoints.length,
+      deferredPoints.reduce((s, p) => s + p.longitude, 0) / deferredPoints.length,
     ]
-  }, [validPoints, startPoint])
+  }, [deferredPoints, startPoint])
 
   const polylineGroups = useMemo(() => {
     if (!showPolyline) return [] as Array<{ id: string; positions: [number, number][] }>
 
     const grouped = new Map<string, [number, number][]>();
-    validPoints.forEach((point) => {
+    deferredPoints.forEach((point) => {
       const groupId = point.routeId ?? "single-route"
       const positions = grouped.get(groupId) ?? []
       positions.push([point.latitude, point.longitude])
@@ -133,20 +185,24 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     return Array.from(grouped.entries())
       .map(([id, positions]) => ({ id, positions }))
       .filter((item) => item.positions.length >= 2)
-  }, [validPoints, showPolyline])
+  }, [deferredPoints, showPolyline])
 
   return (
     <MapContainer
       center={center}
       zoom={13}
+      preferCanvas={true}
       scrollWheelZoom={scrollZoom}
       style={{ width: "100%", height: "100%" }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution={tiles.attribution}
+        url={tiles.url}
+        subdomains={[...tiles.subdomains]}
+        maxZoom={tiles.maxZoom}
       />
-      <BoundsController points={validPoints} startPoint={startPoint} refitToken={refitToken} />
+      <ResizeController resizeToken={resizeToken} />
+      <BoundsController points={deferredPoints} startPoint={startPoint} refitToken={refitToken} />
       {startPoint && (
         <Marker
           key="start-point"
@@ -167,14 +223,14 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
           pathOptions={{ color: "#2563eb", weight: 3, opacity: 0.75 }}
         />
       ))}
-      {validPoints.map(point => {
+      {deferredPoints.map(point => {
         const color = DELIVERY_COLORS[point.delivery] ?? "#6b7280"
         const isActive = point.code === activeCode
         return (
           <Marker
             key={point.code}
             position={[point.latitude, point.longitude]}
-            icon={createMarkerIcon(markerStyle, color, isActive)}
+            icon={getCachedMarkerIcon(markerStyle, color, isActive)}
             eventHandlers={{
               click: () => setActiveCode(prev => prev === point.code ? null : point.code),
               popupclose: () => setActiveCode(null),
