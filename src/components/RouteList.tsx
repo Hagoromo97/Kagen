@@ -325,6 +325,7 @@ export function RouteList() {
   const [newRoute, setNewRoute] = useState({ name: "", code: "", shift: "AM" })
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
+  const isInteractingWithSearchSuggestions = useRef(false)
   const [filterRegion, setFilterRegion] = useState<"all" | "KL" | "Sel">("all")
   const [filterShift, setFilterShift] = useState<"all" | "AM" | "PM">("all")
   const [showAllRoutes, setShowAllRoutes] = useState(false)
@@ -1328,7 +1329,12 @@ export function RouteList() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
+              onBlur={() => {
+                if (isInteractingWithSearchSuggestions.current) {
+                  return
+                }
+                setTimeout(() => setSearchFocused(false), 120)
+              }}
               className="w-full h-12 pl-11 pr-10 bg-card/75 backdrop-blur-md rounded-xl text-[11px] md:text-[11px] placeholder:text-muted-foreground/40 outline-none ring-1 ring-border/60 focus:ring-2 focus:ring-primary/40 shadow-sm transition-shadow"
             />
             {searchQuery && (
@@ -1341,7 +1347,25 @@ export function RouteList() {
             )}
 
             {searchFocused && searchSuggestions.length > 0 && (
-              <div className="absolute z-30 mt-2 w-full rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-lg overflow-hidden max-h-[220px] overflow-y-auto">
+              <div
+                className="absolute z-30 mt-2 w-full rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-lg overflow-hidden max-h-[220px] overflow-y-auto overscroll-contain"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+                onMouseDown={() => {
+                  isInteractingWithSearchSuggestions.current = true
+                }}
+                onTouchStart={() => {
+                  isInteractingWithSearchSuggestions.current = true
+                }}
+                onMouseUp={() => {
+                  isInteractingWithSearchSuggestions.current = false
+                }}
+                onTouchEnd={() => {
+                  isInteractingWithSearchSuggestions.current = false
+                }}
+                onMouseLeave={() => {
+                  isInteractingWithSearchSuggestions.current = false
+                }}
+              >
                 {searchSuggestions.map((route) => (
                   <button
                     key={route.id}
@@ -1349,6 +1373,7 @@ export function RouteList() {
                     className="w-full text-left px-3 py-2.5 hover:bg-muted/60 transition-colors"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
+                      isInteractingWithSearchSuggestions.current = false
                       setSearchQuery(route.name)
                       setCurrentRouteId(route.id)
                       setSearchFocused(false)

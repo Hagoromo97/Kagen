@@ -78,6 +78,13 @@ const RESOURCE_COLORS = [
   "#EC4899", "#EAB308", "#14B8A6", "#EF4444",
 ]
 
+// Route card / marker palette — mirrors Settings → Route Colours
+const DEFAULT_ROUTE_COLORS = ['#374151', '#7c3aed', '#0891b2', '#16a34a', '#dc2626', '#d97706']
+const getRouteColorPalette = (): string[] => {
+  try { const v = localStorage.getItem('fcalendar_route_colors'); if (v) return JSON.parse(v) } catch { /**/ }
+  return DEFAULT_ROUTE_COLORS
+}
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function getWeekDates(baseDate: Date): Date[] {
@@ -249,6 +256,18 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   const [shifts, setShifts] = useState<Shift[]>([])
   const [routes, setRoutes] = useState<RouteRef[]>([])
   const [loading, setLoading] = useState(true)
+  const [routeColorPalette, setRouteColorPalette] = useState<string[]>(getRouteColorPalette)
+
+  // Maps route name → effective colour (route.color overrides palette fallback)
+  const routeEffectiveColorMap = useMemo(() => {
+    const map = new Map<string, string>()
+    routes.forEach((r, i) => {
+      const c = r.color || routeColorPalette[i % routeColorPalette.length]
+      map.set(r.id, c)
+      map.set(r.name, c)
+    })
+    return map
+  }, [routes, routeColorPalette])
 
   // Dialogs
   const [shiftDialog, setShiftDialog] = useState<{
@@ -294,6 +313,13 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
+
+  // Sync palette whenever Settings saves new route colours
+  useEffect(() => {
+    const handler = () => setRouteColorPalette(getRouteColorPalette())
+    window.addEventListener('fcalendar_route_colors_changed', handler)
+    return () => window.removeEventListener('fcalendar_route_colors_changed', handler)
+  }, [])
 
   // Shift form state
   const [shiftForm, setShiftForm] = useState({
@@ -604,6 +630,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                                 key={shift.id}
                                 shift={shift}
                                 shiftType={routes.find(r => r.name === shift.title)?.shift ?? ""}
+                                routeColor={routeEffectiveColorMap.get(shift.title)}
                                 isEditMode={isEditMode}
                                 onEdit={() => openEditShift(shift)}
                               />
@@ -690,7 +717,8 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                     onChange={e => {
                       const selected = routes.find(r => r.name === e.target.value)
                       const preset = getShiftPreset(selected?.shift ?? "")
-                      setShiftForm(p => ({ ...p, title: e.target.value, color: selected?.color || p.color, ...preset }))
+                      const effectiveColor = selected ? (routeEffectiveColorMap.get(selected.name) ?? "#3B82F6") : shiftForm.color
+                      setShiftForm(p => ({ ...p, title: e.target.value, color: effectiveColor, ...preset }))
                     }}
                     className="h-9 w-full rounded-md border border-input bg-background px-3 text-[11px] md:text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
                   >
@@ -767,7 +795,8 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                 onChange={e => {
                   const selected = routes.find(r => r.name === e.target.value)
                   const preset = getShiftPreset(selected?.shift ?? "")
-                  setShiftForm(p => ({ ...p, title: e.target.value, color: selected?.color || p.color, ...preset }))
+                  const effectiveColor = selected ? (routeEffectiveColorMap.get(selected.name) ?? "#3B82F6") : shiftForm.color
+                  setShiftForm(p => ({ ...p, title: e.target.value, color: effectiveColor, ...preset }))
                 }}
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-[11px] md:text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
               >
@@ -868,14 +897,18 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
 function ShiftBlock({
   shift,
   shiftType,
+  routeColor,
   isEditMode,
   onEdit,
 }: {
   shift: Shift
   shiftType: string
+  routeColor?: string
   isEditMode: boolean
   onEdit: () => void
 }) {
+  // Use live route colour from Settings palette; fall back to the colour saved on the shift
+  const displayColor = routeColor || shift.color
   const startLabel = formatHour(shift.startHour)
   const endLabel = formatHour(shift.endHour)
   const duration = shift.endHour - shift.startHour
@@ -885,18 +918,18 @@ function ShiftBlock({
       className={`rounded-md overflow-hidden select-none transition-all ${
         isEditMode ? "cursor-pointer hover:brightness-95 active:scale-[0.98]" : "cursor-default"
       }`}
-      style={{ backgroundColor: `${shift.color}12`, border: `1px solid ${shift.color}30` }}
+      style={{ backgroundColor: `${displayColor}12`, border: `1px solid ${displayColor}30` }}
       onClick={e => { e.stopPropagation(); if (isEditMode) onEdit() }}
       title={`${shift.title}${shiftType ? ` — ${shiftType}` : ""}: ${startLabel} – ${endLabel} (${duration}h)`}
     >
-      <div className="h-[3px] w-full" style={{ backgroundColor: shift.color }} />
+      <div className="h-[3px] w-full" style={{ backgroundColor: displayColor }} />
       <div className="px-2 py-1.5 flex flex-col items-center text-center">
         {isEditMode ? (
-          <div className="text-[9px] font-semibold leading-tight whitespace-nowrap" style={{ color: shift.color }}>
+          <div className="text-[9px] font-semibold leading-tight whitespace-nowrap" style={{ color: displayColor }}>
             {startLabel} – {endLabel}
           </div>
         ) : (
-          <div className="text-[10px] font-bold leading-tight whitespace-nowrap" style={{ color: shift.color }}>
+          <div className="text-[10px] font-bold leading-tight whitespace-nowrap" style={{ color: displayColor }}>
             {shift.title}{shiftType ? ` — ${shiftType}` : ""}
           </div>
         )}
