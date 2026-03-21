@@ -510,16 +510,18 @@ export function RouteList() {
   // Only show first 3 route cards when collapsed
   const displayedRoutes = showAllRoutes ? filteredRoutes : filteredRoutes.slice(0, 4)
 
+  const SEARCH_SUGGESTION_LIMIT = 20
+
   const searchSuggestions = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return routes.slice(0, 8)
+    if (!q) return routes.slice(0, SEARCH_SUGGESTION_LIMIT)
     return routes
       .filter(route =>
         route.name.toLowerCase().includes(q) ||
         route.code.toLowerCase().includes(q) ||
         route.shift.toLowerCase().includes(q)
       )
-      .slice(0, 8)
+      .slice(0, SEARCH_SUGGESTION_LIMIT)
   }, [routes, searchQuery])
 
   const [editingCell, setEditingCell] = useState<{ rowCode: string; field: EditableField } | null>(null)
@@ -1339,7 +1341,7 @@ export function RouteList() {
             )}
 
             {searchFocused && searchSuggestions.length > 0 && (
-              <div className="absolute z-30 mt-2 w-full rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-lg overflow-hidden">
+              <div className="absolute z-30 mt-2 w-full rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-lg overflow-hidden max-h-[220px] overflow-y-auto">
                 {searchSuggestions.map((route) => (
                   <button
                     key={route.id}
