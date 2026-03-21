@@ -177,13 +177,11 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
             icon={createMarkerIcon(markerStyle, color, isActive)}
             eventHandlers={{
               click: () => setActiveCode(prev => prev === point.code ? null : point.code),
+              popupclose: () => setActiveCode(null),
             }}
           >
             {isActive && (
-              <Popup
-                onClose={() => setActiveCode(null)}
-                autoPan={false}
-              >
+              <Popup autoPan={false}>
                 <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 148, padding: "2px 0" }}>
                   {point.routeLabel && (
                     <p style={{ fontSize: 10, fontWeight: 600, color: "#888", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.04em" }}>{point.routeLabel}</p>

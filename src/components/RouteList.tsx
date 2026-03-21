@@ -463,7 +463,7 @@ export function RouteList() {
 
   // Combined delivery points for map (all selected routes merged)
   const combinedDeliveryPoints = useMemo(() => {
-    const result: (DeliveryPoint & { routeLabel?: string })[] = []
+    const result: (DeliveryPoint & { routeLabel?: string; routeId?: string })[] = []
     routes.forEach(r => {
       if (!combinedRouteIds.has(r.id)) return
       r.deliveryPoints.forEach(p => {
