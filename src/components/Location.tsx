@@ -264,7 +264,7 @@ export function DeliveryTableDialog() {
 
       {/* ── Toolbar ─────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b bg-muted/40 shrink-0">
-        <span className="text-xs text-muted-foreground">
+        <span className="font-bold text-muted-foreground" style={{ fontSize: "10px" }}>
           {!loading && !error && `${displayed.length} / ${totalPoints} point(s) · ${routes.length} route(s)`}
         </span>
         {!loading && !error && dupCodeCount > 0 && (

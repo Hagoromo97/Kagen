@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense, Component, type ErrorInfo, type ReactNode } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
+import { LandingPage } from "@/components/LandingPage"
 
 const RouteList = lazy(() => import("@/components/RouteList").then(m => ({ default: m.RouteList })))
 const Settings = lazy(() => import("@/components/Settings").then(m => ({ default: m.Settings })))
@@ -704,14 +705,19 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 }
 
 export function App() {
+  const [landed, setLanded] = useState(false)
+
   return (
     <DeviceProvider>
       <ErrorBoundary>
-        <SidebarProvider defaultOpen={false}>
-          <EditModeProvider>
-            <AppContent />
-          </EditModeProvider>
-        </SidebarProvider>
+        {!landed && <LandingPage onEnter={() => setLanded(true)} />}
+        {landed && (
+          <SidebarProvider defaultOpen={false}>
+            <EditModeProvider>
+              <AppContent />
+            </EditModeProvider>
+          </SidebarProvider>
+        )}
         <PWAInstallPrompt />
         <Toaster
           position="top-right"

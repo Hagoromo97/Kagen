@@ -52,10 +52,10 @@ const TILE_CONFIG = {
     maxNativeZoom: 20,
   },
   osm: {
-    attribution: "&copy; OpenStreetMap contributors",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    subdomains: ["a", "b", "c"],
-    maxZoom: 19,
+    attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    subdomains: ["a", "b", "c", "d"],
+    maxZoom: 20,
     maxNativeZoom: 19,
   },
 } as const
@@ -162,7 +162,6 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
   const [activeCode, setActiveCode] = useState<string | null>(null)
   const [renderedMarkerCount, setRenderedMarkerCount] = useState(INITIAL_MARKER_RENDER)
   const tiles = TILE_CONFIG[mapStyle]
-  const isGoogleStyle = mapStyle === "google-streets" || mapStyle === "google-satellite"
 
   const validPoints = useMemo(
     () => deliveryPoints.filter(p => p.latitude !== 0 && p.longitude !== 0),
@@ -246,9 +245,9 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         subdomains={[...tiles.subdomains]}
         maxZoom={tiles.maxZoom}
         maxNativeZoom={tiles.maxNativeZoom}
-        updateWhenIdle={!isGoogleStyle}
-        updateWhenZooming={isGoogleStyle}
-        keepBuffer={2}
+        updateWhenIdle={false}
+        updateWhenZooming={false}
+        keepBuffer={4}
         detectRetina={false}
         crossOrigin={true}
       />
