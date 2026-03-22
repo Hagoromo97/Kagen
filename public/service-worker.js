@@ -1,4 +1,6 @@
-const CACHE_NAME = 'fcalendar-v3';
+const APP_CACHE_NAME = 'fcalendar-app-v4';
+const MAP_TILE_CACHE_NAME = 'fcalendar-map-tiles-v1';
+const MAP_TILE_CACHE_LIMIT = 500;
 
 // Only cache truly immutable assets (icons/manifest that don't change between deploys)
 const PRECACHE_URLS = [
@@ -9,7 +11,7 @@ const PRECACHE_URLS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(APP_CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_URLS))
       .catch(() => {})
   );
@@ -21,7 +23,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) =>
       Promise.all(
         cacheNames.map((name) => {
-          if (name !== CACHE_NAME) return caches.delete(name);
+          if (name !== APP_CACHE_NAME && name !== MAP_TILE_CACHE_NAME) return caches.delete(name);
         })
       )
     )
@@ -29,8 +31,62 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+function isMapTileRequest(requestUrl) {
+  const isOSM = /(^|\.)tile\.openstreetmap\.org$/i.test(requestUrl.hostname);
+  const isGoogleTile = /(^|\.)google\.com$/i.test(requestUrl.hostname) && requestUrl.pathname === '/vt';
+  return isOSM || isGoogleTile;
+}
+
+async function trimCache(cacheName, maxEntries) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length <= maxEntries) return;
+
+  const deleteCount = keys.length - maxEntries;
+  for (let i = 0; i < deleteCount; i += 1) {
+    await cache.delete(keys[i]);
+  }
+}
+
+async function cacheMapTile(request, response) {
+  // Tile servers often return CORS/opaque responses; status can be 0 for opaque.
+  const canCache = response && (response.ok || response.type === 'opaque');
+  if (!canCache) return;
+
+  const cache = await caches.open(MAP_TILE_CACHE_NAME);
+  await cache.put(request, response.clone());
+  await trimCache(MAP_TILE_CACHE_NAME, MAP_TILE_CACHE_LIMIT);
+}
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Map tiles (OSM/Google) - stale-while-revalidate for faster repeat loads.
+  if (event.request.method === 'GET' && isMapTileRequest(url)) {
+    event.respondWith(
+      caches.open(MAP_TILE_CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+
+        const networkPromise = fetch(event.request)
+          .then(async (response) => {
+            await cacheMapTile(event.request, response);
+            return response;
+          })
+          .catch(() => null);
+
+        if (cached) {
+          event.waitUntil(networkPromise);
+          return cached;
+        }
+
+        const networkResponse = await networkPromise;
+        if (networkResponse) return networkResponse;
+
+        return new Response('', { status: 504, statusText: 'Map tile unavailable' });
+      })
+    );
+    return;
+  }
 
   // 1. API calls — always network, never cache
   if (url.pathname.startsWith('/api/')) {
@@ -55,7 +111,7 @@ self.addEventListener('fetch', (event) => {
         return fetch(event.request).then((response) => {
           if (response && response.status === 200 && response.type === 'basic') {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            caches.open(APP_CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
         });
@@ -70,7 +126,7 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         if (response && response.status === 200 && response.type === 'basic') {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          caches.open(APP_CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
       })

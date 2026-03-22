@@ -2,6 +2,9 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 
+const INITIAL_MARKER_RENDER = 180
+const MARKER_RENDER_CHUNK = 180
+
 const DELIVERY_COLORS: Record<string, string> = {
   Daily:      "#22c55e",
   "Alt 1":    "#f59e0b",
@@ -39,18 +42,21 @@ const TILE_CONFIG = {
     url: "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
     subdomains: ["mt0", "mt1", "mt2", "mt3"],
     maxZoom: 20,
+    maxNativeZoom: 20,
   },
   "google-satellite": {
     attribution: "Map data © Google",
     url: "https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
     subdomains: ["mt0", "mt1", "mt2", "mt3"],
     maxZoom: 20,
+    maxNativeZoom: 20,
   },
   osm: {
     attribution: "&copy; OpenStreetMap contributors",
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     subdomains: ["a", "b", "c"],
     maxZoom: 19,
+    maxNativeZoom: 19,
   },
 } as const
 
@@ -154,6 +160,7 @@ function ResizeController({ resizeToken }: { resizeToken?: number }) {
 
 export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", mapStyle = "google-streets", startPoint, refitToken = 0, resizeToken = 0 }: DeliveryMapProps) {
   const [activeCode, setActiveCode] = useState<string | null>(null)
+  const [renderedMarkerCount, setRenderedMarkerCount] = useState(INITIAL_MARKER_RENDER)
   const tiles = TILE_CONFIG[mapStyle]
 
   const validPoints = useMemo(
@@ -161,6 +168,40 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     [deliveryPoints]
   )
   const deferredPoints = useDeferredValue(validPoints)
+
+  // Render marker nodes progressively to avoid long first-paint stalls on large routes.
+  useEffect(() => {
+    setRenderedMarkerCount(INITIAL_MARKER_RENDER)
+  }, [deferredPoints.length, mapStyle, markerStyle])
+
+  useEffect(() => {
+    if (renderedMarkerCount >= deferredPoints.length) return
+
+    let cancelled = false
+    const schedule =
+      typeof window !== "undefined" && "requestIdleCallback" in window
+        ? (cb: () => void) => (window as Window & { requestIdleCallback: (fn: () => void) => number }).requestIdleCallback(cb)
+        : (cb: () => void) => window.setTimeout(cb, 16)
+    const cancel =
+      typeof window !== "undefined" && "cancelIdleCallback" in window
+        ? (id: number) => (window as Window & { cancelIdleCallback: (x: number) => void }).cancelIdleCallback(id)
+        : (id: number) => window.clearTimeout(id)
+
+    const id = schedule(() => {
+      if (cancelled) return
+      setRenderedMarkerCount((prev) => Math.min(prev + MARKER_RENDER_CHUNK, deferredPoints.length))
+    })
+
+    return () => {
+      cancelled = true
+      cancel(id)
+    }
+  }, [renderedMarkerCount, deferredPoints.length])
+
+  const renderedPoints = useMemo(
+    () => deferredPoints.slice(0, Math.min(renderedMarkerCount, deferredPoints.length)),
+    [deferredPoints, renderedMarkerCount]
+  )
 
   const center = useMemo((): [number, number] => {
     if (startPoint) return [startPoint.lat, startPoint.lng]
@@ -175,7 +216,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     if (!showPolyline) return [] as Array<{ id: string; positions: [number, number][] }>
 
     const grouped = new Map<string, [number, number][]>();
-    deferredPoints.forEach((point) => {
+    renderedPoints.forEach((point) => {
       const groupId = point.routeId ?? "single-route"
       const positions = grouped.get(groupId) ?? []
       positions.push([point.latitude, point.longitude])
@@ -185,7 +226,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     return Array.from(grouped.entries())
       .map(([id, positions]) => ({ id, positions }))
       .filter((item) => item.positions.length >= 2)
-  }, [deferredPoints, showPolyline])
+  }, [renderedPoints, showPolyline])
 
   return (
     <MapContainer
@@ -200,6 +241,12 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         url={tiles.url}
         subdomains={[...tiles.subdomains]}
         maxZoom={tiles.maxZoom}
+        maxNativeZoom={tiles.maxNativeZoom}
+        updateWhenIdle={true}
+        updateWhenZooming={false}
+        keepBuffer={3}
+        detectRetina={false}
+        crossOrigin={true}
       />
       <ResizeController resizeToken={resizeToken} />
       <BoundsController points={deferredPoints} startPoint={startPoint} refitToken={refitToken} />
@@ -207,7 +254,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         <Marker
           key="start-point"
           position={[startPoint.lat, startPoint.lng]}
-          icon={createMarkerIcon(markerStyle, "#111111", false)}
+          icon={getCachedMarkerIcon(markerStyle, "#111111", false)}
         >
           <Popup autoPan={false}>
             <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 120 }}>
@@ -223,7 +270,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
           pathOptions={{ color: "#2563eb", weight: 3, opacity: 0.75 }}
         />
       ))}
-      {deferredPoints.map(point => {
+      {renderedPoints.map(point => {
         const color = DELIVERY_COLORS[point.delivery] ?? "#6b7280"
         const isActive = point.code === activeCode
         return (
