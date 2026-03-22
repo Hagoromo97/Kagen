@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -510,110 +509,146 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
 
           {/* Avatar Gallery Dialog */}
           <Dialog open={showAvatarDialog} onOpenChange={(o) => { if (!o) { setAvatarTab("url"); setAvatarUrlInput("") } setShowAvatarDialog(o) }}>
-            <DialogContent className="max-w-sm rounded-2xl md:max-w-lg md:rounded-3xl">
-              <DialogHeader>
-                <DialogTitle className="text-base">Avatar Images</DialogTitle>
-                <DialogDescription>Manage avatar images. Click an image to set it as display thumbnail.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                {/* Image grid */}
-                <div className="grid grid-cols-4 gap-2 md:grid-cols-5">
-                  {dialogImages.map((url, i) => (
-                    <div key={i} className="relative group">
-                      <button
-                        onClick={() => setDialogSelected(url)}
-                        className={`w-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                          dialogSelected === url
-                            ? "border-primary ring-2 ring-primary/30"
-                            : "border-transparent hover:border-primary/40"
-                        }`}
-                      >
-                        <img src={url} alt={`avatar-${i}`} className="w-full h-full object-cover" />
-                      </button>
-                      {/* Selected badge */}
-                      {dialogSelected === url && (
-                        <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 pointer-events-none">
-                          <Check className="w-2.5 h-2.5 text-primary-foreground" />
-                        </div>
-                      )}
-                      {/* Delete button */}
-                      <button
-                        onClick={() => {
-                          const next = dialogImages.filter((_, idx) => idx !== i)
-                          setDialogImages(next)
-                          if (dialogSelected === url) setDialogSelected(next[0] ?? "")
-                        }}
-                        className="absolute -bottom-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                  {/* Add slot */}
-                  {dialogImages.length < 8 && (
-                    <div className="w-full aspect-square rounded-xl border-2 border-dashed border-border flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
+            <DialogContent className="w-[92vw] max-w-sm rounded-2xl p-0 overflow-hidden gap-0">
 
-                {dialogImages.length === 0 && (
-                  <p className="text-xs text-center text-muted-foreground py-1">No images yet. Add one below.</p>
+              {/* Header */}
+              <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Camera className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-base font-bold leading-tight">Avatar Images</DialogTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">Manage images for this location.</p>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              {/* Body */}
+              <div className="overflow-y-auto max-h-[60vh] px-5 py-4 space-y-4">
+
+                {/* Image grid */}
+                {dialogImages.length > 0 ? (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
+                      Photos <span className="text-muted-foreground/60 font-normal">({dialogImages.length}/8) · tap to select</span>
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {dialogImages.map((url, i) => (
+                        <div key={i} className="relative group">
+                          <button
+                            onClick={() => setDialogSelected(url)}
+                            className={`w-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                              dialogSelected === url
+                                ? "border-primary ring-2 ring-primary/30"
+                                : "border-transparent hover:border-primary/40"
+                            }`}
+                          >
+                            <img src={url} alt={`avatar-${i}`} className="w-full h-full object-cover" />
+                          </button>
+                          {dialogSelected === url && (
+                            <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 pointer-events-none shadow">
+                              <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                            </div>
+                          )}
+                          <button
+                            onClick={() => {
+                              const next = dialogImages.filter((_, idx) => idx !== i)
+                              setDialogImages(next)
+                              if (dialogSelected === url) setDialogSelected(next[0] ?? "")
+                            }}
+                            className="absolute -bottom-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-6 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
+                      <Camera className="w-6 h-6 text-muted-foreground/50" />
+                    </div>
+                    <p className="text-sm font-medium text-muted-foreground">No images yet</p>
+                    <p className="text-xs text-muted-foreground/60">Add one below.</p>
+                  </div>
                 )}
 
                 {/* Add new image */}
                 {dialogImages.length < 8 && (
-                  <div className="border-t border-border pt-3 space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Add Image</p>
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Add Image</p>
+
                     {/* Tabs */}
-                    <div className="flex rounded-lg border overflow-hidden">
+                    <div className="flex rounded-xl border border-border overflow-hidden bg-muted/40 p-0.5 gap-0.5">
                       {(["url", "upload"] as const).map(tab => (
                         <button
                           key={tab}
                           onClick={() => setAvatarTab(tab)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold transition-colors ${
-                            avatarTab === tab ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                            avatarTab === tab
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
                           {tab === "url" ? <><Link2 className="w-3 h-3" />URL</> : <><ImageUp className="w-3 h-3" />Upload</>}
                         </button>
                       ))}
                     </div>
+
                     {avatarTab === "url" && (
-                      <div className="flex gap-2">
-                        <Input
-                          value={avatarUrlInput}
-                          onChange={e => setAvatarUrlInput(e.target.value)}
-                          placeholder="https://example.com/image.jpg"
-                          className="h-8 text-[11px] md:text-[11px] flex-1"
-                        />
-                        <Button
-                          size="sm"
-                          className="h-8 shrink-0"
-                          disabled={!avatarUrlInput.trim()}
-                          onClick={() => {
-                            const url = avatarUrlInput.trim()
-                            if (!url) return
-                            const next = [...dialogImages, url]
-                            setDialogImages(next)
-                            if (!dialogSelected) setDialogSelected(url)
-                            setAvatarUrlInput("")
-                          }}
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </Button>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Image URL</label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={avatarUrlInput}
+                            onChange={e => setAvatarUrlInput(e.target.value)}
+                            placeholder="https://example.com/image.jpg"
+                            className="h-9 text-[11px] md:text-[11px] flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            className="h-9 shrink-0"
+                            disabled={!avatarUrlInput.trim()}
+                            onClick={() => {
+                              const url = avatarUrlInput.trim()
+                              if (!url) return
+                              const next = [...dialogImages, url]
+                              setDialogImages(next)
+                              if (!dialogSelected) setDialogSelected(url)
+                              setAvatarUrlInput("")
+                            }}
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     )}
+
                     {avatarTab === "upload" && (
                       <>
                         <div
                           onClick={() => !avatarUploading && avatarFileRef.current?.click()}
-                          className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-3 cursor-pointer hover:bg-muted/40 transition-colors"
+                          className={`flex flex-col items-center justify-center gap-2.5 border-2 border-dashed rounded-2xl py-6 cursor-pointer transition-colors ${
+                            avatarUploading ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/40"
+                          }`}
                         >
                           {avatarUploading ? (
-                            <><Loader2 className="w-4 h-4 text-muted-foreground animate-spin" /><p className="text-xs text-muted-foreground">Uploading…</p></>
+                            <>
+                              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                              <p className="text-xs font-medium text-primary">Uploading…</p>
+                            </>
                           ) : (
-                            <><ImageUp className="w-4 h-4 text-muted-foreground" /><p className="text-xs text-muted-foreground">Click to select image</p></>
+                            <>
+                              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                                <ImageUp className="w-5 h-5 text-muted-foreground" />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs font-semibold text-foreground">Click to upload</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">PNG, JPG, etc. — multiple allowed</p>
+                              </div>
+                            </>
                           )}
                         </div>
                         <input
@@ -663,7 +698,9 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                   </div>
                 )}
               </div>
-              <DialogFooter className="flex gap-2 justify-end pt-2">
+
+              {/* Footer */}
+              <div className="px-5 py-4 border-t border-border flex gap-2 justify-end bg-muted/20">
                 <Button variant="outline" size="sm" onClick={() => setShowAvatarDialog(false)}>Cancel</Button>
                 <Button
                   size="sm"
@@ -673,7 +710,6 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                     setAvatarImages(newImages)
                     setAvatarImageUrl(newSelectedUrl)
                     setShowAvatarDialog(false)
-                    // Save immediately after updating avatar images
                     const updatedPoint = {
                       ...point,
                       descriptions: drafts.filter(d => d.key.trim() !== ""),
@@ -692,7 +728,8 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                 >
                   <Check className="w-3.5 h-3.5 mr-1" />Save
                 </Button>
-              </DialogFooter>
+              </div>
+
             </DialogContent>
           </Dialog>
 

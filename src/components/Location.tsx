@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2, Settings2 } from "lucide-react"
+import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -295,10 +295,6 @@ export function DeliveryTableDialog() {
             {isSaving ? "Saving…" : `Save (${pendingEdits.size})`}
           </Button>
         )}
-        <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(true)} className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground">
-          <Settings2 className="w-3.5 h-3.5" />
-          Settings
-        </Button>
         {saveError && (
           <span className="flex items-center gap-1 text-xs font-medium text-destructive">
             <AlertCircle className="w-3.5 h-3.5" />{saveError}
