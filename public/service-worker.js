@@ -1,6 +1,10 @@
 const APP_CACHE_NAME = 'fcalendar-app-v4';
 const MAP_TILE_CACHE_NAME = 'fcalendar-map-tiles-v1';
-const MAP_TILE_CACHE_LIMIT = 500;
+const MAP_TILE_CACHE_LIMIT = 1200;
+const MAP_TILE_TRIM_INTERVAL = 40;
+
+let mapTileWriteCount = 0;
+let mapTileTrimInFlight = false;
 
 // Only cache truly immutable assets (icons/manifest that don't change between deploys)
 const PRECACHE_URLS = [
@@ -32,9 +36,9 @@ self.addEventListener('activate', (event) => {
 });
 
 function isMapTileRequest(requestUrl) {
-  const isOSM = /(^|\.)tile\.openstreetmap\.org$/i.test(requestUrl.hostname);
-  const isGoogleTile = /(^|\.)google\.com$/i.test(requestUrl.hostname) && requestUrl.pathname === '/vt';
-  return isOSM || isGoogleTile;
+  // Keep SW tile cache for OSM only. Google tile endpoints can be slower when
+  // proxied through custom SW caching logic on some networks/devices.
+  return /(^|\.)tile\.openstreetmap\.org$/i.test(requestUrl.hostname);
 }
 
 async function trimCache(cacheName, maxEntries) {
@@ -48,20 +52,29 @@ async function trimCache(cacheName, maxEntries) {
   }
 }
 
-async function cacheMapTile(request, response) {
-  // Tile servers often return CORS/opaque responses; status can be 0 for opaque.
-  const canCache = response && (response.ok || response.type === 'opaque');
-  if (!canCache) return;
+async function maybeTrimMapTileCache() {
+  if (mapTileTrimInFlight) return;
+  if (mapTileWriteCount % MAP_TILE_TRIM_INTERVAL !== 0) return;
 
+  mapTileTrimInFlight = true;
+  try {
+    await trimCache(MAP_TILE_CACHE_NAME, MAP_TILE_CACHE_LIMIT);
+  } finally {
+    mapTileTrimInFlight = false;
+  }
+}
+
+async function cacheMapTile(request, responseForCache) {
   const cache = await caches.open(MAP_TILE_CACHE_NAME);
-  await cache.put(request, response.clone());
-  await trimCache(MAP_TILE_CACHE_NAME, MAP_TILE_CACHE_LIMIT);
+  await cache.put(request, responseForCache);
+  mapTileWriteCount += 1;
+  await maybeTrimMapTileCache();
 }
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Map tiles (OSM/Google) - stale-while-revalidate for faster repeat loads.
+  // OSM tiles - stale-while-revalidate for faster repeat loads.
   if (event.request.method === 'GET' && isMapTileRequest(url)) {
     event.respondWith(
       caches.open(MAP_TILE_CACHE_NAME).then(async (cache) => {
@@ -69,7 +82,11 @@ self.addEventListener('fetch', (event) => {
 
         const networkPromise = fetch(event.request)
           .then(async (response) => {
-            await cacheMapTile(event.request, response);
+            // Don't block tile paint with cache writes; cache in background.
+            const canCache = response && (response.ok || response.type === 'opaque');
+            if (canCache) {
+              event.waitUntil(cacheMapTile(event.request, response.clone()));
+            }
             return response;
           })
           .catch(() => null);

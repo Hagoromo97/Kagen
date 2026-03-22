@@ -2,8 +2,8 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 
-const INITIAL_MARKER_RENDER = 180
-const MARKER_RENDER_CHUNK = 180
+const INITIAL_MARKER_RENDER = 64
+const MARKER_RENDER_CHUNK = 96
 
 const DELIVERY_COLORS: Record<string, string> = {
   Daily:      "#22c55e",
@@ -162,6 +162,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
   const [activeCode, setActiveCode] = useState<string | null>(null)
   const [renderedMarkerCount, setRenderedMarkerCount] = useState(INITIAL_MARKER_RENDER)
   const tiles = TILE_CONFIG[mapStyle]
+  const isGoogleStyle = mapStyle === "google-streets" || mapStyle === "google-satellite"
 
   const validPoints = useMemo(
     () => deliveryPoints.filter(p => p.latitude !== 0 && p.longitude !== 0),
@@ -233,6 +234,9 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
       center={center}
       zoom={13}
       preferCanvas={true}
+      zoomAnimation={false}
+      fadeAnimation={false}
+      markerZoomAnimation={false}
       scrollWheelZoom={scrollZoom}
       style={{ width: "100%", height: "100%" }}
     >
@@ -242,9 +246,9 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         subdomains={[...tiles.subdomains]}
         maxZoom={tiles.maxZoom}
         maxNativeZoom={tiles.maxNativeZoom}
-        updateWhenIdle={true}
-        updateWhenZooming={false}
-        keepBuffer={3}
+        updateWhenIdle={!isGoogleStyle}
+        updateWhenZooming={isGoogleStyle}
+        keepBuffer={2}
         detectRetina={false}
         crossOrigin={true}
       />

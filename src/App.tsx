@@ -142,7 +142,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             setConfirmingLink(null)
             setIsRymnetPopoverOpen(false)
           }}
-          className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1.5px] transition-opacity duration-200"
+          className="fixed inset-0 z-[45] bg-black/45 backdrop-blur-md transition-opacity duration-200"
         />
       )}
 
