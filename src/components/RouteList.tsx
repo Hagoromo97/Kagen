@@ -339,6 +339,7 @@ export function RouteList() {
   const isInteractingWithSearchSuggestions = useRef(false)
   const [filterRegion, setFilterRegion] = useState<"all" | "KL" | "Sel">("all")
   const [filterShift, setFilterShift] = useState<"all" | "AM" | "PM">("all")
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [showAllRoutes, setShowAllRoutes] = useState(false)
 
   // ── Per-card sliding panel state { info, edit } ───────────────────
@@ -1419,79 +1420,19 @@ export function RouteList() {
           </div>
 
           {/* Single Filter Button */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className={`relative h-12 w-12 flex items-center justify-center rounded-xl ring-1 shadow-sm backdrop-blur-md transition-colors ${
-                  filterRegion !== "all" || filterShift !== "all"
-                    ? "bg-primary/95 text-primary-foreground ring-primary"
-                    : "bg-card/75 text-muted-foreground ring-border/60 hover:bg-muted/80"
-                }`}
-              >
-                <SlidersHorizontal className="size-5" />
-                {(filterRegion !== "all" || filterShift !== "all") && (
-                  <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-orange-400 ring-2 ring-background" />
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-5 space-y-5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">Filter</span>
-                {(filterRegion !== "all" || filterShift !== "all") && (
-                  <button
-                    onClick={() => { setFilterRegion("all"); setFilterShift("all") }}
-                    className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-
-              {/* Region */}
-              <div className="space-y-2.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Region</p>
-                <div className="flex gap-2">
-                  {(["all", "KL", "Sel"] as const).map(r => (
-                    <button
-                      key={r}
-                      onClick={() => setFilterRegion(r)}
-                      className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-all ${
-                        filterRegion === r
-                          ? r === "KL" ? "bg-blue-500 text-white shadow-sm"
-                            : r === "Sel" ? "bg-red-500 text-white shadow-sm"
-                            : "bg-foreground text-background shadow-sm"
-                          : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
-                      }`}
-                    >
-                      {r === "all" ? "All" : r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Shift */}
-              <div className="space-y-2.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shift</p>
-                <div className="flex gap-2">
-                  {(["all", "AM", "PM"] as const).map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setFilterShift(s)}
-                      className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-all ${
-                        filterShift === s
-                          ? s === "AM" ? "bg-orange-500 text-white shadow-sm"
-                            : s === "PM" ? "bg-indigo-500 text-white shadow-sm"
-                            : "bg-foreground text-background shadow-sm"
-                          : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
-                      }`}
-                    >
-                      {s === "all" ? "All" : s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <button
+            onClick={() => setFilterModalOpen(true)}
+            className={`relative h-12 w-12 flex items-center justify-center rounded-xl ring-1 shadow-sm backdrop-blur-md transition-colors ${
+              filterRegion !== "all" || filterShift !== "all"
+                ? "bg-primary/95 text-primary-foreground ring-primary"
+                : "bg-card/75 text-muted-foreground ring-border/60 hover:bg-muted/80"
+            }`}
+          >
+            <SlidersHorizontal className="size-5" />
+            {(filterRegion !== "all" || filterShift !== "all") && (
+              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-orange-400 ring-2 ring-background" />
+            )}
+          </button>
 
         </div>
 
@@ -2295,6 +2236,16 @@ export function RouteList() {
                               Clear selection
                             </Button>
                           )}
+                          {selectedRows.length > 0 && isEditMode && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1.5 text-xs text-green-600 hover:text-green-600 hover:bg-green-500/10"
+                              onClick={handleDoneClick}
+                            >
+                              <Check className="size-3 mr-1" />Action
+                            </Button>
+                          )}
                           {isEditMode && hasUnsavedChanges && (
                             <Button
                               size="sm"
@@ -2306,23 +2257,6 @@ export function RouteList() {
                               {isSaving ? 'Saving...' : 'Save changes'}
                             </Button>
                           )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Action Buttons - Show when rows are selected in Edit Mode */}
-                    {selectedRows.length > 0 && isEditMode && (
-                      <div className="border-t border-border px-4 py-2.5 flex items-center justify-between shrink-0">
-                        <span className="text-xs font-semibold text-primary">
-                          {selectedRows.length} row{selectedRows.length > 1 ? 's' : ''} selected
-                        </span>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setSelectedRows([])}>
-                            <X className="size-3 mr-1" />Deselect
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-green-600 hover:text-green-600 hover:bg-green-500/10" onClick={handleDoneClick}>
-                            <Check className="size-3 mr-1" />Action
-                          </Button>
                         </div>
                       </div>
                     )}
@@ -2784,6 +2718,88 @@ export function RouteList() {
           </Dialog>
         </>
         )}
+
+      <Dialog open={filterModalOpen} onOpenChange={setFilterModalOpen}>
+        <DialogContent className="w-[92vw] max-w-sm overflow-hidden flex flex-col gap-0 p-0 rounded-2xl">
+          <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
+                <SlidersHorizontal className="size-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-sm font-bold leading-tight">Route Filter</DialogTitle>
+                <DialogDescription className="text-xs mt-0.5">Filter route cards by region and shift</DialogDescription>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 space-y-4">
+            <div className="rounded-xl border border-border bg-background p-3">
+              <p className="text-xs text-muted-foreground">
+                Pilih penapis untuk sempitkan senarai route yang dipaparkan.
+              </p>
+            </div>
+
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Region</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(["all", "KL", "Sel"] as const).map(r => (
+                  <button
+                    key={r}
+                    onClick={() => setFilterRegion(r)}
+                    className={`h-10 rounded-lg text-xs font-semibold transition-all ${
+                      filterRegion === r
+                        ? r === "KL" ? "bg-blue-500 text-white shadow-sm"
+                          : r === "Sel" ? "bg-red-500 text-white shadow-sm"
+                          : "bg-foreground text-background shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                    }`}
+                  >
+                    {r === "all" ? "All" : r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shift</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(["all", "AM", "PM"] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setFilterShift(s)}
+                    className={`h-10 rounded-lg text-xs font-semibold transition-all ${
+                      filterShift === s
+                        ? s === "AM" ? "bg-orange-500 text-white shadow-sm"
+                          : s === "PM" ? "bg-indigo-500 text-white shadow-sm"
+                          : "bg-foreground text-background shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                    }`}
+                  >
+                    {s === "all" ? "All" : s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-3.5 border-t border-border shrink-0 bg-background flex items-center gap-3">
+            {(filterRegion !== "all" || filterShift !== "all") && (
+              <button
+                className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
+                onClick={() => {
+                  setFilterRegion("all")
+                  setFilterShift("all")
+                }}
+              >
+                Reset
+              </button>
+            )}
+            <div className="flex-1" />
+            <Button size="sm" onClick={() => setFilterModalOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
         </div>
 
         {/* Edit Route Dialog */}
