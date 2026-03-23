@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { ArrowRight, CalendarDays, MapPin, Package, Layers, Users } from "lucide-react"
+import landingBackground from "../../icon/landingp.jpeg"
 
 const FEATURES = [
   {
@@ -55,11 +56,17 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col bg-background overflow-y-auto transition-opacity duration-300 ease-in-out ${visible ? "opacity-100" : "opacity-0"}`}
+      className={`fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background transition-opacity duration-300 ease-in-out ${visible ? "opacity-100" : "opacity-0"}`}
       style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}
     >
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${landingBackground})` }}
+      />
+      <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-[1px]" />
+
       {/* Hero */}
-      <div className="flex flex-col items-center justify-center gap-6 px-6 pt-16 pb-10 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center gap-6 px-6 pt-16 pb-10 text-center">
         {/* App icon */}
         <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-700 to-blue-400 shadow-xl shadow-blue-500/30">
           <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -76,8 +83,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
         {/* Brand */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-[33px] font-bold tracking-tight text-foreground">FCalendar</h1>
-          <p className="max-w-xs text-base text-muted-foreground leading-relaxed">
+          <h1 className="text-[33px] font-bold tracking-tight text-white drop-shadow-sm">FCalendar</h1>
+          <p className="max-w-xs text-base leading-relaxed text-white/82">
             Route planning &amp; delivery management — all in one place.
           </p>
         </div>
@@ -93,25 +100,25 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       </div>
 
       {/* Divider */}
-      <div className="mx-6 h-px bg-border/60" />
+      <div className="relative z-10 mx-6 h-px bg-white/20" />
 
       {/* Features grid */}
-      <div className="px-6 pt-8">
-        <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <div className="relative z-10 px-6 pt-8">
+        <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-white/65">
           Key Features
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-lg mx-auto">
           {FEATURES.map(({ icon: Icon, title, description, color, bg }) => (
             <div
               key={title}
-              className="flex items-start gap-3.5 rounded-xl border border-border bg-card p-4"
+              className="flex items-start gap-3.5 rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-md"
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${bg}`}>
                 <Icon className={`size-4.5 ${color}`} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground leading-snug">{title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground leading-snug">{description}</p>
+                <p className="text-sm font-semibold leading-snug text-white">{title}</p>
+                <p className="mt-0.5 text-xs leading-snug text-white/72">{description}</p>
               </div>
             </div>
           ))}
@@ -119,7 +126,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       </div>
 
       {/* Footer note */}
-      <p className="mt-8 text-center text-[11px] text-muted-foreground/60 px-6">
+      <p className="relative z-10 mt-8 px-6 text-center text-[11px] text-white/55">
         FCalendar — internal tool for delivery route management
       </p>
     </div>

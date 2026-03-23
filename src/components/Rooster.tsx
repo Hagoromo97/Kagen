@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { useEditMode } from "@/contexts/EditModeContext"
@@ -618,13 +619,13 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                       return (
                         <td
                           key={dateKey}
-                          className={`border-b border-r border-border align-top p-1.5 transition-colors ${
+                          className={`border-b border-r border-border p-1.5 transition-colors ${
                             isToday ? "bg-primary/[0.02]" : ""
-                          } ${isEditMode ? "cursor-pointer hover:bg-muted/25" : ""}`}
+                          } ${isEditMode ? "align-middle cursor-pointer hover:bg-muted/25 text-center" : "align-top"}`}
                           style={{ minHeight: "72px" }}
                           onClick={() => { if (isEditMode) openAddShift(resource.id, dateKey) }}
                         >
-                          <div className="flex flex-col gap-1">
+                          <div className={`flex flex-col gap-1 ${isEditMode ? "items-center" : ""}`}>
                             {dayShifts.map(shift => (
                               <ShiftBlock
                                 key={shift.id}
@@ -635,11 +636,6 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                                 onEdit={() => openEditShift(shift)}
                               />
                             ))}
-                            {isEditMode && dayShifts.length === 0 && (
-                              <div className="h-8 flex items-center justify-center rounded-lg border border-dashed border-border/40 opacity-0 hover:opacity-100 transition-opacity">
-                                <Plus className="size-3 text-muted-foreground/30" />
-                              </div>
-                            )}
                           </div>
                         </td>
                       )
@@ -655,10 +651,13 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
       {/* ── Manage Modal ─────────────────────────────────────────────────────── */}
       <Dialog open={manageOpen} onOpenChange={setManageOpen}>
         <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden gap-0" onOpenAutoFocus={e => e.preventDefault()}>
-          <DialogHeader className="px-5 pt-5 pb-3">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Settings2 className="size-4 text-primary" />Manage
-            </DialogTitle>
+          <DialogHeader className="px-5 pt-5 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center justify-center p-2 bg-primary/10 rounded-lg text-primary">
+                <Settings2 className="size-5" />
+              </div>
+              <DialogTitle className="text-base font-semibold tracking-tight">Manage</DialogTitle>
+            </div>
           </DialogHeader>
 
           {/* Tabs */}
@@ -780,14 +779,19 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
 
       {/* ── Shift Dialog ─────────────────────────────────────────────────────── */}
       <Dialog open={shiftDialog.open} onOpenChange={o => !o && setShiftDialog(p => ({ ...p, open: false }))}>
-        <DialogContent className="max-w-md" onOpenAutoFocus={e => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Clock className="size-4 text-primary" />
-              {shiftDialog.mode === "add" ? "Add Shift" : "Edit Shift"}
-            </DialogTitle>
+        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden gap-0" onOpenAutoFocus={e => e.preventDefault()}>
+          <DialogHeader className="px-5 pt-5 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center justify-center p-2 bg-primary/10 rounded-lg text-primary">
+                <Clock className="size-5" />
+              </div>
+              <DialogTitle className="text-base font-semibold tracking-tight">
+                {shiftDialog.mode === "add" ? "Add Shift" : "Edit Shift"}
+              </DialogTitle>
+            </div>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
+          <Separator />
+          <div className="px-5 py-4 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Route</label>
               <select
@@ -838,7 +842,8 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-2">
+          <Separator />
+          <div className="px-5 py-3 flex items-center justify-between gap-2">
             <div>
               {shiftDialog.mode === "edit" && shiftDialog.shift && (
                 <Button variant="destructive" size="sm" onClick={async () => { await deleteShift(shiftDialog.shift!.id); setShiftDialog({ open: false, mode: "add" }) }} className="gap-1.5">
@@ -856,14 +861,19 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
 
       {/* ── Resource Dialog ──────────────────────────────────────────────────── */}
       <Dialog open={resourceDialog.open} onOpenChange={o => !o && setResourceDialog(p => ({ ...p, open: false }))}>
-        <DialogContent className="max-w-sm" onOpenAutoFocus={e => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="size-4 text-primary" />
-              {resourceDialog.mode === "add" ? "Add Staff" : "Edit Staff"}
-            </DialogTitle>
+        <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden gap-0" onOpenAutoFocus={e => e.preventDefault()}>
+          <DialogHeader className="px-5 pt-5 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center justify-center p-2 bg-primary/10 rounded-lg text-primary">
+                <Users className="size-5" />
+              </div>
+              <DialogTitle className="text-base font-semibold tracking-tight">
+                {resourceDialog.mode === "add" ? "Add Staff" : "Edit Staff"}
+              </DialogTitle>
+            </div>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
+          <Separator />
+          <div className="px-5 py-4 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Name</label>
               <Input placeholder="e.g. Ahmad Faris" value={resForm.name} onChange={e => setResForm(p => ({ ...p, name: e.target.value }))} />
@@ -873,7 +883,8 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
               <Input placeholder="e.g. Driver, Operator" value={resForm.role} onChange={e => setResForm(p => ({ ...p, role: e.target.value }))} />
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-2">
+          <Separator />
+          <div className="px-5 py-3 flex items-center justify-between gap-2">
             <div>
               {resourceDialog.mode === "edit" && resourceDialog.resource && (
                 <Button variant="destructive" size="sm" onClick={async () => { await deleteResource(resourceDialog.resource!.id); setResourceDialog({ open: false, mode: "add" }) }} className="gap-1.5">
@@ -925,11 +936,16 @@ function ShiftBlock({
       <div className="h-[3px] w-full" style={{ backgroundColor: displayColor }} />
       <div className="px-2 py-1.5 flex flex-col items-center text-center">
         {isEditMode ? (
-          <div className="text-[9px] font-semibold leading-tight whitespace-nowrap" style={{ color: displayColor }}>
-            {startLabel} – {endLabel}
-          </div>
+          <>
+            <div className="text-[10px] font-semibold leading-tight whitespace-nowrap" style={{ color: displayColor }}>
+              {shift.title}{shiftType ? ` — ${shiftType}` : ""}
+            </div>
+            <div className="text-[9px] leading-tight whitespace-nowrap mt-0.5" style={{ color: displayColor }}>
+              {startLabel} – {endLabel}
+            </div>
+          </>
         ) : (
-          <div className="text-[10px] font-bold leading-tight whitespace-nowrap" style={{ color: displayColor }}>
+          <div className="text-[10px] font-semibold leading-tight whitespace-nowrap" style={{ color: displayColor }}>
             {shift.title}{shiftType ? ` — ${shiftType}` : ""}
           </div>
         )}
