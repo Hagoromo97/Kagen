@@ -21,6 +21,7 @@ interface DeliveryPoint {
   latitude: number
   longitude: number
   descriptions: { key: string; value: string }[]
+  markerColor?: string
   routeLabel?: string
   routeId?: string
 }
@@ -32,6 +33,7 @@ interface DeliveryMapProps {
   markerStyle?: "pin" | "dot" | "ring"
   mapStyle?: "google-streets" | "google-satellite" | "osm"
   startPoint?: { lat: number; lng: number }
+  includeStartInBounds?: boolean
   refitToken?: number
   resizeToken?: number
 }
@@ -120,7 +122,7 @@ function getCachedMarkerIcon(style: "pin" | "dot" | "ring", color: string, activ
 }
 
 /** Fits map bounds whenever validPoints changes */
-function BoundsController({ points, startPoint, refitToken }: { points: DeliveryPoint[]; startPoint?: { lat: number; lng: number }; refitToken?: number }) {
+function BoundsController({ points, startPoint, includeStartInBounds = true, refitToken }: { points: DeliveryPoint[]; startPoint?: { lat: number; lng: number }; includeStartInBounds?: boolean; refitToken?: number }) {
   const map = useMap()
   useEffect(() => {
     if (points.length === 0 && !startPoint) return
@@ -130,14 +132,15 @@ function BoundsController({ points, startPoint, refitToken }: { points: Delivery
       return
     }
 
-    if (points.length === 1) {
+    const bounds = L.latLngBounds(points.map(p => [p.latitude, p.longitude] as [number, number]))
+    if (startPoint && includeStartInBounds) bounds.extend([startPoint.lat, startPoint.lng])
+
+    if (bounds.isValid() && bounds.getSouthWest().equals(bounds.getNorthEast())) {
       map.setView([points[0].latitude, points[0].longitude], 14)
     } else {
-      const bounds = L.latLngBounds(points.map(p => [p.latitude, p.longitude]))
-      if (startPoint) bounds.extend([startPoint.lat, startPoint.lng])
       map.fitBounds(bounds, { padding: [40, 40] })
     }
-  }, [points, startPoint, refitToken])
+  }, [points, startPoint, includeStartInBounds, refitToken])
   return null
 }
 
@@ -158,7 +161,7 @@ function ResizeController({ resizeToken }: { resizeToken?: number }) {
   return null
 }
 
-export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", mapStyle = "google-streets", startPoint, refitToken = 0, resizeToken = 0 }: DeliveryMapProps) {
+export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", mapStyle = "google-streets", startPoint, includeStartInBounds = true, refitToken = 0, resizeToken = 0 }: DeliveryMapProps) {
   const [activeCode, setActiveCode] = useState<string | null>(null)
   const [renderedMarkerCount, setRenderedMarkerCount] = useState(INITIAL_MARKER_RENDER)
   const tiles = TILE_CONFIG[mapStyle]
@@ -252,7 +255,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         crossOrigin={true}
       />
       <ResizeController resizeToken={resizeToken} />
-      <BoundsController points={deferredPoints} startPoint={startPoint} refitToken={refitToken} />
+      <BoundsController points={deferredPoints} startPoint={startPoint} includeStartInBounds={includeStartInBounds} refitToken={refitToken} />
       {startPoint && (
         <Marker
           key="start-point"
@@ -274,7 +277,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         />
       ))}
       {renderedPoints.map(point => {
-        const color = DELIVERY_COLORS[point.delivery] ?? "#6b7280"
+        const color = point.markerColor ?? DELIVERY_COLORS[point.delivery] ?? "#6b7280"
         const isActive = point.code === activeCode
         return (
           <Marker

@@ -86,6 +86,7 @@ interface DeliveryPoint {
   latitude: number
   longitude: number
   descriptions: { key: string; value: string }[]
+  markerColor?: string
   qrCodeImageUrl?: string
   qrCodeDestinationUrl?: string
   avatarImageUrl?: string
@@ -313,6 +314,10 @@ const getMapStyle = (): 'google-streets' | 'google-satellite' | 'osm' => {
   return 'google-streets'
 }
 
+const SINGLE_ROUTE_MARKER_COLORS = [
+  '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899',
+]
+
 export function RouteList() {
   const { isEditMode, hasUnsavedChanges, isSaving, setHasUnsavedChanges, registerSaveHandler, saveChanges, registerDiscardHandler } = useEditMode()
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"))
@@ -465,6 +470,13 @@ export function RouteList() {
       sessionStorage.removeItem('fcalendar_open_route')
       setCurrentRouteId(pending)
       setDetailDialogOpen(true)
+      setDetailFullscreen(false)
+      setDialogView('table')
+      setSelectedRows([])
+      setCombinedRouteIds(new Set([pending]))
+      setShowPolyline(false)
+      setMapRefitToken(0)
+      setMapResizeToken(0)
     }
   }, [isLoading])
 
@@ -476,15 +488,29 @@ export function RouteList() {
 
   // Combined delivery points for map (all selected routes merged)
   const combinedDeliveryPoints = useMemo(() => {
+    const selectedRoutes = routes.filter(r => combinedRouteIds.has(r.id))
+    const isCombinedView = selectedRoutes.length > 1
     const result: (DeliveryPoint & { routeLabel?: string; routeId?: string })[] = []
-    routes.forEach(r => {
-      if (!combinedRouteIds.has(r.id)) return
-      r.deliveryPoints.forEach(p => {
-        result.push({ ...p, routeLabel: combinedRouteIds.size > 1 ? r.name : undefined, routeId: r.id })
+
+    selectedRoutes.forEach(r => {
+      const routeIndex = routes.findIndex(route => route.id === r.id)
+      const routeMarkerColor = r.color ?? routeColorPalette[routeIndex % routeColorPalette.length] ?? '#6b7280'
+
+      r.deliveryPoints.forEach((p, pointIdx) => {
+        const singleRouteMarkerColor = SINGLE_ROUTE_MARKER_COLORS[pointIdx % SINGLE_ROUTE_MARKER_COLORS.length]
+        const markerColor = isCombinedView ? routeMarkerColor : singleRouteMarkerColor
+
+        result.push({
+          ...p,
+          markerColor,
+          routeLabel: isCombinedView ? r.name : undefined,
+          routeId: r.id,
+        })
       })
     })
+
     return result
-  }, [routes, combinedRouteIds])
+  }, [routes, combinedRouteIds, routeColorPalette])
   const setDeliveryPoints = (updater: (prev: DeliveryPoint[]) => DeliveryPoint[]) => {
     setHasUnsavedChanges(true)
     setRoutes(prev => prev.map(route => 
@@ -606,6 +632,18 @@ export function RouteList() {
   const [kmMode, setKmMode] = useState<'direct' | 'step'>('direct')
   const [kmStartPoint, setKmStartPoint] = useState<{ lat: number; lng: number }>(DEFAULT_MAP_CENTER)
   const [sortConflictPending, setSortConflictPending] = useState<SortType | null>(null)
+
+  const openRouteDetail = useCallback((routeId: string) => {
+    setCurrentRouteId(routeId)
+    setDetailDialogOpen(true)
+    setDetailFullscreen(false)
+    setDialogView('table')
+    setSelectedRows([])
+    setCombinedRouteIds(new Set([routeId]))
+    setShowPolyline(false)
+    setMapRefitToken(0)
+    setMapResizeToken(0)
+  }, [])
 
   useEffect(() => {
     try { localStorage.setItem(LS_MAP_STYLE, mapStyle) } catch { /**/ }
@@ -1535,7 +1573,7 @@ export function RouteList() {
                     {route.deliveryPoints.length > previewRows && (
                       <>
                         <button
-                          onClick={() => { setCurrentRouteId(route.id); setDetailDialogOpen(true) }}
+                          onClick={() => openRouteDetail(route.id)}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontSize: badgeFs, fontWeight: 700, color: isDark ? '#a0aab4' : markerColor, background: isDark ? 'rgba(160,170,180,0.08)' : `${markerColor}12`, border: isDark ? '1px dashed rgba(160,170,180,0.3)' : `1px dashed ${markerColor}50`, borderRadius: 8, padding: '0.3rem 0.6rem', cursor: 'pointer', transition: 'background 0.15s', width: '100%' }}
                           onMouseEnter={e => (e.currentTarget.style.background = isDark ? 'rgba(160,170,180,0.14)' : `${markerColor}22`)}
                           onMouseLeave={e => (e.currentTarget.style.background = isDark ? 'rgba(160,170,180,0.08)' : `${markerColor}12`)}
@@ -1597,7 +1635,7 @@ export function RouteList() {
                                           <button
                                             className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                                             title="Edit in table"
-                                            onClick={() => { setBadgePopover(null); setCurrentRouteId(route.id); setDetailDialogOpen(true) }}
+                                            onClick={() => { setBadgePopover(null); openRouteDetail(route.id) }}
                                           >
                                             <Edit2 className="size-3" />
                                           </button>
@@ -1642,7 +1680,7 @@ export function RouteList() {
                       <History style={{ width: iconSz * 0.6, height: iconSz * 0.6 }} /> Log
                     </button>
                     <button
-                      onClick={() => { setCurrentRouteId(route.id); setDetailDialogOpen(true) }}
+                      onClick={() => openRouteDetail(route.id)}
                       style={{ flex: 1, borderRadius: 11, fontSize: btnFs, fontWeight: 800, padding: `${btnPad} 0`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: `linear-gradient(135deg, ${markerColor} 0%, ${markerColor}cc 100%)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 2px 7px ${markerColor}30`, letterSpacing: '0.02em' }}
                     >
                       <List style={{ width: iconSz * 0.65, height: iconSz * 0.65 }} /> View
@@ -1896,7 +1934,11 @@ export function RouteList() {
                         {/* Map / Table toggle */}
                         <button
                           onClick={() => {
-                            setDialogView(v => v === 'table' ? 'map' : 'table')
+                            setDialogView(prev => {
+                              const next = prev === 'table' ? 'map' : 'table'
+                              if (next === 'map') setMapRefitToken(t => t + 1)
+                              return next
+                            })
                             setMapResizeToken(t => t + 1)
                           }}
                           title={dialogView === 'table' ? 'Switch to Map' : 'Switch to Table'}
@@ -1922,7 +1964,7 @@ export function RouteList() {
                     <div className="flex-1 overflow-auto scroll-smooth">
                     {dialogView === 'map' ? (
                       <div className="h-full min-h-[400px] relative">
-                        <DeliveryMap deliveryPoints={combinedDeliveryPoints} scrollZoom={true} showPolyline={showPolyline} markerStyle={markerStyle} mapStyle={mapStyle} startPoint={kmStartPoint} refitToken={mapRefitToken} resizeToken={mapResizeToken} />
+                        <DeliveryMap deliveryPoints={combinedDeliveryPoints} scrollZoom={true} showPolyline={showPolyline} markerStyle={markerStyle} mapStyle={mapStyle} startPoint={kmStartPoint} includeStartInBounds={false} refitToken={mapRefitToken} resizeToken={mapResizeToken} />
                         <button
                           onClick={() => {
                             setCombinedRouteIds(new Set([route.id]))
