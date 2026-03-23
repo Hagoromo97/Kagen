@@ -598,12 +598,12 @@ function AppContent() {
       {/* Backdrop for desktop sidebar */}
       {!isMobile && open && (
         <div 
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
+          className="fixed inset-0 z-40 bg-black/30 transition-opacity duration-300"
           onClick={toggleSidebar}
         />
       )}
       
-      <main className={`relative flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background transition-all duration-500 ease-in-out ${(isMobile && openMobile) || (!isMobile && open) ? 'scale-95 opacity-90' : 'scale-100 opacity-100'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <main className={`relative flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background transition-opacity duration-300 ${(isMobile && openMobile) || (!isMobile && open) ? 'opacity-75' : 'opacity-100'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <header className="glass-header sticky top-0 z-30 flex shrink-0 items-center gap-2 px-3 md:px-5 transition-colors duration-300" style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)', paddingBottom: '0.5rem', minHeight: 'calc(3.25rem + max(env(safe-area-inset-top), 10px))' }}>
           <SidebarTrigger className="-ml-1 shrink-0" />
           <Separator orientation="vertical" className="mr-1 md:mr-2 h-4 shrink-0" />

@@ -76,7 +76,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
         {/* Brand */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">FCalendar</h1>
+          <h1 className="text-[33px] font-bold tracking-tight text-foreground">FCalendar</h1>
           <p className="max-w-xs text-base text-muted-foreground leading-relaxed">
             Route planning &amp; delivery management — all in one place.
           </p>
@@ -87,7 +87,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           onClick={handleEnter}
           className="inline-flex items-center gap-2.5 rounded-2xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-[0.97] transition-all duration-150"
         >
-          Masuk Aplikasi
+          Enter App
           <ArrowRight className="size-5" />
         </button>
       </div>
@@ -98,7 +98,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       {/* Features grid */}
       <div className="px-6 pt-8">
         <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Ciri-ciri Utama
+          Key Features
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-lg mx-auto">
           {FEATURES.map(({ icon: Icon, title, description, color, bg }) => (
