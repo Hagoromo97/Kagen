@@ -1566,7 +1566,7 @@ export function RouteList() {
         </div>
 
         {/* ── Card list ── */}
-        <div ref={cardContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div ref={cardContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {displayedRoutes.map((route, routeIndex) => {
           const markerColor = route.color || routeColorPalette[routeIndex % routeColorPalette.length]
           const cardPanel = getCardPanel(route.id)
