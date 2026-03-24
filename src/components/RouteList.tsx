@@ -813,6 +813,7 @@ export function RouteList() {
   )
 
   const updatePointCoordinate = (pointCode: string, field: 'latitude' | 'longitude', nextValue: number) => {
+    if (!isEditMode) return
     setDeliveryPoints(prev => prev.map(point => (
       point.code === pointCode ? { ...point, [field]: nextValue } : point
     )))
@@ -3286,7 +3287,10 @@ export function RouteList() {
             ) : (
               <>
                 <div className="rounded-xl border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">Set latitude dan longitude untuk setiap location dalam route ini.</p>
+                  <p className="text-xs text-muted-foreground">Set latitude and longitude for each location in this route.</p>
+                  {!isEditMode && (
+                    <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">Coordinates can only be edited when Edit Mode is active.</p>
+                  )}
                 </div>
                 {/* Header row */}
                 <div className="grid grid-cols-[1fr_100px_100px] gap-2 px-1">
@@ -3322,6 +3326,7 @@ export function RouteList() {
                             if (!Number.isFinite(next)) return
                             updatePointCoordinate(point.code, 'latitude', next)
                           }}
+                          disabled={!isEditMode}
                           className="h-6 text-[10px] px-1.5 font-mono text-center"
                           placeholder="0.000000"
                         />
@@ -3334,6 +3339,7 @@ export function RouteList() {
                             if (!Number.isFinite(next)) return
                             updatePointCoordinate(point.code, 'longitude', next)
                           }}
+                          disabled={!isEditMode}
                           className="h-6 text-[10px] px-1.5 font-mono text-center"
                           placeholder="0.000000"
                         />
