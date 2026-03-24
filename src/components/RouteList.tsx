@@ -604,7 +604,7 @@ export function RouteList() {
   const isPointCodeValid = (code: string) => /^\d{1,4}$/.test(code)
 
   // ── Settings Modal ────────────────────────────────────────────────
-  type ColumnKey = 'no' | 'code' | 'name' | 'delivery' | 'km' | 'lat' | 'lng' | 'action'
+  type ColumnKey = 'no' | 'code' | 'name' | 'delivery' | 'km' | 'action'
 
   interface ColumnDef {
     key: ColumnKey
@@ -618,10 +618,30 @@ export function RouteList() {
     { key: 'name',     label: 'Name',      visible: true  },
     { key: 'delivery', label: 'Delivery',  visible: true  },
     { key: 'km',       label: 'KM',        visible: false },
-    { key: 'lat',      label: 'Latitude',  visible: false },
-    { key: 'lng',      label: 'Longitude', visible: false },
     { key: 'action',   label: 'Action',    visible: true  },
   ]
+
+  const sanitizeColumnDefs = (value?: ColumnDef[] | null): ColumnDef[] => {
+    const defaultsByKey = new Map(DEFAULT_COLUMNS.map((column) => [column.key, column]))
+    const input = value ?? []
+    const orderedKeys: ColumnKey[] = []
+    const visibility = new Map<ColumnKey, boolean>()
+
+    input.forEach((column) => {
+      if (!defaultsByKey.has(column.key) || orderedKeys.includes(column.key)) return
+      orderedKeys.push(column.key)
+      visibility.set(column.key, column.visible)
+    })
+
+    DEFAULT_COLUMNS.forEach((column) => {
+      if (!orderedKeys.includes(column.key)) orderedKeys.push(column.key)
+    })
+
+    return orderedKeys.map((key) => {
+      const base = defaultsByKey.get(key)!
+      return { ...base, visible: visibility.get(key) ?? base.visible }
+    })
+  }
 
   interface SavedRowOrder {
     id: string
@@ -632,7 +652,7 @@ export function RouteList() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsMenu, setSettingsMenu] = useState<'column' | 'row' | 'sorting'>('column')
   const [mapSettingsOpen, setMapSettingsOpen] = useState(false)
-  const [mapSettingsTab, setMapSettingsTab] = useState<'route' | 'markerpoly'>('route')
+  const [mapSettingsTab, setMapSettingsTab] = useState<'route' | 'markerpoly' | 'coordinate'>('route')
   const [mapRefitToken, setMapRefitToken] = useState(0)
   const [mapResizeToken, setMapResizeToken] = useState(0)
   const [showPolyline, setShowPolyline] = useState(false)
@@ -660,13 +680,22 @@ export function RouteList() {
   }, [mapStyle])
 
   // Column Customize
-  const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS)
-  const [draftColumns, setDraftColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS)
+  const [columns, setColumns] = useState<ColumnDef[]>(() => sanitizeColumnDefs(DEFAULT_COLUMNS))
+  const [draftColumns, setDraftColumns] = useState<ColumnDef[]>(() => sanitizeColumnDefs(DEFAULT_COLUMNS))
   const [savedColumns, setSavedColumns] = useState<ColumnDef[] | null>(null)
   const [savedSort, setSavedSort] = useState<SortType | undefined>(undefined)
   const [columnApplyScopeOpen, setColumnApplyScopeOpen] = useState(false)
   const [routeColumnOverrides, setRouteColumnOverrides] = useState<Record<string, ColumnDef[]>>(() => {
-    try { const s = localStorage.getItem('fcalendar_route_columns'); return s ? JSON.parse(s) : {} } catch { return {} }
+    try {
+      const s = localStorage.getItem('fcalendar_route_columns')
+      if (!s) return {}
+      const parsed = JSON.parse(s) as Record<string, ColumnDef[]>
+      return Object.fromEntries(
+        Object.entries(parsed).map(([routeId, cols]) => [routeId, sanitizeColumnDefs(cols)])
+      )
+    } catch {
+      return {}
+    }
   })
   const columnsDirty = useMemo(
     () => JSON.stringify(draftColumns) !== JSON.stringify(routeColumnOverrides[currentRouteId] ?? columns),
@@ -691,7 +720,7 @@ export function RouteList() {
 
   const openSettings = (routeId: string) => {
     setCurrentRouteId(routeId)
-    setDraftColumns([...(routeColumnOverrides[routeId] ?? columns)])
+    setDraftColumns(sanitizeColumnDefs(routeColumnOverrides[routeId] ?? columns))
     setDraftRowOrder(buildRowEntries(routes.find(r => r.id === routeId)?.deliveryPoints || []))
     setDraftSort(activeSortConfig)
     setSettingsMenu('column')
@@ -795,11 +824,11 @@ export function RouteList() {
   }, [deliveryPoints, activeSortConfig, savedRowOrders])
 
   // Effective columns – per-route override wins, falls back to global columns
-  const effectiveColumns = routeColumnOverrides[currentRouteId] ?? columns
+  const effectiveColumns = sanitizeColumnDefs(routeColumnOverrides[currentRouteId] ?? columns)
 
   const visibleDataColumns = useMemo(
-    () => effectiveColumns.filter(c => c.visible && c.key !== 'action' && !((c.key === 'lat' || c.key === 'lng') && !isEditMode)),
-    [effectiveColumns, isEditMode]
+    () => effectiveColumns.filter(c => c.visible && c.key !== 'action'),
+    [effectiveColumns]
   )
 
   const isActionColumnVisible = useMemo(
@@ -2046,7 +2075,7 @@ export function RouteList() {
                               <Input
                                 value={detailSearchQuery}
                                 onChange={(e) => setDetailSearchQuery(e.target.value)}
-                                placeholder="Search by code, name, delivery, lat, lng..."
+                                placeholder="Search by code, name, delivery..."
                                 className="h-8 pl-8 pr-8 text-[11px]"
                               />
                               {detailSearchQuery && (
@@ -2262,40 +2291,6 @@ export function RouteList() {
                                       </TooltipProvider>
                                     </td>
                                   )
-                                  if (col.key === 'lat') {
-                                    if (!isEditMode) return null
-                                    const isChanged = editingCell?.rowCode === point.code && editingCell.field === 'latitude' && !isNaN(parseFloat(editValue)) && parseFloat(editValue) !== point.latitude
-                                    const canSave = isChanged
-                                    return (
-                                      <td key="lat" className="px-3 h-9 text-center font-mono">
-                                        <Popover open={isEditMode && !!popoverOpen[`${point.code}-latitude`]} onOpenChange={(open) => { if (!isEditMode) return; if (!open) cancelEdit(); setPopoverOpen({ [`${point.code}-latitude`]: open }) }}>
-                                          <PopoverTrigger asChild>
-                                            <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group font-mono mx-auto text-[11px]" onClick={() => startEdit(point.code, 'latitude', point.latitude.toFixed(4))}>
-                                              <span className={pendingCellEdits.has(`${point.code}-latitude`) ? 'text-amber-600 dark:text-amber-400 font-semibold' : ''}>{point.latitude.toFixed(4)}</span><Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-                                            </button>
-                                          </PopoverTrigger>
-                                          <PopoverContent className="w-64"><div className="space-y-3"><div className="space-y-2"><label className="text-sm font-medium">Latitude</label><Input className="h-8 text-[11px] md:text-[11px] font-semibold leading-none text-center font-mono" type="number" step="0.0001" value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder="Enter latitude" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }} /></div><div className="flex gap-2"><Button size="sm" onClick={saveEdit} disabled={!canSave} className={`flex-1 !border-0 !bg-transparent shadow-none hover:!bg-transparent ${canSave ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground/50'}`}><Check className="size-4 mr-1" /> Save</Button><Button size="sm" onClick={cancelEdit} className="flex-1 !border-0 !bg-transparent text-red-600 shadow-none hover:!bg-transparent hover:text-red-700"><X className="size-4 mr-1" /> Cancel</Button></div></div></PopoverContent>
-                                        </Popover>
-                                      </td>
-                                    )
-                                  }
-                                  if (col.key === 'lng') {
-                                    if (!isEditMode) return null
-                                    const isChanged = editingCell?.rowCode === point.code && editingCell.field === 'longitude' && !isNaN(parseFloat(editValue)) && parseFloat(editValue) !== point.longitude
-                                    const canSave = isChanged
-                                    return (
-                                      <td key="lng" className="px-3 h-9 text-center font-mono">
-                                        <Popover open={isEditMode && !!popoverOpen[`${point.code}-longitude`]} onOpenChange={(open) => { if (!isEditMode) return; if (!open) cancelEdit(); setPopoverOpen({ [`${point.code}-longitude`]: open }) }}>
-                                          <PopoverTrigger asChild>
-                                            <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group font-mono mx-auto text-[11px]" onClick={() => startEdit(point.code, 'longitude', point.longitude.toFixed(4))}>
-                                              <span className={pendingCellEdits.has(`${point.code}-longitude`) ? 'text-amber-600 dark:text-amber-400 font-semibold' : ''}>{point.longitude.toFixed(4)}</span><Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-                                            </button>
-                                          </PopoverTrigger>
-                                          <PopoverContent className="w-64"><div className="space-y-3"><div className="space-y-2"><label className="text-sm font-medium">Longitude</label><Input className="h-8 text-[11px] md:text-[11px] font-semibold leading-none text-center font-mono" type="number" step="0.0001" value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder="Enter longitude" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }} /></div><div className="flex gap-2"><Button size="sm" onClick={saveEdit} disabled={!canSave} className={`flex-1 !border-0 !bg-transparent shadow-none hover:!bg-transparent ${canSave ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground/50'}`}><Check className="size-4 mr-1" /> Save</Button><Button size="sm" onClick={cancelEdit} className="flex-1 !border-0 !bg-transparent text-red-600 shadow-none hover:!bg-transparent hover:text-red-700"><X className="size-4 mr-1" /> Cancel</Button></div></div></PopoverContent>
-                                        </Popover>
-                                      </td>
-                                    )
-                                  }
                                   if (col.key === 'action') return null
                                   return null
                                 })}
@@ -3086,7 +3081,7 @@ export function RouteList() {
             </div>
           </div>
           <div className="px-4 pt-3 border-b border-border shrink-0">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setMapSettingsTab('route')}
@@ -3097,6 +3092,17 @@ export function RouteList() {
                 }`}
               >
                 Route
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapSettingsTab('coordinate')}
+                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
+                  mapSettingsTab === 'coordinate'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                }`}
+              >
+                Coordinate
               </button>
               <button
                 type="button"
@@ -3154,6 +3160,99 @@ export function RouteList() {
                       </label>
                     )
                   })}
+              </>
+            ) : mapSettingsTab === 'coordinate' ? (
+              <>
+                <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+                  <p className="text-xs font-semibold">Route Coordinates</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Update latitude and longitude for every location in the current route.
+                    {!isEditMode ? ' Enable Edit Mode to save coordinate changes.' : ' Changes will be included in the next save.'}
+                  </p>
+                </div>
+
+                {sortedDeliveryPoints.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-6 text-center text-xs text-muted-foreground">
+                    No locations available in this route.
+                  </div>
+                ) : (
+                  sortedDeliveryPoints.map((point) => (
+                    <div
+                      key={point.code}
+                      className="rounded-xl border border-border bg-background p-3 space-y-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold leading-5 truncate">{point.name || `Point ${point.code}`}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-[11px] text-muted-foreground">
+                          Latitude
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.000001"
+                            defaultValue={point.latitude === 0 ? '' : point.latitude}
+                            disabled={!isEditMode}
+                            onBlur={(e) => {
+                              const raw = e.target.value.trim()
+                              if (raw === '') {
+                                setDeliveryPoints(prev => prev.map(item =>
+                                  item.code === point.code ? { ...item, latitude: 0 } : item
+                                ))
+                                return
+                              }
+
+                              const parsed = Number.parseFloat(raw)
+                              if (!Number.isFinite(parsed)) {
+                                e.target.value = point.latitude === 0 ? '' : String(point.latitude)
+                                return
+                              }
+
+                              setDeliveryPoints(prev => prev.map(item =>
+                                item.code === point.code ? { ...item, latitude: parsed } : item
+                              ))
+                              e.target.value = String(parsed)
+                            }}
+                            className="mt-1 h-8 text-xs"
+                          />
+                        </label>
+
+                        <label className="text-[11px] text-muted-foreground">
+                          Longitude
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.000001"
+                            defaultValue={point.longitude === 0 ? '' : point.longitude}
+                            disabled={!isEditMode}
+                            onBlur={(e) => {
+                              const raw = e.target.value.trim()
+                              if (raw === '') {
+                                setDeliveryPoints(prev => prev.map(item =>
+                                  item.code === point.code ? { ...item, longitude: 0 } : item
+                                ))
+                                return
+                              }
+
+                              const parsed = Number.parseFloat(raw)
+                              if (!Number.isFinite(parsed)) {
+                                e.target.value = point.longitude === 0 ? '' : String(point.longitude)
+                                return
+                              }
+
+                              setDeliveryPoints(prev => prev.map(item =>
+                                item.code === point.code ? { ...item, longitude: parsed } : item
+                              ))
+                              e.target.value = String(parsed)
+                            }}
+                            className="mt-1 h-8 text-xs"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))
+                )}
               </>
             ) : (
               <>
@@ -3340,7 +3439,6 @@ export function RouteList() {
                 </div>
                 <div className="space-y-2.5">
                   {draftColumns.map((col, idx) => {
-                    if ((col.key === 'lat' || col.key === 'lng') && !isEditMode) return null
                     return (
                     <div key={col.key} className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-background">
                       <input
@@ -3535,7 +3633,7 @@ export function RouteList() {
                 {columnsHasSaved && (
                   <button
                     className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
-                    onClick={() => { setDraftColumns([...DEFAULT_COLUMNS]); setSavedColumns(null) }}
+                    onClick={() => { setDraftColumns(sanitizeColumnDefs(DEFAULT_COLUMNS)); setSavedColumns(null) }}
                   >
                     Reset to Default
                   </button>
@@ -3627,8 +3725,9 @@ export function RouteList() {
             <button
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border bg-background hover:bg-muted/60 transition-colors text-left group"
               onClick={() => {
-                setColumns([...draftColumns])
-                setSavedColumns([...draftColumns])
+                const normalized = sanitizeColumnDefs(draftColumns)
+                setColumns(normalized)
+                setSavedColumns(normalized)
                 // Clear all per-route overrides so global applies everywhere
                 setRouteColumnOverrides({})
                 try { localStorage.removeItem('fcalendar_route_columns') } catch {}
@@ -3649,12 +3748,13 @@ export function RouteList() {
             <button
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border bg-background hover:bg-muted/60 transition-colors text-left group"
               onClick={() => {
+                const normalized = sanitizeColumnDefs(draftColumns)
                 setRouteColumnOverrides(prev => {
-                  const updated = { ...prev, [currentRouteId]: [...draftColumns] }
+                  const updated = { ...prev, [currentRouteId]: normalized }
                   try { localStorage.setItem('fcalendar_route_columns', JSON.stringify(updated)) } catch {}
                   return updated
                 })
-                setSavedColumns([...draftColumns])
+                setSavedColumns(normalized)
                 setColumnApplyScopeOpen(false)
                 setSettingsOpen(false)
               }}
