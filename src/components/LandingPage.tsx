@@ -128,7 +128,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       {/* Features grid */}
       <div className="relative z-10 px-5 sm:px-6 pb-8 sm:pb-12">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 max-w-6xl mx-auto">
-          {FEATURES.map(({ icon: Icon, title, description, color, bg }, index) => (
+          {FEATURES.map(({ icon: Icon, title, description, color }, index) => (
             <div
               key={title}
               className={`group flex flex-col gap-3 rounded-2xl border border-white/15 hover:border-white/30 bg-white/8 hover:bg-white/12 backdrop-blur-md p-5 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 ${
