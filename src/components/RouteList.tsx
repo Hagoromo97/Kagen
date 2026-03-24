@@ -396,6 +396,7 @@ export function RouteList() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [detailFullscreen, setDetailFullscreen] = useState(false)
   const [dialogView, setDialogView] = useState<'table' | 'map'>('table')
+  const [detailSearchQuery, setDetailSearchQuery] = useState("")
 
   // Responsive card dimensions — measure the actual container so CSS zoom is handled correctly
   const cardContainerRef = useRef<HTMLDivElement>(null)
@@ -646,6 +647,7 @@ export function RouteList() {
     setDetailDialogOpen(true)
     setDetailFullscreen(false)
     setDialogView('table')
+    setDetailSearchQuery("")
     setSelectedRows([])
     setCombinedRouteIds(new Set([routeId]))
     setShowPolyline(false)
@@ -795,6 +797,21 @@ export function RouteList() {
   // Effective columns – per-route override wins, falls back to global columns
   const effectiveColumns = routeColumnOverrides[currentRouteId] ?? columns
 
+  const visibleDataColumns = useMemo(
+    () => effectiveColumns.filter(c => c.visible && c.key !== 'action' && !((c.key === 'lat' || c.key === 'lng') && !isEditMode)),
+    [effectiveColumns, isEditMode]
+  )
+
+  const isActionColumnVisible = useMemo(
+    () => effectiveColumns.some(c => c.key === 'action' && c.visible),
+    [effectiveColumns]
+  )
+
+  const tableColSpan = useMemo(
+    () => visibleDataColumns.length + (isActionColumnVisible ? 1 : 0) + (isEditMode ? 1 : 0),
+    [visibleDataColumns.length, isActionColumnVisible, isEditMode]
+  )
+
   // Compute distances for Km column
   // direct → straight-line from start point to each row
   // step   → cumulative chain: start point → Row1 → Row2 → Row3 …
@@ -822,6 +839,33 @@ export function RouteList() {
     }
     return result
   }, [sortedDeliveryPoints, isStepMode, kmStartPoint])
+
+  const tableRows = useMemo(() => {
+    const q = detailSearchQuery.trim().toLowerCase()
+    if (!q) {
+      return sortedDeliveryPoints.map((point, index) => ({ point, index }))
+    }
+
+    return sortedDeliveryPoints
+      .map((point, index) => ({ point, index }))
+      .filter(({ point }) => {
+        const lat = point.latitude.toFixed(4)
+        const lng = point.longitude.toFixed(4)
+        return (
+          point.code.toLowerCase().includes(q)
+          || point.name.toLowerCase().includes(q)
+          || point.delivery.toLowerCase().includes(q)
+          || lat.includes(q)
+          || lng.includes(q)
+        )
+      })
+  }, [sortedDeliveryPoints, detailSearchQuery])
+
+  const visibleRowCodes = useMemo(() => tableRows.map(({ point }) => point.code), [tableRows])
+  const areAllVisibleRowsSelected = useMemo(
+    () => visibleRowCodes.length > 0 && visibleRowCodes.every(code => selectedRows.includes(code)),
+    [visibleRowCodes, selectedRows]
+  )
 
   const startEdit = (rowCode: string, field: EditableField, currentValue: string | number) => {
     if (!isEditMode) return
@@ -910,11 +954,21 @@ export function RouteList() {
     )
   }
 
-  const toggleSelectAll = () => {
-    if (selectedRows.length === deliveryPoints.length) {
+  const toggleSelectAll = (codes: string[]) => {
+    if (codes.length === 0) {
       setSelectedRows([])
+      return
+    }
+
+    const isAllSelected = codes.every(code => selectedRows.includes(code))
+    if (isAllSelected) {
+      setSelectedRows(prev => prev.filter(code => !codes.includes(code)))
     } else {
-      setSelectedRows(deliveryPoints.map(p => p.code))
+      setSelectedRows(prev => {
+        const next = new Set(prev)
+        codes.forEach(code => next.add(code))
+        return Array.from(next)
+      })
     }
   }
 
@@ -1900,7 +1954,7 @@ export function RouteList() {
               </div>{/* end sliding track */}
             </div>{/* end card */}
 
-                  <Dialog open={detailDialogOpen && route.id === currentRouteId} onOpenChange={(open) => { if (!open) { setDetailDialogOpen(false); setDetailFullscreen(false); setDialogView('table'); setSelectedRows([]); setCombinedRouteIds(new Set([currentRouteId])); setShowPolyline(false); setMapRefitToken(0); setMapResizeToken(0) } }}>
+                  <Dialog open={detailDialogOpen && route.id === currentRouteId} onOpenChange={(open) => { if (!open) { setDetailDialogOpen(false); setDetailFullscreen(false); setDialogView('table'); setDetailSearchQuery(''); setSelectedRows([]); setCombinedRouteIds(new Set([currentRouteId])); setShowPolyline(false); setMapRefitToken(0); setMapResizeToken(0) } }}>
                   <DialogContent
                     className={`p-0 gap-0 flex flex-col overflow-hidden duration-300 ease-in-out ${
                       detailFullscreen
@@ -1985,6 +2039,37 @@ export function RouteList() {
                         </button>
                       </div>
                     ) : (
+                        <div className="h-full flex flex-col">
+                          <div className="shrink-0 border-b border-border/70 bg-background/95 px-3 py-2">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                              <Input
+                                value={detailSearchQuery}
+                                onChange={(e) => setDetailSearchQuery(e.target.value)}
+                                placeholder="Search by code, name, delivery, lat, lng..."
+                                className="h-8 pl-8 pr-8 text-[11px]"
+                              />
+                              {detailSearchQuery && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDetailSearchQuery("")}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
+                                  aria-label="Clear search"
+                                >
+                                  <X className="size-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {tableRows.length === 0 ? (
+                            <div className="flex flex-1 items-center justify-center p-6 text-center text-muted-foreground">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-foreground">No matching delivery point</p>
+                                <p className="text-xs">Try a different keyword.</p>
+                              </div>
+                            </div>
+                          ) : (
                           <table className="border-collapse text-[12px] whitespace-nowrap min-w-max w-full text-center">
                             <thead className="sticky top-0 z-10 backdrop-blur-sm" style={{ background: 'hsl(var(--background)/0.92)' }}>
                               <tr>
@@ -1992,22 +2077,22 @@ export function RouteList() {
                                   <th className="px-4 h-10 text-center w-12 bg-background/95 border-b border-border/70">
                                     <input
                                       type="checkbox"
-                                      checked={selectedRows.length === deliveryPoints.length && deliveryPoints.length > 0}
-                                      onChange={toggleSelectAll}
+                                      checked={areAllVisibleRowsSelected}
+                                      onChange={() => toggleSelectAll(visibleRowCodes)}
                                       className="w-4 h-4 rounded border-border cursor-pointer accent-primary"
                                     />
                                   </th>
                                 )}
-                                {effectiveColumns.filter(c => c.visible && c.key !== 'action' && !((c.key === 'lat' || c.key === 'lng') && !isEditMode)).map(col => (
+                                {visibleDataColumns.map(col => (
                                   <th key={col.key} className="px-4 h-10 text-center text-[10px] font-bold uppercase tracking-wider bg-background/95 border-b border-border/70" style={{ color: 'hsl(var(--foreground)/0.72)' }}>{col.label}</th>
                                 ))}
-                                {effectiveColumns.find(c => c.key === 'action' && c.visible) && (
+                                {isActionColumnVisible && (
                                   <th className="px-4 h-10 text-center text-[10px] font-bold uppercase tracking-wider bg-background/95 border-b border-border/70" style={{ color: 'hsl(var(--foreground)/0.72)' }}>Action</th>
                                 )}
                           </tr>
                         </thead>
                         <tbody>
-                          {sortedDeliveryPoints.map((point, index) => {
+                          {tableRows.map(({ point, index }) => {
                             const isActive = isDeliveryActive(point.delivery)
                             const distInfo = pointDistances[index]
                             const hasCoords = point.latitude !== 0 || point.longitude !== 0
@@ -2214,7 +2299,7 @@ export function RouteList() {
                                   if (col.key === 'action') return null
                                   return null
                                 })}
-                                {effectiveColumns.find(c => c.key === 'action' && c.visible) && (
+                                {isActionColumnVisible && (
                                   <td className="px-3 h-9 text-center">
                                     <button
                                       className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95 ${
@@ -2241,7 +2326,7 @@ export function RouteList() {
                               setCodeError("")
                             }}
                           >
-                            <td colSpan={8} className="py-3 text-center">
+                            <td colSpan={tableColSpan} className="py-3 text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
                                   <Plus className="size-3.5 text-primary" />
@@ -2257,12 +2342,12 @@ export function RouteList() {
                       </table>
                     )}
                     </div>
+                    )}
+                    </div>
 
                     {dialogView === 'table' && (
                       <div className="border-t border-border bg-background/95 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0 backdrop-blur-sm">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">{sortedDeliveryPoints.length} point{sortedDeliveryPoints.length !== 1 ? 's' : ''}</span>
-                          <span>{effectiveColumns.filter(c => c.visible && c.key !== 'action' && !((c.key === 'lat' || c.key === 'lng') && !isEditMode)).length}{effectiveColumns.find(c => c.key === 'action' && c.visible) ? ' + action' : ''} column{effectiveColumns.filter(c => c.visible && c.key !== 'action' && !((c.key === 'lat' || c.key === 'lng') && !isEditMode)).length !== 1 ? 's' : ''}</span>
                           {pendingCellEdits.size > 0 && (
                             <span className="font-medium text-amber-600 dark:text-amber-400">
                               {pendingCellEdits.size} pending edit{pendingCellEdits.size !== 1 ? 's' : ''}
@@ -2280,7 +2365,7 @@ export function RouteList() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 text-xs"
+                              className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10"
                               onClick={() => setSelectedRows([])}
                             >
                               Clear selection
