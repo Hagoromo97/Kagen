@@ -667,11 +667,13 @@ export function RouteList() {
     try {
       const s = localStorage.getItem('fcalendar_route_columns')
       if (!s) return {}
-      const parsed = JSON.parse(s) as Record<string, ColumnDef[]>
+      const parsed = JSON.parse(s) as Record<string, Array<{ key: string; label: string; visible: boolean }>>
       // Strip any stale lat/lng columns that may be cached from a previous version
       const cleaned: Record<string, ColumnDef[]> = {}
       for (const [key, cols] of Object.entries(parsed)) {
-        cleaned[key] = (cols as ColumnDef[]).filter((c: ColumnDef) => c.key !== 'lat' && c.key !== 'lng')
+        cleaned[key] = cols
+          .filter((c) => c.key !== 'lat' && c.key !== 'lng')
+          .filter((c): c is ColumnDef => ['no', 'code', 'name', 'delivery', 'km', 'action'].includes(c.key))
       }
       return cleaned
     } catch { return {} }
