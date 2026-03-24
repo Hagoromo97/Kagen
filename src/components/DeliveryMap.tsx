@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 
@@ -38,7 +38,15 @@ interface DeliveryMapProps {
   resizeToken?: number
 }
 
-const TILE_CONFIG = {
+interface TileConfigItem {
+  attribution: string
+  url: string
+  subdomains: string[]
+  maxZoom: number
+  maxNativeZoom: number
+}
+
+const TILE_CONFIG: Record<"google-streets" | "google-satellite" | "osm", TileConfigItem> = {
   "google-streets": {
     attribution: "Map data © Google",
     url: "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
@@ -60,7 +68,7 @@ const TILE_CONFIG = {
     maxZoom: 20,
     maxNativeZoom: 19,
   },
-} as const
+}
 
 function createPinIcon(color: string, active = false): L.Icon {
   // Use the standard Leaflet marker images but tinted via a coloured shadow trick
@@ -161,10 +169,60 @@ function ResizeController({ resizeToken }: { resizeToken?: number }) {
   return null
 }
 
+interface MarkerItemProps {
+  point: DeliveryPoint
+  markerStyle: "pin" | "dot" | "ring"
+  color: string
+  isActive: boolean
+  onToggleActive: (code: string) => void
+}
+
+const MarkerItem = memo(function MarkerItem({ point, markerStyle, color, isActive, onToggleActive }: MarkerItemProps) {
+  return (
+    <Marker
+      position={[point.latitude, point.longitude]}
+      icon={getCachedMarkerIcon(markerStyle, color, isActive)}
+      eventHandlers={{
+        click: () => onToggleActive(point.code),
+        popupclose: () => onToggleActive(""),
+      }}
+    >
+      {isActive && (
+        <Popup autoPan={false}>
+          <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 148, padding: "2px 0" }}>
+            {point.routeLabel && (
+              <p style={{ fontSize: 10, fontWeight: 600, color: "#888", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.04em" }}>{point.routeLabel}</p>
+            )}
+            <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: "#111", lineHeight: 1.3 }}>{point.name}</p>
+            <div style={{ fontSize: 11, color: "#666", lineHeight: 1.7 }}>
+              <div>Code: <span style={{ fontWeight: 600, color: "#333", fontFamily: "monospace" }}>{point.code}</span></div>
+              <div>Delivery: <span style={{ fontWeight: 700, color }}>{point.delivery}</span></div>
+            </div>
+          </div>
+        </Popup>
+      )}
+    </Marker>
+  )
+}, (prev, next) => (
+  prev.point === next.point
+  && prev.markerStyle === next.markerStyle
+  && prev.color === next.color
+  && prev.isActive === next.isActive
+  && prev.onToggleActive === next.onToggleActive
+))
+
 export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", mapStyle = "google-streets", startPoint, includeStartInBounds = true, refitToken = 0, resizeToken = 0 }: DeliveryMapProps) {
   const [activeCode, setActiveCode] = useState<string | null>(null)
   const [renderedMarkerCount, setRenderedMarkerCount] = useState(INITIAL_MARKER_RENDER)
   const tiles = TILE_CONFIG[mapStyle]
+
+  const toggleActive = useCallback((code: string) => {
+    if (code === "") {
+      setActiveCode(null)
+      return
+    }
+    setActiveCode((prev) => (prev === code ? null : code))
+  }, [])
 
   const validPoints = useMemo(
     () => deliveryPoints.filter(p => p.latitude !== 0 && p.longitude !== 0),
@@ -245,7 +303,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
       <TileLayer
         attribution={tiles.attribution}
         url={tiles.url}
-        subdomains={[...tiles.subdomains]}
+        subdomains={tiles.subdomains}
         maxZoom={tiles.maxZoom}
         maxNativeZoom={tiles.maxNativeZoom}
         updateWhenIdle={false}
@@ -280,30 +338,14 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
         const color = point.markerColor ?? DELIVERY_COLORS[point.delivery] ?? "#6b7280"
         const isActive = point.code === activeCode
         return (
-          <Marker
-            key={point.code}
-            position={[point.latitude, point.longitude]}
-            icon={getCachedMarkerIcon(markerStyle, color, isActive)}
-            eventHandlers={{
-              click: () => setActiveCode(prev => prev === point.code ? null : point.code),
-              popupclose: () => setActiveCode(null),
-            }}
-          >
-            {isActive && (
-              <Popup autoPan={false}>
-                <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 148, padding: "2px 0" }}>
-                  {point.routeLabel && (
-                    <p style={{ fontSize: 10, fontWeight: 600, color: "#888", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.04em" }}>{point.routeLabel}</p>
-                  )}
-                  <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: "#111", lineHeight: 1.3 }}>{point.name}</p>
-                  <div style={{ fontSize: 11, color: "#666", lineHeight: 1.7 }}>
-                    <div>Code: <span style={{ fontWeight: 600, color: "#333", fontFamily: "monospace" }}>{point.code}</span></div>
-                    <div>Delivery: <span style={{ fontWeight: 700, color }}>{point.delivery}</span></div>
-                  </div>
-                </div>
-              </Popup>
-            )}
-          </Marker>
+          <MarkerItem
+            key={`${point.routeId ?? "single-route"}:${point.code}`}
+            point={point}
+            markerStyle={markerStyle}
+            color={color}
+            isActive={isActive}
+            onToggleActive={toggleActive}
+          />
         )
       })}
     </MapContainer>

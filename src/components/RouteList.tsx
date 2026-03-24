@@ -486,6 +486,14 @@ export function RouteList() {
 
   const [combinedRouteIds, setCombinedRouteIds] = useState<Set<string>>(() => new Set([currentRouteId]))
 
+  const routeIndexById = useMemo(() => {
+    const indexMap = new Map<string, number>()
+    routes.forEach((route, index) => {
+      indexMap.set(route.id, index)
+    })
+    return indexMap
+  }, [routes])
+
   // Combined delivery points for map (all selected routes merged)
   const combinedDeliveryPoints = useMemo(() => {
     const selectedRoutes = routes.filter(r => combinedRouteIds.has(r.id))
@@ -493,7 +501,7 @@ export function RouteList() {
     const result: (DeliveryPoint & { routeLabel?: string; routeId?: string })[] = []
 
     selectedRoutes.forEach(r => {
-      const routeIndex = routes.findIndex(route => route.id === r.id)
+      const routeIndex = routeIndexById.get(r.id) ?? 0
       const routeMarkerColor = r.color ?? routeColorPalette[routeIndex % routeColorPalette.length] ?? '#6b7280'
 
       r.deliveryPoints.forEach((p, pointIdx) => {
@@ -510,7 +518,7 @@ export function RouteList() {
     })
 
     return result
-  }, [routes, combinedRouteIds, routeColorPalette])
+  }, [routes, combinedRouteIds, routeColorPalette, routeIndexById])
   const setDeliveryPoints = (updater: (prev: DeliveryPoint[]) => DeliveryPoint[]) => {
     setHasUnsavedChanges(true)
     setRoutes(prev => prev.map(route => 

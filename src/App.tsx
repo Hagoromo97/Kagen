@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense, Component, type ErrorInfo, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
 import { LandingPage } from "@/components/LandingPage"
@@ -106,6 +107,21 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const todayIndex = (new Date().getDay() + 6) % 7
   const isToolPopoverOpen = confirmingLink !== null || isRymnetPopoverOpen
 
+  const toolPopoverBackdrop = isToolPopoverOpen && typeof document !== "undefined"
+    ? createPortal(
+      <button
+        type="button"
+        aria-label="Close popover"
+        onClick={() => {
+          setConfirmingLink(null)
+          setIsRymnetPopoverOpen(false)
+        }}
+        className="fixed inset-0 z-[45] bg-black/45 backdrop-blur-md transition-opacity duration-200"
+      />,
+      document.body
+    )
+    : null
+
   const [pinnedRoutes, setPinnedRoutes] = useState<Array<{ id: string; name: string; code: string; shift: string }>>(() => {
     try { return JSON.parse(localStorage.getItem("fcalendar_pinned_routes") || "[]") } catch { return [] }
   })
@@ -135,17 +151,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       className="flex flex-col gap-5 p-4 md:p-6 max-w-2xl mx-auto w-full"
       style={{ paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))" }}
     >
-      {isToolPopoverOpen && (
-        <button
-          type="button"
-          aria-label="Close popover"
-          onClick={() => {
-            setConfirmingLink(null)
-            setIsRymnetPopoverOpen(false)
-          }}
-          className="fixed inset-0 z-[45] bg-black/45 backdrop-blur-md transition-opacity duration-200"
-        />
-      )}
+      {toolPopoverBackdrop}
 
       {/* ── Pinned Routes ─────────────────────────────────────── */}
       {pinnedRoutes.length > 0 && (
