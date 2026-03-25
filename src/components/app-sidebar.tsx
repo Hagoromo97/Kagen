@@ -103,13 +103,14 @@ const data = {
     { title: "Profile",     page: "settings-profile" },
     { title: "Font",        page: "settings-appearance-font" },
     { title: "Route Colours", page: "settings-route-colors" },
+    { title: "Storage",     page: "settings-storage" },
     { title: "Security",    page: "settings-security" },
   ],
 }
 
 const SETTINGS_PAGES = new Set([
   "settings-profile",
-  "settings-appearance-font","settings-route-colors","settings-security",
+  "settings-appearance-font","settings-route-colors","settings-storage","settings-security",
 ])
 
 

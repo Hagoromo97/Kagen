@@ -769,6 +769,8 @@ function AppContent() {
         return <Settings section="appearance-font" />
       case "settings-route-colors":
         return <Settings section="route-colors" />
+      case "settings-storage":
+        return <Settings section="storage" />
       case "settings-security":
         return <Settings section="security" />
       case "plano-vm":
@@ -798,6 +800,8 @@ function AppContent() {
         return { parent: { label: "Settings", icon: Settings2 }, current: "Font" }
       case "settings-route-colors":
         return { parent: { label: "Settings", icon: Settings2 }, current: "Route Colours" }
+      case "settings-storage":
+        return { parent: { label: "Settings", icon: Settings2 }, current: "Storage" }
       case "settings-security":
         return { parent: { label: "Settings", icon: Settings2 }, current: "Security" }
       case "plano-vm":

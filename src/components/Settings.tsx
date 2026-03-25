@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import {
   User, Bell, Lock, Globe, Mail, Phone, Save, Shield,
   Eye, EyeOff, Check, Type, Copy,
-  Navigation, Palette,
+  Navigation, Palette, Database, HardDrive, Clock3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,39 @@ type SectionId =
   | "appearance-font"
   | "map-defaultview"
   | "route-colors"
+  | "storage"
   | "security"
+
+type StorageLocationItem = {
+  section: string
+  store: string
+  purpose: string
+}
+
+const DATABASE_STORAGE_ITEMS: StorageLocationItem[] = [
+  { section: "Route List", store: "routes", purpose: "Stores routes, shifts, route colors, and delivery points." },
+  { section: "Route Notes", store: "route_notes", purpose: "Stores notes and changelog entries for each route." },
+  { section: "Rooster", store: "rooster_resources + rooster_shifts", purpose: "Stores resources/team members and shift schedules." },
+  { section: "Plano VM", store: "plano_vm", purpose: "Stores VM planogram page layouts." },
+  { section: "Location", store: "deliveries", purpose: "Stores delivery records and current statuses." },
+  { section: "Calendar", store: "calendar_events", purpose: "Stores calendar events (when used)." },
+  { section: "Notes", store: "notes", purpose: "Stores general app notes/changelog content." },
+]
+
+const LOCAL_STORAGE_ITEMS: StorageLocationItem[] = [
+  { section: "Theme & Display", store: "colorMode, app-font, app-zoom, text-size", purpose: "Stores user theme mode, font, zoom, and text size." },
+  { section: "Home", store: "fcalendar_home_quick_access, fcalendar_home_archive", purpose: "Stores quick cards and archived panel states on Home." },
+  { section: "Pinned Routes", store: "fcalendar_pinned_routes", purpose: "Stores pinned routes for quick display on Home." },
+  { section: "Route List Map", store: "fcalendar_map_style", purpose: "Stores map mode selection (streets/satellite/OSM)." },
+  { section: "Route List Table", store: "fcalendar_route_columns", purpose: "Stores table column layout per route or globally." },
+  { section: "Route List Sorting", store: "fcalendar_my_sorts_<routeId>", purpose: "Stores custom row order/sorting presets per route." },
+  { section: "Settings", store: "mapMarkerDefaultView, app_imgbb_api_key", purpose: "Stores default map coordinates and ImgBB API key." },
+]
+
+const SESSION_STORAGE_ITEMS: StorageLocationItem[] = [
+  { section: "Navigation", store: "fcalendar_open_route", purpose: "Temporarily stores the route to auto-open during page navigation." },
+  { section: "PWA Prompt", store: "pwa-prompt-dismissed", purpose: "Stores install prompt dismiss state for the current session." },
+]
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LS_DEFAULT_VIEW = "mapMarkerDefaultView"
@@ -78,6 +110,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
   // Security state
   const [security, setSecurity] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" })
   const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false })
+  const [storageTab, setStorageTab] = useState<"database" | "local">("database")
 
   // ImgBB API key
   const [imgbbKey, setImgbbKey] = useState(() => localStorage.getItem(LS_IMGBB_KEY) ?? "")
@@ -148,6 +181,11 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
     alert("Password changed successfully!")
     setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" })
   }
+
+  useEffect(() => {
+    if (active !== "storage") return
+    setStorageTab("database")
+  }, [active])
 
   // ── Render section content ────────────────────────────────────────────────
   const renderContent = () => {
@@ -429,6 +467,93 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
           </div>
         )
       }
+
+      // ── Storage ───────────────────────────────────────────────────────────
+      case "storage":
+        return (
+          <div className="space-y-6">
+            <SectionHeader
+              icon={<Database className="size-5" />}
+              title="Storage"
+              description="Reference of where app data is stored (Database and Local Storage)."
+            />
+
+            <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+              <button
+                type="button"
+                onClick={() => setStorageTab("database")}
+                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  storageTab === "database"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Database className="size-3.5" />
+                Database
+              </button>
+              <button
+                type="button"
+                onClick={() => setStorageTab("local")}
+                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  storageTab === "local"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <HardDrive className="size-3.5" />
+                Local Storage
+              </button>
+            </div>
+
+            {storageTab === "database" ? (
+              <div className="space-y-2.5">
+                {DATABASE_STORAGE_ITEMS.map((item) => (
+                  <div key={item.store} className="rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-foreground">{item.section}</p>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] text-primary">{item.store}</span>
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.purpose}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Local Storage</p>
+                  <div className="space-y-2.5">
+                    {LOCAL_STORAGE_ITEMS.map((item) => (
+                      <div key={item.store} className="rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-foreground">{item.section}</p>
+                          <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 font-mono text-[11px] text-sky-600 dark:text-sky-400">{item.store}</span>
+                        </div>
+                        <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.purpose}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Clock3 className="size-3.5" />Session Storage
+                  </p>
+                  <div className="space-y-2.5">
+                    {SESSION_STORAGE_ITEMS.map((item) => (
+                      <div key={item.store} className="rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-foreground">{item.section}</p>
+                          <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 font-mono text-[11px] text-amber-600 dark:text-amber-400">{item.store}</span>
+                        </div>
+                        <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.purpose}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
 
       // ── Security ──────────────────────────────────────────────────────────
       case "security":
