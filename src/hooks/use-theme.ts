@@ -18,6 +18,10 @@ export type AppFont =
   | "quicksand"
   | "figtree"
   | "barlow"
+  | "ubuntu"
+  | "work-sans"
+  | "outfit"
+  | "caveat"
 
 export const FONT_OPTIONS: { id: AppFont; label: string; family: string; googleId?: string }[] = [
   { id: "system",            label: "System Default",    family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
@@ -29,6 +33,10 @@ export const FONT_OPTIONS: { id: AppFont; label: string; family: string; googleI
   { id: "quicksand",         label: "Quicksand",         family: "'Quicksand', sans-serif",         googleId: "Quicksand:wght@300;400;500;600;700" },
   { id: "figtree",           label: "Figtree",           family: "'Figtree', sans-serif",           googleId: "Figtree:wght@300;400;500;600;700" },
   { id: "barlow",            label: "Barlow",            family: "'Barlow', sans-serif",            googleId: "Barlow:wght@300;400;500;600;700" },
+  { id: "ubuntu",            label: "Ubuntu",            family: "'Ubuntu', sans-serif",            googleId: "Ubuntu:wght@300;400;500;700" },
+  { id: "work-sans",         label: "Work Sans",         family: "'Work Sans', sans-serif",         googleId: "Work+Sans:wght@300;400;500;600;700" },
+  { id: "outfit",            label: "Outfit",            family: "'Outfit', sans-serif",            googleId: "Outfit:wght@300;400;500;600;700" },
+  { id: "caveat",            label: "Caveat",            family: "'Caveat', cursive",               googleId: "Caveat:wght@400;500;600;700" },
 ]
 
 export type AppZoom = "80" | "85" | "90" | "95" | "100" | "105" | "110" | "115" | "120"

@@ -13,6 +13,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { useTheme, FONT_OPTIONS, type AppFont } from "@/hooks/use-theme"
 import { useEditMode } from "@/contexts/EditModeContext"
 import { LS_IMGBB_KEY } from "@/lib/imgbb"
+import { DEFAULT_ROUTE_COLORS } from "@/lib/route-colors"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SectionId =
@@ -26,8 +27,6 @@ type SectionId =
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LS_DEFAULT_VIEW = "mapMarkerDefaultView"
 const MAP_FALLBACK = { lat: "3.0695500", lng: "101.5469179", zoom: "12" }
-
-const DEFAULT_ROUTE_COLORS = ["#374151", "#7c3aed", "#0891b2", "#16a34a", "#dc2626", "#d97706"]
 
 // ─── Sidebar nav ──────────────────────────────────────────────────────────────
 // ─── Section panels ───────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
 import { DeliveryMap } from "@/components/DeliveryMap"
 import { useEditMode } from "@/contexts/EditModeContext"
+import { getRouteColorPalette } from "@/lib/route-colors"
 import {
   Dialog,
   DialogContent,
@@ -296,13 +297,7 @@ const getAvailableDeliveryLabels = (route?: Route): string[] => {
 }
 
 // ── Route card color palette (from Settings → Route Colours, stored in localStorage) ──
-const DEFAULT_ROUTE_COLORS = ['#374151', '#7c3aed', '#0891b2', '#16a34a', '#dc2626', '#d97706']
-const LS_ROUTE_COLORS = 'fcalendar_route_colors'
 const LS_MAP_STYLE = 'fcalendar_map_style'
-const getRouteColorPalette = (): string[] => {
-  try { const v = localStorage.getItem(LS_ROUTE_COLORS); if (v) return JSON.parse(v) } catch { /**/ }
-  return DEFAULT_ROUTE_COLORS
-}
 
 const getMapStyle = (): 'google-streets' | 'google-satellite' | 'osm' => {
   try {

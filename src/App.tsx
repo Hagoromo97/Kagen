@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
 import { LandingPage } from "@/components/LandingPage"
+import { useEditMode } from "@/contexts/EditModeContext"
 
 const RouteList = lazy(() => import("@/components/RouteList").then(m => ({ default: m.RouteList })))
 const Settings = lazy(() => import("@/components/Settings").then(m => ({ default: m.Settings })))
@@ -13,7 +14,7 @@ const Rooster = lazy(() => import("@/components/Rooster").then(m => ({ default: 
 import { EditModeProvider } from "@/contexts/EditModeContext"
 import { DeviceProvider } from "@/contexts/DeviceContext"
 import { Toaster } from "sonner"
-import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X } from "lucide-react"
+import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -54,6 +55,35 @@ const COLOR_LABELS: Record<string, string> = {
   "#EAB308": "Yellow",
 }
 
+type QuickAccessId = "route-list" | "deliveries" | "rooster" | "plano-vm" | "gallery-album" | "settings-profile"
+
+type QuickAccessOption = {
+  id: QuickAccessId
+  icon: React.ElementType
+  label: string
+  description: string
+  iconClass?: string
+}
+
+const LS_HOME_QUICK_ACCESS = "fcalendar_home_quick_access"
+const LS_HOME_ARCHIVE = "fcalendar_home_archive"
+const QUICK_ACCESS_LIMIT = 4
+
+const QUICK_ACCESS_OPTIONS: QuickAccessOption[] = [
+  { id: "route-list",       icon: ClipboardList, label: "Route List", description: "Manage vending routes", iconClass: "text-violet-500" },
+  { id: "deliveries",       icon: MapPin,        label: "Location",   description: "Delivery records",     iconClass: "text-emerald-500" },
+  { id: "rooster",          icon: Users,         label: "Rooster",    description: "Team schedule",        iconClass: "text-orange-500" },
+  { id: "plano-vm",         icon: Package,       label: "Plano VM",   description: "Planogram tools",      iconClass: "text-sky-500" },
+  { id: "gallery-album",    icon: Images,        label: "Album",      description: "Photo gallery",        iconClass: "text-pink-500" },
+  { id: "settings-profile", icon: Settings2,     label: "Settings",   description: "Profile settings",     iconClass: "text-indigo-500" },
+]
+
+const DEFAULT_QUICK_ACCESS: QuickAccessId[] = ["route-list", "deliveries", "rooster", "plano-vm"]
+
+function isQuickAccessId(value: unknown): value is QuickAccessId {
+  return QUICK_ACCESS_OPTIONS.some(opt => opt.id === value)
+}
+
 function ColorPill({ color, size = "md" }: { color: string; size?: "sm" | "md" | "lg" }) {
   const label = COLOR_LABELS[color] ?? color
   const sizeClasses = size === "lg"
@@ -77,6 +107,8 @@ function QuickActionCard({
   page,
   iconClass,
   onNavigate,
+  showRemove = false,
+  onRemove,
 }: {
   icon: React.ElementType
   label: string
@@ -84,29 +116,126 @@ function QuickActionCard({
   page: string
   iconClass?: string
   onNavigate: (page: string) => void
+  showRemove?: boolean
+  onRemove?: () => void
 }) {
   return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => onNavigate(page)}
+        className="group w-full flex flex-col items-start gap-2.5 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 active:scale-[0.97] transition-all duration-150"
+      >
+        <Icon className={`size-5 shrink-0 ${iconClass ?? "text-muted-foreground"}`} />
+        <div className="min-w-0 pr-5">
+          <p className="text-sm font-semibold text-foreground tracking-tight leading-snug">{label}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
+        </div>
+      </button>
+
+      {showRemove && onRemove && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+          className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-0 bg-transparent text-red-600 hover:text-red-700 transition-colors"
+          aria-label={`Remove ${label}`}
+          title={`Remove ${label}`}
+        >
+          <Minus className="size-3" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
+  return (
     <button
-      onClick={() => onNavigate(page)}
-      className="group flex flex-col items-start gap-2.5 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 active:scale-[0.97] transition-all duration-150"
+      type="button"
+      onClick={onClick}
+      className="group flex min-h-[112px] flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-card/40 p-3 text-center hover:border-primary/60 hover:bg-primary/5 transition-colors"
     >
-      <Icon className={`size-5 shrink-0 ${iconClass ?? "text-muted-foreground"}`} />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-foreground tracking-tight leading-snug">{label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
-      </div>
+      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Plus className="size-4" />
+      </span>
+      <p className="text-xs font-semibold text-foreground">Tambah Card</p>
+      <p className="text-[11px] text-muted-foreground">Maksimum 4</p>
     </button>
   )
 }
 
 function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
+  const { isEditMode } = useEditMode()
   const [tableExpanded, setTableExpanded] = useState(false)
   const [legendOpen, setLegendOpen] = useState(false)
   const [confirmingLink, setConfirmingLink] = useState<string | null>(null)
   const [isRymnetPopoverOpen, setIsRymnetPopoverOpen] = useState(false)
+  const [showQuickPicker, setShowQuickPicker] = useState(false)
+  const [quickAccess, setQuickAccess] = useState<QuickAccessId[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(LS_HOME_QUICK_ACCESS) || "[]")
+      if (!Array.isArray(stored)) return DEFAULT_QUICK_ACCESS
+      const normalized = stored.filter(isQuickAccessId)
+      const unique = normalized.filter((id, index) => normalized.indexOf(id) === index)
+      return unique.slice(0, QUICK_ACCESS_LIMIT).length > 0 ? unique.slice(0, QUICK_ACCESS_LIMIT) : DEFAULT_QUICK_ACCESS
+    } catch {
+      return DEFAULT_QUICK_ACCESS
+    }
+  })
+  const [archiveState, setArchiveState] = useState<{ colorGuide: boolean; colorExpired: boolean }>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(LS_HOME_ARCHIVE) || "{}")
+      return {
+        colorGuide: Boolean(stored?.colorGuide),
+        colorExpired: Boolean(stored?.colorExpired),
+      }
+    } catch {
+      return { colorGuide: false, colorExpired: false }
+    }
+  })
   const todayIndex = (new Date().getDay() + 6) % 7
   const isToolPopoverOpen = confirmingLink !== null || isRymnetPopoverOpen
 
+  const quickAccessById = QUICK_ACCESS_OPTIONS.reduce<Record<QuickAccessId, QuickAccessOption>>((acc, option) => {
+    acc[option.id] = option
+    return acc
+  }, {} as Record<QuickAccessId, QuickAccessOption>)
+
+  const quickAccessCards = quickAccess
+    .map(id => quickAccessById[id])
+    .filter(Boolean)
+
+  const availableQuickOptions = QUICK_ACCESS_OPTIONS.filter(opt => !quickAccess.includes(opt.id))
+  const showColorGuide = !archiveState.colorGuide || isEditMode
+  const showColorExpired = !archiveState.colorExpired || isEditMode
+  const hasHomeArchiveContent = showColorGuide || showColorExpired
+
+  const updateQuickAccess = (next: QuickAccessId[]) => {
+    const limited = next.slice(0, QUICK_ACCESS_LIMIT)
+    setQuickAccess(limited)
+    localStorage.setItem(LS_HOME_QUICK_ACCESS, JSON.stringify(limited))
+  }
+
+  const addQuickAccess = (id: QuickAccessId) => {
+    if (quickAccess.includes(id) || quickAccess.length >= QUICK_ACCESS_LIMIT) return
+    updateQuickAccess([...quickAccess, id])
+    setShowQuickPicker(false)
+  }
+
+  const removeQuickAccess = (id: QuickAccessId) => {
+    updateQuickAccess(quickAccess.filter(item => item !== id))
+  }
+
+  const toggleArchive = (key: "colorGuide" | "colorExpired") => {
+    setArchiveState(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      localStorage.setItem(LS_HOME_ARCHIVE, JSON.stringify(next))
+      return next
+    })
+  }
   const toolPopoverBackdrop = isToolPopoverOpen && typeof document !== "undefined"
     ? createPortal(
       <button
@@ -176,32 +305,40 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             <span className="rounded-md border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">PM {pinnedPM}</span>
           </div>
 
-          <div className="rounded-2xl overflow-hidden border border-border/60 shadow-sm bg-card divide-y divide-border/40">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {pinnedRoutesOrdered.map((r) => {
               const isKL  = (r.name + " " + r.code).toLowerCase().includes("kl")
               const isSel = (r.name + " " + r.code).toLowerCase().includes("sel")
               return (
-                <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
-                  {isKL
-                    ? <img src="/kl-flag.png" className="shrink-0 object-cover rounded shadow-sm ring-1 ring-black/10 dark:ring-white/10" style={{ width: 32, height: 20 }} alt="KL" />
-                    : isSel
-                    ? <img src="/selangor-flag.png" className="shrink-0 object-cover rounded shadow-sm ring-1 ring-black/10 dark:ring-white/10" style={{ width: 32, height: 20 }} alt="Selangor" />
-                    : <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
-                      <Pin className="size-3.5 text-primary" />
-                      </div>
-                  }
-                  <p className="flex-1 text-sm font-semibold text-foreground leading-tight line-clamp-1 min-w-0">{r.name}</p>
-                  <span className="shrink-0 text-[10px] font-mono text-muted-foreground">{r.code}</span>
-                  <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full text-white tracking-wide ${
-                    r.shift === "AM" ? "bg-blue-500" : r.shift === "PM" ? "bg-orange-600" : "bg-muted text-muted-foreground"
-                  }`}>{r.shift || "—"}</span>
-                  <button
-                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                    onClick={() => { sessionStorage.setItem("fcalendar_open_route", r.id); onNavigate("route-list") }}
-                  >
+                <button
+                  key={r.id}
+                  type="button"
+                  className="group w-full flex flex-col items-start gap-2.5 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 active:scale-[0.97] transition-all duration-150"
+                  onClick={() => { sessionStorage.setItem("fcalendar_open_route", r.id); onNavigate("route-list") }}
+                >
+                  <div className="flex items-center gap-2.5 w-full">
+                    {isKL
+                      ? <img src="/kl-flag.png" className="shrink-0 object-cover rounded shadow-sm ring-1 ring-black/10 dark:ring-white/10" style={{ width: 32, height: 20 }} alt="KL" />
+                      : isSel
+                      ? <img src="/selangor-flag.png" className="shrink-0 object-cover rounded shadow-sm ring-1 ring-black/10 dark:ring-white/10" style={{ width: 32, height: 20 }} alt="Selangor" />
+                      : <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                        <Pin className="size-3.5 text-primary" />
+                        </div>
+                    }
+                    <p className="flex-1 text-sm font-semibold text-foreground tracking-tight leading-snug line-clamp-1 min-w-0">{r.name}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 w-full pr-1">
+                    <span className="text-[10px] font-mono text-muted-foreground">{r.code}</span>
+                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full text-white tracking-wide ${
+                      r.shift === "AM" ? "bg-blue-500" : r.shift === "PM" ? "bg-orange-600" : "bg-muted text-muted-foreground"
+                    }`}>{r.shift || "—"}</span>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
                     <List className="size-3" />View
-                  </button>
-                </div>
+                  </div>
+                </button>
               )
             })}
           </div>
@@ -210,74 +347,149 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div>
-        <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2.5 px-0.5">Quick Access</p>
-        <div className="grid grid-cols-2 gap-3">
-          <QuickActionCard icon={ClipboardList} label="Route List" description="Manage vending routes" page="route-list" iconClass="text-violet-500"  onNavigate={onNavigate} />
-          <QuickActionCard icon={MapPin}        label="Location"   description="Delivery records"       page="deliveries" iconClass="text-emerald-500" onNavigate={onNavigate} />
-          <QuickActionCard icon={Users}         label="Rooster"    description="Team schedule"          page="rooster"    iconClass="text-orange-500"  onNavigate={onNavigate} />
-          <QuickActionCard icon={Package}       label="Plano VM"   description="Planogram tools"        page="plano-vm"   iconClass="text-sky-500"     onNavigate={onNavigate} />
+        <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
+          <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Quick Access</p>
+          <span className="rounded-md border border-border bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            {quickAccess.length}/{QUICK_ACCESS_LIMIT}
+          </span>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          {quickAccessCards.map(card => (
+            <QuickActionCard
+              key={card.id}
+              icon={card.icon}
+              label={card.label}
+              description={card.description}
+              page={card.id}
+              iconClass={card.iconClass}
+              onNavigate={onNavigate}
+              showRemove={isEditMode}
+              onRemove={() => removeQuickAccess(card.id)}
+            />
+          ))}
+          {isEditMode && quickAccess.length < QUICK_ACCESS_LIMIT && (
+            <AddQuickAccessCard onClick={() => setShowQuickPicker(v => !v)} />
+          )}
+        </div>
+
+        {isEditMode && showQuickPicker && quickAccess.length < QUICK_ACCESS_LIMIT && (
+          <div className="mt-3 rounded-xl border border-dashed border-border bg-card/50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Pilih card untuk ditambah</p>
+            {availableQuickOptions.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Semua card sudah dipakai.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {availableQuickOptions.map(option => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => addQuickAccess(option.id)}
+                    className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-left hover:bg-muted/40 transition-colors"
+                  >
+                    <option.icon className={`size-4 shrink-0 ${option.iconClass ?? "text-muted-foreground"}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{option.label}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{option.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isEditMode && quickAccess.length === 0 && (
+          <p className="mt-3 text-xs text-muted-foreground px-0.5">Tiada card. Tekan `+` untuk tambah Quick Access.</p>
+        )}
       </div>
 
-      <hr className="border-border/40" />
+      {hasHomeArchiveContent && <hr className="border-border/40" />}
 
       {/* ── Color Guide Table ─────────────────────────────────── */}
-      <div>
-        <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2.5 px-0.5">Colour Guide</p>
-        <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
-          {/* Header */}
-          <div className="grid grid-cols-4 items-end border-b border-border bg-card px-4 py-3 gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Day</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Stock In</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Move Front</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Expired</span>
+      {showColorGuide && (
+        <div className={archiveState.colorGuide ? "opacity-60" : undefined}>
+          <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Colour Guide</p>
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={() => toggleArchive("colorGuide")}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                title={archiveState.colorGuide ? "Unarchive Colour Guide" : "Archive Colour Guide"}
+              >
+                {archiveState.colorGuide ? <ArchiveRestore className="size-3" /> : <Archive className="size-3" />}
+                {archiveState.colorGuide ? "Unarchive" : "Archive"}
+              </button>
+            )}
           </div>
-          {/* Rows */}
-          <div className="flex flex-col">
-            {DAYS.map((day, i) => {
-              const isToday = i === todayIndex
-              const visible = isToday || tableExpanded
-              return (
-                <div
-                  key={day.en}
-                  style={{
-                    display: 'grid',
-                    gridTemplateRows: visible ? '1fr' : '0fr',
-                    transition: 'grid-template-rows 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                  }}
-                >
-                  <div className="overflow-hidden">
-                    <div className={`grid grid-cols-4 items-center px-4 py-3 gap-2${i < DAYS.length - 1 ? ' border-b border-border/60' : ''}`}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isToday && (
-                          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
-                        )}
-                        <div className="min-w-0">
-                          <p className={`text-sm font-semibold truncate ${isToday ? "text-primary" : "text-foreground"}`}>{day.en}</p>
+
+          <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
+            {/* Header */}
+            <div className="grid grid-cols-4 items-end border-b border-border bg-card px-4 py-3 gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Day</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Stock In</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Move Front</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Expired</span>
+            </div>
+            {/* Rows */}
+            <div className="flex flex-col">
+              {DAYS.map((day, i) => {
+                const isToday = i === todayIndex
+                const visible = isToday || tableExpanded
+                return (
+                  <div
+                    key={day.en}
+                    style={{
+                      display: 'grid',
+                      gridTemplateRows: visible ? '1fr' : '0fr',
+                      transition: 'grid-template-rows 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                    }}
+                  >
+                    <div className="overflow-hidden">
+                      <div className={`grid grid-cols-4 items-center px-4 py-3 gap-2${i < DAYS.length - 1 ? ' border-b border-border/60' : ''}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isToday && (
+                            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                          )}
+                          <div className="min-w-0">
+                            <p className={`text-sm font-semibold truncate ${isToday ? "text-primary" : "text-foreground"}`}>{day.en}</p>
+                          </div>
                         </div>
+                        <div className="flex justify-center"><ColorPill color={STOCK_IN_COLORS[i]} size="sm" /></div>
+                        <div className="flex justify-center"><ColorPill color={MOVE_FRONT_COLORS[i]} size="sm" /></div>
+                        <div className="flex justify-center"><ColorPill color={EXPIRED_COLORS[i]} size="sm" /></div>
                       </div>
-                      <div className="flex justify-center"><ColorPill color={STOCK_IN_COLORS[i]} size="sm" /></div>
-                      <div className="flex justify-center"><ColorPill color={MOVE_FRONT_COLORS[i]} size="sm" /></div>
-                      <div className="flex justify-center"><ColorPill color={EXPIRED_COLORS[i]} size="sm" /></div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+            {/* Expand toggle */}
+            <button
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted/70 transition-colors duration-200 ease-in-out border-t border-border"
+              onClick={() => setTableExpanded(v => !v)}
+            >
+              <ChevronDown className={`size-3.5 transition-transform duration-200 ${tableExpanded ? "rotate-180" : ""}`} />
+              {tableExpanded ? "Show less" : "Show all days"}
+            </button>
           </div>
-          {/* Expand toggle */}
-          <button
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted/70 transition-colors duration-200 ease-in-out border-t border-border"
-            onClick={() => setTableExpanded(v => !v)}
-          >
-            <ChevronDown className={`size-3.5 transition-transform duration-200 ${tableExpanded ? "rotate-180" : ""}`} />
-            {tableExpanded ? "Show less" : "Show all days"}
-          </button>
         </div>
-      </div>
+      )}
 
       {/* ── Colour Legend ─────────────────────────────────────── */}
-      <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
+      {showColorExpired && (
+      <div className={`relative rounded-xl overflow-hidden border border-border bg-card shadow-sm ${archiveState.colorExpired ? "opacity-60" : ""}`}>
+        {isEditMode && (
+          <button
+            type="button"
+            onClick={() => toggleArchive("colorExpired")}
+            className="absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background/90 px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+            title={archiveState.colorExpired ? "Unarchive Colour Expired" : "Archive Colour Expired"}
+          >
+            {archiveState.colorExpired ? <ArchiveRestore className="size-3" /> : <Archive className="size-3" />}
+            {archiveState.colorExpired ? "Unarchive" : "Archive"}
+          </button>
+        )}
         <button
           className="group w-full flex items-center gap-3 px-3.5 py-3.5 hover:bg-muted/40 active:scale-[0.99] transition-all duration-150 text-left"
           onClick={() => setLegendOpen(v => !v)}
@@ -316,8 +528,9 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           </div>
         </div>
       </div>
+      )}
 
-      <hr className="border-border/40" />
+      {hasHomeArchiveContent && <hr className="border-border/40" />}
 
       {/* ── Tool & Equipment ──────────────────────────────────── */}
       <div>

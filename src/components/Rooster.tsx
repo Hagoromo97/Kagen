@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { useEditMode } from "@/contexts/EditModeContext"
+import { getRouteColorPalette } from "@/lib/route-colors"
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -78,13 +79,6 @@ const RESOURCE_COLORS = [
   "#3B82F6", "#F97316", "#22C55E", "#A855F7",
   "#EC4899", "#EAB308", "#14B8A6", "#EF4444",
 ]
-
-// Route card / marker palette — mirrors Settings → Route Colours
-const DEFAULT_ROUTE_COLORS = ['#374151', '#7c3aed', '#0891b2', '#16a34a', '#dc2626', '#d97706']
-const getRouteColorPalette = (): string[] => {
-  try { const v = localStorage.getItem('fcalendar_route_colors'); if (v) return JSON.parse(v) } catch { /**/ }
-  return DEFAULT_ROUTE_COLORS
-}
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 

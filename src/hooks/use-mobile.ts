@@ -41,11 +41,3 @@ export function useDeviceType(): DeviceType {
 
   return device
 }
-
-export function useIsTablet() {
-  return useDeviceType() === "tablet"
-}
-
-export function useIsDesktop() {
-  return useDeviceType() === "desktop"
-}
