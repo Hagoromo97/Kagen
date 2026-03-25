@@ -39,6 +39,16 @@ export const FONT_OPTIONS: { id: AppFont; label: string; family: string; googleI
   { id: "caveat",            label: "Caveat",            family: "'Caveat', cursive",               googleId: "Caveat:wght@400;500;600;700" },
 ]
 
+export const DEFAULT_APP_FONT: AppFont = "system"
+
+function getStoredOrDefaultFont(): AppFont {
+  const stored = localStorage.getItem("app-font")
+  const isValid = stored !== null && FONT_OPTIONS.some(f => f.id === stored)
+  if (isValid) return stored as AppFont
+  localStorage.setItem("app-font", DEFAULT_APP_FONT)
+  return DEFAULT_APP_FONT
+}
+
 export type AppZoom = "80" | "85" | "90" | "95" | "100" | "105" | "110" | "115" | "120"
 export type TextSize = "13" | "14" | "15" | "16" | "17" | "18" | "20"
 
@@ -58,7 +68,7 @@ export function useTheme() {
     (localStorage.getItem("colorMode") as ColorMode) ?? "light"
   )
   const [appFont, setAppFont] = useState<AppFont>(() =>
-    (localStorage.getItem("app-font") as AppFont) ?? "inter"
+    getStoredOrDefaultFont()
   )
   const [appZoom, setAppZoom] = useState<AppZoom>(() =>
     (localStorage.getItem("app-zoom") as AppZoom) ?? "120"

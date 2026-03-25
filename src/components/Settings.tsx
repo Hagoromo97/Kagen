@@ -57,6 +57,10 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
   const [selectedFont, setSelectedFont] = useState<AppFont>(appFont)
   const fontDirty = selectedFont !== appFont
 
+  useEffect(() => {
+    setSelectedFont(appFont)
+  }, [appFont])
+
   // Profile state
   const [profile, setProfile] = useState({ name: "John Doe", email: "john.doe@speedparcel.com", phone: "+60 12-345 6789", role: "Delivery Manager" })
   const [copiedField, setCopiedField] = useState<string | null>(null)
@@ -265,7 +269,8 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
           <div className="space-y-6">
             <SectionHeader icon={<Type className="size-5" />} title="Font Style" description="Choose a font for the entire app." />
             <div className="space-y-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="max-h-[46vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {FONT_OPTIONS.map(opt => {
                   const isSelected = selectedFont === opt.id
                   const isApplied  = appFont === opt.id
@@ -281,6 +286,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
                     </button>
                   )
                 })}
+                </div>
               </div>
               <div className="mt-2 p-4 rounded-lg bg-muted/40 border">
                 <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Preview</p>
@@ -288,16 +294,16 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
                   This is a text preview using <strong>{FONT_OPTIONS.find(f => f.id === selectedFont)?.label}</strong>. The quick brown fox jumps over the lazy dog.
                 </p>
               </div>
-              <div className="flex items-center justify-end gap-3">
-                {fontDirty && (
-                  <button onClick={() => setSelectedFont(appFont)} className="text-xs text-muted-foreground underline hover:text-foreground">
-                    Cancel
-                  </button>
-                )}
-                <Button onClick={() => setAppFont(selectedFont)} disabled={!fontDirty} className="gap-2">
-                  <Check className="size-4" /> Apply Font
-                </Button>
-              </div>
+              {fontDirty && (
+                <div className="flex items-center justify-end gap-3">
+                  <Button variant="outline" onClick={() => setSelectedFont("system")}>
+                    Reset
+                  </Button>
+                  <Button onClick={() => setAppFont(selectedFont)} className="bg-green-600 text-white hover:bg-green-700">
+                    Apply
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )
@@ -308,7 +314,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
           <div className="space-y-6">
             <SectionHeader icon={<Navigation className="size-5" />} title="Default Map View" description="Coordinates and zoom shown by default in Map Marker." />
             <div className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5\">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="space-y-2.5">
                   <label className="text-sm font-medium">Latitude</label>
                   <Input value={mapLat} onChange={e => setMapLat(e.target.value)} placeholder="3.0695500" className="font-mono" />
@@ -481,7 +487,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
                     </button>
                   </div>
                 </div>
-                <div className="space-y-2.5\">
+                <div className="space-y-2.5">
                   <label className="text-sm font-medium">Confirm Password</label>
                   <div className="relative">
                     <Input type={showPasswords.confirm ? "text" : "password"} value={security.confirmPassword} onChange={e => setSecurity({ ...security, confirmPassword: e.target.value })} placeholder="Confirm new password" className="pr-10" />

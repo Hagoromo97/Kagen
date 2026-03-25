@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client"
 import "./index.css"
 import App from "./App.tsx"
 import { registerServiceWorker } from "./lib/pwa"
-import { FONT_OPTIONS } from "./hooks/use-theme"
+import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
 
 // ── Apply persisted display settings before first paint ──────────────────────
 ;(function applyStoredDisplaySettings() {
@@ -18,7 +18,10 @@ import { FONT_OPTIONS } from "./hooks/use-theme"
     if (textSize) document.documentElement.style.fontSize = `${textSize}px`
 
     // Font family
-    const fontId = localStorage.getItem("app-font") ?? "inter"
+    const storedFont = localStorage.getItem("app-font")
+    const hasValidStoredFont = storedFont !== null && FONT_OPTIONS.some(f => f.id === storedFont)
+    const fontId = hasValidStoredFont ? storedFont : DEFAULT_APP_FONT
+    if (!hasValidStoredFont) localStorage.setItem("app-font", DEFAULT_APP_FONT)
     const fontOpt = FONT_OPTIONS.find(f => f.id === fontId)
     if (fontOpt) {
       // Inject Google Fonts link if needed
