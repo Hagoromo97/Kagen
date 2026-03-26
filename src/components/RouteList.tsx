@@ -2331,6 +2331,11 @@ export function RouteList() {
                     {dialogView === 'table' && (
                       <div className="border-t border-border bg-background/95 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0 backdrop-blur-sm">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          {!isEditMode && (
+                            <span className="font-medium text-muted-foreground">
+                              Location : {tableRows.length}
+                            </span>
+                          )}
                           {pendingCellEdits.size > 0 && (
                             <span className="font-medium text-amber-600 dark:text-amber-400">
                               {pendingCellEdits.size} pending edit{pendingCellEdits.size !== 1 ? 's' : ''}

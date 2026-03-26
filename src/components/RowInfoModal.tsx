@@ -240,14 +240,14 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                   setAvatarTab("url")
                   setShowAvatarDialog(true)
                 }}
-                className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full shadow group focus:outline-none md:h-12 md:w-12"
+                className="group relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted shadow focus:outline-none md:size-14"
               >
                 {avatarImageUrl ? (
-                  <img src={avatarImageUrl} alt={point.name} className="w-full h-full object-cover" />
+                  <img src={avatarImageUrl} alt={point.name} className="size-full rounded-full object-cover" />
                 ) : (
-                  <img src={noImageSrc} alt="No image" className="w-full h-full object-cover" />
+                  <img src={noImageSrc} alt="No image" className="size-full rounded-full object-cover" />
                 )}
-                <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                   <Camera className="size-4 text-white md:size-5" />
                 </div>
               </button>
@@ -256,9 +256,9 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                 <>
                   <button
                     onClick={openAvatarGallery}
-                    className="relative h-9 w-9 shrink-0 cursor-zoom-in overflow-hidden rounded-full shadow focus:outline-none md:h-12 md:w-12"
+                    className="relative flex size-11 shrink-0 cursor-zoom-in items-center justify-center overflow-hidden rounded-full bg-muted shadow focus:outline-none md:size-14"
                   >
-                    <img src={avatarImageUrl || avatarImages[0]} alt={point.name} className="w-full h-full object-cover" />
+                    <img src={avatarImageUrl || avatarImages[0]} alt={point.name} className="size-full rounded-full object-cover" />
                     {avatarImages.length > 1 && (
                       <span className="absolute -right-0.5 -bottom-0.5 rounded-full bg-black/75 px-1 py-0.5 text-[9px] leading-none text-white md:px-1.5 md:py-1 md:text-[10px]">
                         {avatarImages.length}
@@ -267,8 +267,8 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                   </button>
                 </>
               ) : (
-                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow md:h-12 md:w-12">
-                  <img src={noImageSrc} alt="No image" className="w-full h-full object-cover" />
+                <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted shadow md:size-14">
+                  <img src={noImageSrc} alt="No image" className="size-full rounded-full object-cover" />
                 </div>
               )
             )}
@@ -544,7 +544,7 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                                 : "border-transparent hover:border-primary/40"
                             }`}
                           >
-                            <img src={url} alt={`avatar-${i}`} className="w-full h-full object-cover" />
+                            <img src={url} alt={`avatar-${i}`} className="h-full w-full bg-muted/40 object-contain" />
                           </button>
                           {dialogSelected === url && (
                             <div className="absolute -top-1 -right-1 bg-primary rounded-full p-0.5 pointer-events-none shadow">
@@ -913,20 +913,33 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
         </div>
 
         <DialogFooter className="shrink-0 border-t border-border bg-background px-4 py-3 sm:space-x-0">
-          {isEditing ? (
-            <>
-              <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
-              <Button size="sm" onClick={handleSave}><Check className="size-3.5 mr-1" />Save</Button>
-            </>
+          {isEditMode ? (
+            isEditing ? (
+              <>
+                <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
+                <Button size="sm" onClick={handleSave}><Check className="size-3.5 mr-1" />Save</Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-auto px-0 py-0 text-xs text-red-600 hover:bg-transparent hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                onClick={() => onOpenChange(false)}
+              >
+                Close
+              </Button>
+            )
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto px-0 py-0 text-xs text-red-600 hover:bg-transparent hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
+            <div className="flex w-full items-center justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-auto px-0 py-0 text-xs text-red-600 hover:bg-transparent hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                onClick={() => onOpenChange(false)}
+              >
+                Close
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
