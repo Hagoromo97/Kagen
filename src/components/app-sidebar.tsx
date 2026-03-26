@@ -10,7 +10,6 @@ import {
   Sun,
   X,
   Images,
-  Layers,
   Users,
 } from "lucide-react"
 import { useEditMode } from "@/contexts/EditModeContext"
