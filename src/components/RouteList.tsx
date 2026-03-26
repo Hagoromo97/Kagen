@@ -1987,9 +1987,9 @@ export function RouteList() {
                     <div className="shrink-0 border-b border-border bg-background">
                       <div className="px-5 py-3 flex items-center gap-3">
                         {(route.name + " " + route.code).toLowerCase().includes("kl")
-                          ? <img src="/kl-flag.png" className="object-cover shadow-sm ring-1 ring-black/10 dark:ring-white/10 shrink-0" style={{ width: 36, height: 22, borderRadius: 4 }} alt="KL" />
+                          ? <img src="/kl-flag.png" className="object-cover shadow-sm ring-1 ring-black/10 dark:ring-white/10 shrink-0" style={{ width: 28, height: 17, borderRadius: 3 }} alt="KL" />
                           : (route.name + " " + route.code).toLowerCase().includes("sel")
-                          ? <img src="/selangor-flag.png" className="object-cover shadow-sm ring-1 ring-black/10 dark:ring-white/10 shrink-0" style={{ width: 36, height: 22, borderRadius: 4 }} alt="Selangor" />
+                          ? <img src="/selangor-flag.png" className="object-cover shadow-sm ring-1 ring-black/10 dark:ring-white/10 shrink-0" style={{ width: 28, height: 17, borderRadius: 3 }} alt="Selangor" />
                           : (
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${markerColor}25`, boxShadow: `0 0 0 1.5px ${markerColor}50` }}>
                               <Truck className="size-4" style={{ color: markerColor }} />

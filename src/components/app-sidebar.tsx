@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import weedLogo from "../../icon/weed.png"
 import {
   Moon,
   Package,
@@ -194,13 +195,11 @@ export function AppSidebar({
               asChild
               onClick={() => onNavigate?.("home")}
             >
-              <a href="#">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Layers className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+              <a href="#" className="!gap-0 !pl-0" style={{ gap: 0 }}>
+                <img src={weedLogo} alt="logo" className="object-contain" style={{ width: 62, height: 62, marginRight: -16 }} />
+                <div className="grid flex-1 text-left text-sm leading-none gap-0">
                   <span className="truncate font-medium">Data Brutal</span>
-                  <span className="truncate text-xs">Info for driver bejad</span>
+                  <span className="truncate text-xs text-muted-foreground">Info for driver bejad</span>
                 </div>
               </a>
             </SidebarMenuButton>

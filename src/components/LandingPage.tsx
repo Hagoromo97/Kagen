@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { ArrowRight, CalendarDays, MapPin, Package, Layers, Users } from "lucide-react"
 import landingBackground from "../../icon/landingp.jpeg"
+import weedLogo from "../../icon/weed.png"
 
 const FEATURES = [
   {
@@ -42,6 +43,7 @@ const FEATURES = [
 
 export function LandingPage({ onEnter }: { onEnter: () => void }) {
   const [visible, setVisible] = useState(false)
+  const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
     // Slight delay so the fade-in triggers after mount
@@ -50,8 +52,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
   }, [])
 
   const handleEnter = () => {
-    setVisible(false)
-    setTimeout(onEnter, 280)
+    setExiting(true)
+    setTimeout(onEnter, 450)
   }
 
   return (
@@ -59,6 +61,10 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       className={`fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background transition-opacity duration-300 ease-in-out ${visible ? "opacity-100" : "opacity-0"}`}
       style={{ paddingBottom: "calc(3rem + env(safe-area-inset-bottom))" }}
     >
+      {/* Fade-out overlay on enter */}
+      <div
+        className={`pointer-events-none absolute inset-0 z-50 bg-black transition-opacity duration-400 ease-in-out ${exiting ? "opacity-100" : "opacity-0"}`}
+      />
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${landingBackground})` }}
@@ -74,22 +80,14 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       {/* Hero */}
       <div className="relative z-10 flex flex-col items-center justify-center gap-7 px-5 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16 text-center">
         {/* App icon with animation */}
-        <div 
-          className={`flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-700 to-blue-400 shadow-2xl shadow-blue-500/40 transition-all duration-700 ${
+        <img
+          src={weedLogo}
+          alt="logo"
+          style={{ width: 90, height: 90 }}
+          className={`object-contain transition-all duration-700 ${
             visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
           }`}
-        >
-          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="4" width="18" height="17" rx="2.5" fill="white" opacity="0.15"/>
-            <rect x="3" y="4" width="18" height="17" rx="2.5" stroke="white" strokeWidth="1.5"/>
-            <path d="M3 9h18" stroke="white" strokeWidth="1.5"/>
-            <circle cx="8" cy="6.5" r="1" fill="white"/>
-            <circle cx="16" cy="6.5" r="1" fill="white"/>
-            <rect x="7" y="12.5" width="3" height="3" rx="0.5" fill="white" opacity="0.9"/>
-            <rect x="10.5" y="12.5" width="3" height="3" rx="0.5" fill="white" opacity="0.6"/>
-            <rect x="14" y="12.5" width="3" height="3" rx="0.5" fill="white" opacity="0.4"/>
-          </svg>
-        </div>
+        />
 
         {/* Brand with animation */}
         <div className={`flex flex-col gap-3 transition-all duration-700 ${

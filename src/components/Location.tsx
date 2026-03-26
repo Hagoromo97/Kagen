@@ -310,7 +310,7 @@ export function DeliveryTableDialog() {
             placeholder="Search code, name, route…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-8 pr-8 h-8 text-[11px] md:text-[11px] rounded-lg"
+            className="pl-8 pr-8 h-9 text-[11px] md:text-[11px] rounded-lg"
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -321,7 +321,7 @@ export function DeliveryTableDialog() {
         <button
           onClick={() => setFilterOpen(true)}
           className={cn(
-            "relative flex items-center gap-1.5 h-8 px-3 rounded-lg border text-xs font-medium transition-colors shrink-0",
+            "relative flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors shrink-0",
             (filterRoutes.size > 0 || filterDeliveries.size > 0 || hiddenColCount > 0)
               ? "border-primary bg-primary/10 text-primary"
               : "border-input bg-background text-muted-foreground hover:text-foreground hover:bg-muted/40"
@@ -340,7 +340,7 @@ export function DeliveryTableDialog() {
           <button
             onClick={() => setSortOpen(v => !v)}
             className={cn(
-              "flex items-center gap-1.5 h-8 px-3 rounded-lg border text-xs font-medium transition-colors",
+              "flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors",
               (sortKey !== "code" || sortDir !== "asc")
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-input bg-background text-muted-foreground hover:text-foreground hover:bg-muted/40"
