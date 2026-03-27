@@ -1,4 +1,4 @@
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 
@@ -72,8 +72,8 @@ const TILE_CONFIG: Record<"google-streets" | "google-satellite" | "osm", TileCon
 
 function createPinIcon(color: string, active = false): L.Icon {
   // Use the standard Leaflet marker images but tinted via a coloured shadow trick
-  // with a small size (16×26 instead of default 25×41)
-  const size: [number, number]   = active ? [20, 33] : [16, 26]
+  // with a compact size (14×23 instead of default 25×41)
+  const size: [number, number]   = active ? [18, 30] : [14, 23]
   const anchor: [number, number] = [size[0] / 2, size[1]]
 
   // Build a data-URI that recolours the default Leaflet pin SVG
@@ -92,7 +92,7 @@ function createPinIcon(color: string, active = false): L.Icon {
 }
 
 function createDotIcon(color: string, active = false): L.DivIcon {
-  const size = active ? 14 : 10
+  const size = active ? 12 : 9
   return L.divIcon({
     className: "",
     iconAnchor: [size / 2, size / 2],
@@ -102,8 +102,8 @@ function createDotIcon(color: string, active = false): L.DivIcon {
 }
 
 function createRingIcon(color: string, active = false): L.DivIcon {
-  const outer = active ? 18 : 14
-  const inner = active ? 8 : 6
+  const outer = active ? 16 : 12
+  const inner = active ? 7 : 5
   return L.divIcon({
     className: "",
     iconAnchor: [outer / 2, outer / 2],
@@ -178,29 +178,37 @@ interface MarkerItemProps {
 }
 
 const MarkerItem = memo(function MarkerItem({ point, markerStyle, color, isActive, onToggleActive }: MarkerItemProps) {
+  const markerRef = useRef<L.Marker | null>(null)
+
+  useEffect(() => {
+    if (!markerRef.current) return
+
+    if (isActive) {
+      markerRef.current.openPopup()
+      return
+    }
+
+    markerRef.current.closePopup()
+  }, [isActive])
+
   return (
     <Marker
+      ref={markerRef}
       position={[point.latitude, point.longitude]}
       icon={getCachedMarkerIcon(markerStyle, color, isActive)}
       eventHandlers={{
         click: () => onToggleActive(point.code),
+        popupopen: () => onToggleActive(point.code),
         popupclose: () => onToggleActive(""),
       }}
     >
-      {isActive && (
-        <Popup autoPan={false}>
-          <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 148, padding: "2px 0" }}>
-            {point.routeLabel && (
-              <p style={{ fontSize: 10, fontWeight: 600, color: "#888", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.04em" }}>{point.routeLabel}</p>
-            )}
-            <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 5, color: "#111", lineHeight: 1.3 }}>{point.name}</p>
-            <div style={{ fontSize: 11, color: "#666", lineHeight: 1.7 }}>
-              <div>Code: <span style={{ fontWeight: 600, color: "#333", fontFamily: "monospace" }}>{point.code}</span></div>
-              <div>Delivery: <span style={{ fontWeight: 700, color }}>{point.delivery}</span></div>
-            </div>
-          </div>
-        </Popup>
-      )}
+      <Popup autoPan={false}>
+        <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 160, padding: "2px 0" }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.35 }}>
+            {`${point.code} - ${point.name}`}
+          </p>
+        </div>
+      </Popup>
     </Marker>
   )
 }, (prev, next) => (
@@ -277,9 +285,9 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     if (!showPolyline) return [] as Array<{ id: string; positions: [number, number][] }>
 
     const grouped = new Map<string, [number, number][]>();
-    renderedPoints.forEach((point) => {
+    deferredPoints.forEach((point) => {
       const groupId = point.routeId ?? "single-route"
-      const positions = grouped.get(groupId) ?? []
+      const positions = grouped.get(groupId) ?? (startPoint ? [[startPoint.lat, startPoint.lng]] as [number, number][] : [])
       positions.push([point.latitude, point.longitude])
       grouped.set(groupId, positions)
     })
@@ -287,7 +295,7 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     return Array.from(grouped.entries())
       .map(([id, positions]) => ({ id, positions }))
       .filter((item) => item.positions.length >= 2)
-  }, [renderedPoints, showPolyline])
+  }, [deferredPoints, showPolyline, startPoint])
 
   return (
     <MapContainer

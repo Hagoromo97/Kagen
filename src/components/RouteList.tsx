@@ -143,6 +143,18 @@ function formatKm(km: number): string {
   return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)} Km`
 }
 
+function areSetsEqual<T>(left: Set<T>, right: Set<T>): boolean {
+  if (left.size !== right.size) return false
+  for (const value of left) {
+    if (!right.has(value)) return false
+  }
+  return true
+}
+
+function arePointsEqual(left: { lat: number; lng: number }, right: { lat: number; lng: number }): boolean {
+  return left.lat === right.lat && left.lng === right.lng
+}
+
 const DEFAULT_ROUTES: Route[] = [
   {
     id: "route-1",
@@ -480,6 +492,15 @@ export function RouteList() {
   const currentRoute = routes.find(r => r.id === currentRouteId)
   const deliveryPoints = currentRoute?.deliveryPoints || []
 
+  useEffect(() => {
+    if (routes.length === 0) return
+    if (routes.some(route => route.id === currentRouteId)) return
+
+    const fallbackRouteId = routes[0].id
+    setCurrentRouteId(fallbackRouteId)
+    setCombinedRouteIds(new Set([fallbackRouteId]))
+  }, [routes, currentRouteId])
+
   const [combinedRouteIds, setCombinedRouteIds] = useState<Set<string>>(() => new Set([currentRouteId]))
 
   const routeIndexById = useMemo(() => {
@@ -515,6 +536,7 @@ export function RouteList() {
 
     return result
   }, [routes, combinedRouteIds, routeColorPalette, routeIndexById])
+
   const setDeliveryPoints = (updater: (prev: DeliveryPoint[]) => DeliveryPoint[]) => {
     setHasUnsavedChanges(true)
     setRoutes(prev => prev.map(route => 
@@ -633,6 +655,28 @@ export function RouteList() {
   const [mapStyle, setMapStyle] = useState<'google-streets' | 'google-satellite' | 'osm'>(getMapStyle)
   const [kmMode, setKmMode] = useState<'direct' | 'step'>('direct')
   const [kmStartPoint, setKmStartPoint] = useState<{ lat: number; lng: number }>(DEFAULT_MAP_CENTER)
+  const [draftCombinedRouteIds, setDraftCombinedRouteIds] = useState<Set<string>>(new Set([currentRouteId]))
+  const [routeSettingsBaseline, setRouteSettingsBaseline] = useState<Set<string>>(new Set([currentRouteId]))
+  const [draftShowPolyline, setDraftShowPolyline] = useState(false)
+  const [draftMarkerStyle, setDraftMarkerStyle] = useState<'pin' | 'dot' | 'ring'>('pin')
+  const [draftMapStyle, setDraftMapStyle] = useState<'google-streets' | 'google-satellite' | 'osm'>(getMapStyle)
+  const [draftKmMode, setDraftKmMode] = useState<'direct' | 'step'>('direct')
+  const [draftKmStartPoint, setDraftKmStartPoint] = useState<{ lat: number; lng: number }>(DEFAULT_MAP_CENTER)
+  const [markerPolyBaseline, setMarkerPolyBaseline] = useState<{
+    showPolyline: boolean
+    markerStyle: 'pin' | 'dot' | 'ring'
+    mapStyle: 'google-streets' | 'google-satellite' | 'osm'
+    kmMode: 'direct' | 'step'
+    kmStartPoint: { lat: number; lng: number }
+  }>({
+    showPolyline: false,
+    markerStyle: 'pin',
+    mapStyle: getMapStyle(),
+    kmMode: 'direct',
+    kmStartPoint: DEFAULT_MAP_CENTER,
+  })
+  const [draftCoordinates, setDraftCoordinates] = useState<Record<string, { lat: string; lng: string }>>({})
+  const [coordinateBaseline, setCoordinateBaseline] = useState<Record<string, { lat: string; lng: string }>>({})
   const [sortConflictPending, setSortConflictPending] = useState<SortType | null>(null)
 
   const openRouteDetail = useCallback((routeId: string) => {
@@ -651,6 +695,39 @@ export function RouteList() {
   useEffect(() => {
     try { localStorage.setItem(LS_MAP_STYLE, mapStyle) } catch { /**/ }
   }, [mapStyle])
+
+  useEffect(() => {
+    if (!mapSettingsOpen) return
+
+    const nextRouteIds = new Set(combinedRouteIds)
+    const nextMarkerPolyBaseline = {
+      showPolyline,
+      markerStyle,
+      mapStyle,
+      kmMode,
+      kmStartPoint: { ...kmStartPoint },
+    }
+    const nextCoordinates = Object.fromEntries(
+      deliveryPoints.map((point) => [
+        point.code,
+        {
+          lat: Number.isFinite(point.latitude) ? String(point.latitude) : '',
+          lng: Number.isFinite(point.longitude) ? String(point.longitude) : '',
+        },
+      ])
+    )
+
+    setDraftCombinedRouteIds(nextRouteIds)
+    setRouteSettingsBaseline(new Set(nextRouteIds))
+    setDraftShowPolyline(showPolyline)
+    setDraftMarkerStyle(markerStyle)
+    setDraftMapStyle(mapStyle)
+    setDraftKmMode(kmMode)
+    setDraftKmStartPoint({ ...kmStartPoint })
+    setMarkerPolyBaseline(nextMarkerPolyBaseline)
+    setDraftCoordinates(nextCoordinates)
+    setCoordinateBaseline(nextCoordinates)
+  }, [mapSettingsOpen, combinedRouteIds, showPolyline, markerStyle, mapStyle, kmMode, kmStartPoint, deliveryPoints])
 
   // Column Customize
   const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS)
@@ -799,6 +876,145 @@ export function RouteList() {
     return sortByActive(deliveryPoints)
   }, [deliveryPoints, activeSortConfig, savedRowOrders])
 
+  const mapDeliveryPoints = useMemo(() => {
+    // For single-route view, follow the table/list order currently shown to user.
+    const isSingleRouteView = combinedRouteIds.size <= 1
+      && currentRouteId !== ""
+      && combinedRouteIds.has(currentRouteId)
+
+    if (isSingleRouteView) {
+      return sortedDeliveryPoints.map((point) => ({
+        ...point,
+        routeId: currentRouteId,
+      }))
+    }
+
+    return combinedDeliveryPoints
+  }, [combinedRouteIds, currentRouteId, sortedDeliveryPoints, combinedDeliveryPoints])
+
+  const routeDraftChanged = useMemo(
+    () => !areSetsEqual(draftCombinedRouteIds, combinedRouteIds),
+    [draftCombinedRouteIds, combinedRouteIds]
+  )
+
+  const routeCanReset = useMemo(
+    () => !areSetsEqual(combinedRouteIds, routeSettingsBaseline),
+    [combinedRouteIds, routeSettingsBaseline]
+  )
+
+  const markerPolyDraftChanged = useMemo(
+    () => (
+      draftShowPolyline !== showPolyline
+      || draftMarkerStyle !== markerStyle
+      || draftMapStyle !== mapStyle
+      || draftKmMode !== kmMode
+      || !arePointsEqual(draftKmStartPoint, kmStartPoint)
+    ),
+    [draftShowPolyline, showPolyline, draftMarkerStyle, markerStyle, draftMapStyle, mapStyle, draftKmMode, kmMode, draftKmStartPoint, kmStartPoint]
+  )
+
+  const markerPolyCanReset = useMemo(
+    () => (
+      showPolyline !== markerPolyBaseline.showPolyline
+      || markerStyle !== markerPolyBaseline.markerStyle
+      || mapStyle !== markerPolyBaseline.mapStyle
+      || kmMode !== markerPolyBaseline.kmMode
+      || !arePointsEqual(kmStartPoint, markerPolyBaseline.kmStartPoint)
+    ),
+    [showPolyline, markerStyle, mapStyle, kmMode, kmStartPoint, markerPolyBaseline]
+  )
+
+  const coordinateDraftChanged = useMemo(() => {
+    const keys = new Set([...Object.keys(draftCoordinates), ...Object.keys(coordinateBaseline)])
+    for (const key of keys) {
+      const draft = draftCoordinates[key]
+      const baseline = coordinateBaseline[key]
+      if (!draft || !baseline) return true
+      if (draft.lat !== baseline.lat || draft.lng !== baseline.lng) return true
+    }
+    return false
+  }, [draftCoordinates, coordinateBaseline])
+
+  const applyRouteSettings = () => {
+    const next = new Set(draftCombinedRouteIds)
+    setCombinedRouteIds(next)
+    setMapRefitToken((value) => value + 1)
+  }
+
+  const resetRouteSettings = () => {
+    const next = new Set(routeSettingsBaseline)
+    setCombinedRouteIds(next)
+    setDraftCombinedRouteIds(new Set(next))
+    setMapRefitToken((value) => value + 1)
+  }
+
+  const applyMarkerPolySettings = () => {
+    setShowPolyline(draftShowPolyline)
+    setMarkerStyle(draftMarkerStyle)
+    setMapStyle(draftMapStyle)
+    setKmMode(draftKmMode)
+    setKmStartPoint({ ...draftKmStartPoint })
+    setMapRefitToken((value) => value + 1)
+    setMapResizeToken((value) => value + 1)
+  }
+
+  const resetMarkerPolySettings = () => {
+    setShowPolyline(markerPolyBaseline.showPolyline)
+    setMarkerStyle(markerPolyBaseline.markerStyle)
+    setMapStyle(markerPolyBaseline.mapStyle)
+    setKmMode(markerPolyBaseline.kmMode)
+    setKmStartPoint({ ...markerPolyBaseline.kmStartPoint })
+    setDraftShowPolyline(markerPolyBaseline.showPolyline)
+    setDraftMarkerStyle(markerPolyBaseline.markerStyle)
+    setDraftMapStyle(markerPolyBaseline.mapStyle)
+    setDraftKmMode(markerPolyBaseline.kmMode)
+    setDraftKmStartPoint({ ...markerPolyBaseline.kmStartPoint })
+    setMapRefitToken((value) => value + 1)
+    setMapResizeToken((value) => value + 1)
+  }
+
+  const saveCoordinateSettings = () => {
+    if (!isEditMode || !currentRoute) return
+
+    const changedKeys = new Set<string>()
+    const nextDeliveryPoints = currentRoute.deliveryPoints.map((point) => {
+      const draft = draftCoordinates[point.code]
+      if (!draft) return point
+
+      const parsedLat = Number.parseFloat(draft.lat)
+      const parsedLng = Number.parseFloat(draft.lng)
+      const nextLatitude = Number.isFinite(parsedLat) ? parsedLat : point.latitude
+      const nextLongitude = Number.isFinite(parsedLng) ? parsedLng : point.longitude
+
+      if (nextLatitude !== point.latitude) changedKeys.add(`${point.code}-latitude`)
+      if (nextLongitude !== point.longitude) changedKeys.add(`${point.code}-longitude`)
+
+      if (nextLatitude === point.latitude && nextLongitude === point.longitude) return point
+
+      return {
+        ...point,
+        latitude: nextLatitude,
+        longitude: nextLongitude,
+      }
+    })
+
+    if (changedKeys.size === 0) return
+
+    setHasUnsavedChanges(true)
+    setRoutes((prev) => prev.map((route) => (
+      route.id === currentRouteId
+        ? { ...route, deliveryPoints: nextDeliveryPoints }
+        : route
+    )))
+    setPendingCellEdits((prev) => {
+      const next = new Set(prev)
+      changedKeys.forEach((key) => next.add(key))
+      return next
+    })
+    setCoordinateBaseline(draftCoordinates)
+    setMapRefitToken((value) => value + 1)
+  }
+
   // Effective columns – per-route override wins, falls back to global columns
   const effectiveColumns = routeColumnOverrides[currentRouteId] ?? columns
 
@@ -806,18 +1022,6 @@ export function RouteList() {
     () => effectiveColumns.filter(c => c.visible && c.key !== 'action'),
     [effectiveColumns]
   )
-
-  const updatePointCoordinate = (pointCode: string, field: 'latitude' | 'longitude', nextValue: number) => {
-    if (!isEditMode) return
-    setDeliveryPoints(prev => prev.map(point => (
-      point.code === pointCode ? { ...point, [field]: nextValue } : point
-    )))
-    setPendingCellEdits(prev => {
-      const next = new Set(prev)
-      next.add(`${pointCode}-${field}`)
-      return next
-    })
-  }
 
   const isActionColumnVisible = useMemo(
     () => effectiveColumns.some(c => c.key === 'action' && c.visible),
@@ -2043,7 +2247,7 @@ export function RouteList() {
                     <div className="flex-1 overflow-auto scroll-smooth">
                     {dialogView === 'map' ? (
                       <div className="h-full min-h-[400px] relative">
-                        <DeliveryMap deliveryPoints={combinedDeliveryPoints} scrollZoom={true} showPolyline={showPolyline} markerStyle={markerStyle} mapStyle={mapStyle} startPoint={kmStartPoint} includeStartInBounds={false} refitToken={mapRefitToken} resizeToken={mapResizeToken} />
+                        <DeliveryMap deliveryPoints={mapDeliveryPoints} scrollZoom={true} showPolyline={showPolyline} markerStyle={markerStyle} mapStyle={mapStyle} startPoint={kmStartPoint} includeStartInBounds={false} refitToken={mapRefitToken} resizeToken={mapResizeToken} />
                         <button
                           onClick={() => {
                             setCombinedRouteIds(new Set([route.id]))
@@ -3118,7 +3322,7 @@ export function RouteList() {
                   .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
                   .map(r => {
                     const isCurrentRoute = r.id === currentRouteId
-                    const checked = combinedRouteIds.has(r.id)
+                    const checked = draftCombinedRouteIds.has(r.id)
                     const rColor = r.color ?? routeColorPalette[(routes.indexOf(r)) % routeColorPalette.length] ?? '#6b7280'
                     return (
                       <label
@@ -3134,7 +3338,7 @@ export function RouteList() {
                           disabled={isCurrentRoute}
                           onChange={() => {
                             if (isCurrentRoute) return
-                            setCombinedRouteIds(prev => {
+                            setDraftCombinedRouteIds(prev => {
                               const next = new Set(prev)
                               if (next.has(r.id)) next.delete(r.id)
                               else next.add(r.id)
@@ -3167,9 +3371,9 @@ export function RouteList() {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setMarkerStyle(option.value)}
+                        onClick={() => setDraftMarkerStyle(option.value)}
                         className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                          markerStyle === option.value
+                          draftMarkerStyle === option.value
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
                         }`}
@@ -3191,9 +3395,9 @@ export function RouteList() {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setMapStyle(option.value)}
+                        onClick={() => setDraftMapStyle(option.value)}
                         className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                          mapStyle === option.value
+                          draftMapStyle === option.value
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
                         }`}
@@ -3208,8 +3412,8 @@ export function RouteList() {
                   <input
                     type="checkbox"
                     className="w-4 h-4 rounded accent-primary cursor-pointer"
-                    checked={showPolyline}
-                    onChange={(e) => setShowPolyline(e.target.checked)}
+                    checked={draftShowPolyline}
+                    onChange={(e) => setDraftShowPolyline(e.target.checked)}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold">Show Polyline</p>
@@ -3222,9 +3426,9 @@ export function RouteList() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => setKmMode('direct')}
+                      onClick={() => setDraftKmMode('direct')}
                       className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                        kmMode === 'direct'
+                        draftKmMode === 'direct'
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
                       }`}
@@ -3233,9 +3437,9 @@ export function RouteList() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setKmMode('step')}
+                      onClick={() => setDraftKmMode('step')}
                       className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                        kmMode === 'step'
+                        draftKmMode === 'step'
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
                       }`}
@@ -3250,10 +3454,10 @@ export function RouteList() {
                       <Input
                         type="number"
                         step="0.000001"
-                        value={Number.isFinite(kmStartPoint.lat) ? kmStartPoint.lat : ''}
+                        value={draftKmStartPoint.lat}
                         onChange={(e) => {
                           const next = Number.parseFloat(e.target.value)
-                          if (Number.isFinite(next)) setKmStartPoint(prev => ({ ...prev, lat: next }))
+                          if (Number.isFinite(next)) setDraftKmStartPoint(prev => ({ ...prev, lat: next }))
                         }}
                         className="h-8 mt-1 text-xs"
                       />
@@ -3263,10 +3467,10 @@ export function RouteList() {
                       <Input
                         type="number"
                         step="0.000001"
-                        value={Number.isFinite(kmStartPoint.lng) ? kmStartPoint.lng : ''}
+                        value={draftKmStartPoint.lng}
                         onChange={(e) => {
                           const next = Number.parseFloat(e.target.value)
-                          if (Number.isFinite(next)) setKmStartPoint(prev => ({ ...prev, lng: next }))
+                          if (Number.isFinite(next)) setDraftKmStartPoint(prev => ({ ...prev, lng: next }))
                         }}
                         className="h-8 mt-1 text-xs"
                       />
@@ -3277,7 +3481,7 @@ export function RouteList() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setKmStartPoint(DEFAULT_MAP_CENTER)}
+                      onClick={() => setDraftKmStartPoint(DEFAULT_MAP_CENTER)}
                     >
                       Reset Start Point
                     </Button>
@@ -3302,8 +3506,15 @@ export function RouteList() {
                   .slice()
                   .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }))
                   .map(point => {
+                    const draftCoordinate = draftCoordinates[point.code]
+                    const baselineCoordinate = coordinateBaseline[point.code]
+                    const hasDraftCoordinateChange = !!draftCoordinate && !!baselineCoordinate && (
+                      draftCoordinate.lat !== baselineCoordinate.lat || draftCoordinate.lng !== baselineCoordinate.lng
+                    )
                     const hasPendingCoordinate =
-                      pendingCellEdits.has(`${point.code}-latitude`) || pendingCellEdits.has(`${point.code}-longitude`)
+                      hasDraftCoordinateChange
+                      || pendingCellEdits.has(`${point.code}-latitude`)
+                      || pendingCellEdits.has(`${point.code}-longitude`)
 
                     return (
                       <div
@@ -3320,11 +3531,15 @@ export function RouteList() {
                         <Input
                           type="number"
                           step="0.000001"
-                          value={Number.isFinite(point.latitude) ? point.latitude : ''}
+                          value={draftCoordinates[point.code]?.lat ?? ''}
                           onChange={(e) => {
-                            const next = Number.parseFloat(e.target.value)
-                            if (!Number.isFinite(next)) return
-                            updatePointCoordinate(point.code, 'latitude', next)
+                            setDraftCoordinates((prev) => ({
+                              ...prev,
+                              [point.code]: {
+                                lat: e.target.value,
+                                lng: prev[point.code]?.lng ?? (Number.isFinite(point.longitude) ? String(point.longitude) : ''),
+                              },
+                            }))
                           }}
                           disabled={!isEditMode}
                           className="h-6 text-[10px] px-1.5 font-mono text-center"
@@ -3333,11 +3548,15 @@ export function RouteList() {
                         <Input
                           type="number"
                           step="0.000001"
-                          value={Number.isFinite(point.longitude) ? point.longitude : ''}
+                          value={draftCoordinates[point.code]?.lng ?? ''}
                           onChange={(e) => {
-                            const next = Number.parseFloat(e.target.value)
-                            if (!Number.isFinite(next)) return
-                            updatePointCoordinate(point.code, 'longitude', next)
+                            setDraftCoordinates((prev) => ({
+                              ...prev,
+                              [point.code]: {
+                                lat: prev[point.code]?.lat ?? (Number.isFinite(point.latitude) ? String(point.latitude) : ''),
+                                lng: e.target.value,
+                              },
+                            }))
                           }}
                           disabled={!isEditMode}
                           className="h-6 text-[10px] px-1.5 font-mono text-center"
@@ -3353,7 +3572,53 @@ export function RouteList() {
             <p className="text-xs text-muted-foreground">
               {combinedDeliveryPoints.length} points shown
             </p>
-            <Button size="sm" onClick={() => setMapSettingsOpen(false)}>Close</Button>
+            <div className="flex items-center gap-4">
+              {mapSettingsTab === 'route' && routeCanReset && (
+                <button
+                  type="button"
+                  onClick={resetRouteSettings}
+                  className="text-sm font-semibold text-red-600 transition-colors hover:text-red-700"
+                >
+                  Reset
+                </button>
+              )}
+              {mapSettingsTab === 'route' && routeDraftChanged && (
+                <button
+                  type="button"
+                  onClick={applyRouteSettings}
+                  className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
+                >
+                  Apply
+                </button>
+              )}
+              {mapSettingsTab === 'markerpoly' && markerPolyCanReset && (
+                <button
+                  type="button"
+                  onClick={resetMarkerPolySettings}
+                  className="text-sm font-semibold text-red-600 transition-colors hover:text-red-700"
+                >
+                  Reset
+                </button>
+              )}
+              {mapSettingsTab === 'markerpoly' && markerPolyDraftChanged && (
+                <button
+                  type="button"
+                  onClick={applyMarkerPolySettings}
+                  className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
+                >
+                  Apply
+                </button>
+              )}
+              {mapSettingsTab === 'coordinate' && isEditMode && coordinateDraftChanged && (
+                <button
+                  type="button"
+                  onClick={saveCoordinateSettings}
+                  className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
+                >
+                  Save
+                </button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
