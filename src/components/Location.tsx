@@ -150,7 +150,6 @@ export function DeliveryTableDialog() {
 
   // Load saved row orders when exactly one route is filtered
   useEffect(() => {
-    const prev = prevFilterRoutesRef.current
     prevFilterRoutesRef.current = filterRoutes
     // Reset custom sort whenever filter changes
     setActiveCustomSort(null)
