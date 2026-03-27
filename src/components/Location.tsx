@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,12 @@ interface FlatPoint extends DeliveryPoint {
 
 type SortKey = "code" | "name" | "delivery" | "route"
 type SortDir = "asc" | "desc"
+
+interface SavedRowOrder {
+  id: string
+  label: string
+  order: string[]  // array of point.code in order
+}
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 const ALL_COLUMNS = [
@@ -138,6 +144,30 @@ export function DeliveryTableDialog() {
   // Sort — default: code asc
   const [sortKey, setSortKey] = useState<SortKey>("code")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [customSortOrders, setCustomSortOrders] = useState<SavedRowOrder[]>([])
+  const [activeCustomSort, setActiveCustomSort] = useState<SavedRowOrder | null>(null)
+  const prevFilterRoutesRef = useRef<Set<string>>(new Set())
+
+  // Load saved row orders when exactly one route is filtered
+  useEffect(() => {
+    const prev = prevFilterRoutesRef.current
+    prevFilterRoutesRef.current = filterRoutes
+    // Reset custom sort whenever filter changes
+    setActiveCustomSort(null)
+    if (filterRoutes.size === 1) {
+      const [routeId] = filterRoutes
+      try {
+        const stored = localStorage.getItem(`fcalendar_my_sorts_${routeId}`)
+        const parsed = stored ? JSON.parse(stored) : []
+        setCustomSortOrders(Array.isArray(parsed) ? parsed : [])
+      } catch {
+        setCustomSortOrders([])
+      }
+    } else {
+      setCustomSortOrders([])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterRoutes])
 
   const fetchRoutes = useCallback(async () => {
     setLoading(true)
@@ -341,7 +371,7 @@ export function DeliveryTableDialog() {
             onClick={() => setSortOpen(v => !v)}
             className={cn(
               "flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors",
-              (sortKey !== "code" || sortDir !== "asc")
+              (activeCustomSort || sortKey !== "code" || sortDir !== "asc")
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-input bg-background text-muted-foreground hover:text-foreground hover:bg-muted/40"
             )}
@@ -352,7 +382,7 @@ export function DeliveryTableDialog() {
           {sortOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setSortOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border rounded-xl shadow-lg w-40 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border rounded-xl shadow-lg w-44 py-1 overflow-hidden">
                 {([
                   { key: "code" as SortKey,     label: "Code" },
                   { key: "name" as SortKey,     label: "Name" },
@@ -361,20 +391,39 @@ export function DeliveryTableDialog() {
                 ]).map(({ key, label }) => (
                   <button
                     key={key}
-                    onClick={() => { handleSort(key); setSortOpen(false) }}
+                    onClick={() => { handleSort(key); setActiveCustomSort(null); setSortOpen(false) }}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-muted/60 transition-colors",
-                      sortKey === key ? "text-primary font-semibold" : "text-foreground"
+                      !activeCustomSort && sortKey === key ? "text-primary font-semibold" : "text-foreground"
                     )}
                   >
                     {label}
-                    {sortKey === key
+                    {!activeCustomSort && sortKey === key
                       ? (sortDir === "asc"
                           ? <ChevronUp className="w-3 h-3" />
                           : <ChevronDownIcon className="w-3 h-3" />)
                       : <ChevronsUpDown className="w-3 h-3 text-muted-foreground/40" />}
                   </button>
                 ))}
+                {customSortOrders.length > 0 && (
+                  <>
+                    <div className="mx-2 my-1 border-t border-border" />
+                    <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">My Sort List</p>
+                    {customSortOrders.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => { setActiveCustomSort(s); setSortOpen(false) }}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-muted/60 transition-colors",
+                          activeCustomSort?.id === s.id ? "text-primary font-semibold" : "text-foreground"
+                        )}
+                      >
+                        <span className="truncate">{s.label}</span>
+                        {activeCustomSort?.id === s.id && <Check className="w-3 h-3 shrink-0" />}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </>
           )}

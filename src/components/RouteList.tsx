@@ -732,8 +732,7 @@ export function RouteList() {
   // Column Customize
   const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS)
   const [draftColumns, setDraftColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS)
-  const [savedColumns, setSavedColumns] = useState<ColumnDef[] | null>(null)
-  const [savedSort, setSavedSort] = useState<SortType | undefined>(undefined)
+
   const [columnApplyScopeOpen, setColumnApplyScopeOpen] = useState(false)
   const [routeColumnOverrides, setRouteColumnOverrides] = useState<Record<string, ColumnDef[]>>(() => {
     try {
@@ -754,7 +753,10 @@ export function RouteList() {
     () => JSON.stringify(draftColumns) !== JSON.stringify(routeColumnOverrides[currentRouteId] ?? columns),
     [draftColumns, columns, routeColumnOverrides, currentRouteId]
   )
-  const columnsHasSaved = savedColumns !== null
+  const columnsCanReset = useMemo(
+    () => JSON.stringify(routeColumnOverrides[currentRouteId] ?? columns) !== JSON.stringify(DEFAULT_COLUMNS),
+    [routeColumnOverrides, currentRouteId, columns]
+  )
 
   // Row Customize
   type RowOrderEntry = { code: string; position: string; name: string; delivery: string }
@@ -3858,10 +3860,22 @@ export function RouteList() {
           <div className="px-5 py-3.5 border-t border-border shrink-0 bg-background">
             {settingsMenu === 'column' && (
               <div className="flex items-center gap-3">
-                {columnsHasSaved && (
+                {columnsCanReset && (
                   <button
                     className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
-                    onClick={() => { setDraftColumns([...DEFAULT_COLUMNS]); setSavedColumns(null) }}
+                    onClick={() => {
+                      setDraftColumns([...DEFAULT_COLUMNS])
+                      setColumns([...DEFAULT_COLUMNS])
+                      setRouteColumnOverrides(prev => {
+                        const updated = { ...prev }
+                        delete updated[currentRouteId]
+                        try {
+                          if (Object.keys(updated).length === 0) localStorage.removeItem('fcalendar_route_columns')
+                          else localStorage.setItem('fcalendar_route_columns', JSON.stringify(updated))
+                        } catch {}
+                        return updated
+                      })
+                    }}
                   >
                     Reset to Default
                   </button>
@@ -3901,10 +3915,10 @@ export function RouteList() {
 
             {settingsMenu === 'sorting' && (
               <div className="flex items-center gap-3">
-                {savedSort !== undefined && (
+                {activeSortConfig !== null && (
                   <button
                     className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
-                    onClick={() => { setDraftSort(null); setActiveSortConfig(null); setSavedSort(undefined) }}
+                    onClick={() => { setDraftSort(null); setActiveSortConfig(null) }}
                   >
                     Reset to Default
                   </button>
@@ -3918,7 +3932,6 @@ export function RouteList() {
                         setSortConflictPending(draftSort)
                       } else {
                         setActiveSortConfig(draftSort)
-                        setSavedSort(draftSort)
                         setSettingsOpen(false)
                       }
                     }}
@@ -3954,7 +3967,6 @@ export function RouteList() {
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border bg-background hover:bg-muted/60 transition-colors text-left group"
               onClick={() => {
                 setColumns([...draftColumns])
-                setSavedColumns([...draftColumns])
                 // Clear all per-route overrides so global applies everywhere
                 setRouteColumnOverrides({})
                 try { localStorage.removeItem('fcalendar_route_columns') } catch {}
@@ -3980,7 +3992,6 @@ export function RouteList() {
                   try { localStorage.setItem('fcalendar_route_columns', JSON.stringify(updated)) } catch {}
                   return updated
                 })
-                setSavedColumns([...draftColumns])
                 setColumnApplyScopeOpen(false)
                 setSettingsOpen(false)
               }}
@@ -4020,7 +4031,6 @@ export function RouteList() {
             <Button variant="outline" size="sm" onClick={() => setSortConflictPending(null)}>Cancel</Button>
             <Button size="sm" onClick={() => {
               setActiveSortConfig(sortConflictPending)
-              setSavedSort(sortConflictPending)
               setSortConflictPending(null)
               setSettingsOpen(false)
             }}>Apply Anyway</Button>
