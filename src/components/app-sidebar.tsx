@@ -77,6 +77,11 @@ const data = {
           url: "#",
           page: "deliveries",
         },
+        {
+          title: "Playground",
+          url: "#",
+          page: "playground",
+        },
       ],
     },
     {
@@ -100,7 +105,6 @@ const data = {
     },
   ],
   settingsItems: [
-    { title: "Profile",     page: "settings-profile" },
     { title: "Font",        page: "settings-appearance-font" },
     { title: "Route Colours", page: "settings-route-colors" },
     { title: "Storage",     page: "settings-storage" },

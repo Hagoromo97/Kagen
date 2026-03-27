@@ -105,6 +105,19 @@ interface Route {
   updatedAt?: string
 }
 
+interface RouteListProps {
+  variant?: 'route-list' | 'playground'
+}
+
+interface ExistingLocationOption {
+  code: string
+  name: string
+  delivery: string
+  latitude: number
+  longitude: number
+  routeName: string
+}
+
 type EditableField = 'code' | 'name' | 'latitude' | 'longitude'
 
 // Returns true if the delivery point is active on the given date
@@ -325,7 +338,14 @@ const SINGLE_ROUTE_MARKER_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899',
 ]
 
-export function RouteList() {
+export function RouteList({ variant = 'route-list' }: RouteListProps) {
+  const isPlaygroundMode = variant === 'playground'
+  const duplicateCheckScope: 'global' | 'current' = isPlaygroundMode ? 'current' : 'global'
+  const pageTitle = isPlaygroundMode ? 'Playground' : 'Route List'
+  const addDialogTitle = isPlaygroundMode ? 'Add Existing Location' : 'Add New Delivery Point'
+  const addDialogDescription = isPlaygroundMode
+    ? 'Choose a location from existing Location records'
+    : 'Enter details for the new delivery location'
   const { isEditMode, hasUnsavedChanges, isSaving, setHasUnsavedChanges, registerSaveHandler, saveChanges, registerDiscardHandler } = useEditMode()
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"))
   useEffect(() => {
@@ -603,6 +623,7 @@ export function RouteList() {
     longitude: 0,
     descriptions: [] as { key: string; value: string }[]
   })
+  const [selectedExistingLocationCode, setSelectedExistingLocationCode] = useState("")
   const [codeError, setCodeError] = useState<string>("")
   const [actionModalOpen, setActionModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -616,6 +637,42 @@ export function RouteList() {
   const [editLabelInput, setEditLabelInput] = useState<Record<string, string>>({})
   // tracks locally-edited cells that haven't been pushed to DB yet
   const [pendingCellEdits, setPendingCellEdits] = useState<Set<string>>(new Set())
+
+  const existingLocationOptions = useMemo<ExistingLocationOption[]>(() => {
+    const byCode = new Map<string, ExistingLocationOption>()
+    routes.forEach(route => {
+      route.deliveryPoints.forEach(point => {
+        if (!byCode.has(point.code)) {
+          byCode.set(point.code, {
+            code: point.code,
+            name: point.name,
+            delivery: point.delivery,
+            latitude: point.latitude,
+            longitude: point.longitude,
+            routeName: route.name,
+          })
+        }
+      })
+    })
+
+    return Array.from(byCode.values()).sort((a, b) =>
+      a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
+    )
+  }, [routes])
+
+  useEffect(() => {
+    if (addPointDialogOpen) return
+    setSelectedExistingLocationCode("")
+    setNewPoint({
+      code: "",
+      name: "",
+      delivery: "Daily",
+      latitude: 0,
+      longitude: 0,
+      descriptions: []
+    })
+    setCodeError("")
+  }, [addPointDialogOpen])
 
   const normalizePointCode = (value: string) => value.replace(/\D/g, "").slice(0, 4)
   const isPointCodeValid = (code: string) => /^\d{1,4}$/.test(code)
@@ -1137,7 +1194,7 @@ export function RouteList() {
 
     // Cross-route duplicate check when editing code
     if (editingCell.field === 'code' && nextValue !== editingCell.rowCode) {
-      const dupMsg = findDuplicateRoute(nextValue)
+      const dupMsg = findDuplicateRoute(nextValue, duplicateCheckScope)
       if (dupMsg) {
         setEditError(dupMsg)
         return
@@ -1195,7 +1252,12 @@ export function RouteList() {
     }
   }
 
-  const findDuplicateRoute = (code: string): string | null => {
+  const findDuplicateRoute = (code: string, scope: 'global' | 'current' = 'global'): string | null => {
+    if (scope === 'current') {
+      const existsInCurrent = deliveryPoints.some(point => point.code === code)
+      return existsInCurrent ? "Code already exists in this route" : null
+    }
+
     for (const route of routes) {
       const exists = route.deliveryPoints.some(p => p.code === code)
       if (exists) {
@@ -1207,12 +1269,17 @@ export function RouteList() {
   }
 
   const handleAddNewPoint = () => {
+    if (isPlaygroundMode && !selectedExistingLocationCode) {
+      setCodeError("Please select an existing location")
+      return
+    }
+
     if (!isPointCodeValid(newPoint.code)) {
       setCodeError("Code must be numeric and up to 4 digits")
       return
     }
 
-    const dupMsg = findDuplicateRoute(newPoint.code)
+    const dupMsg = findDuplicateRoute(newPoint.code, duplicateCheckScope)
     if (dupMsg) {
       setCodeError(dupMsg)
       return
@@ -1253,7 +1320,37 @@ export function RouteList() {
       return
     }
 
-    const dupMsg = findDuplicateRoute(masked)
+    const dupMsg = findDuplicateRoute(masked, duplicateCheckScope)
+    setCodeError(dupMsg ?? "")
+  }
+
+  const handleExistingLocationSelect = (code: string) => {
+    setSelectedExistingLocationCode(code)
+    const selected = existingLocationOptions.find(option => option.code === code)
+
+    if (!selected) {
+      setNewPoint({
+        code: "",
+        name: "",
+        delivery: "Daily",
+        latitude: 0,
+        longitude: 0,
+        descriptions: []
+      })
+      setCodeError("")
+      return
+    }
+
+    setNewPoint({
+      code: selected.code,
+      name: selected.name,
+      delivery: selected.delivery || 'Daily',
+      latitude: selected.latitude,
+      longitude: selected.longitude,
+      descriptions: []
+    })
+
+    const dupMsg = findDuplicateRoute(selected.code, duplicateCheckScope)
     setCodeError(dupMsg ?? "")
   }
 
@@ -1272,7 +1369,7 @@ export function RouteList() {
     }
 
     if (masked !== editingCell?.rowCode) {
-      const msg = findDuplicateRoute(masked)
+      const msg = findDuplicateRoute(masked, duplicateCheckScope)
       setEditError(msg ?? "")
     } else {
       setEditError("")
@@ -1666,7 +1763,7 @@ export function RouteList() {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <List className="size-4 shrink-0 text-primary" />
-            <h2 className="text-base font-semibold tracking-tight text-foreground">Route List</h2>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">{pageTitle}</h2>
           </div>
           <p className="ml-7 text-sm text-muted-foreground leading-relaxed">
             {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
@@ -2717,27 +2814,64 @@ export function RouteList() {
                 <Dialog open={addPointDialogOpen} onOpenChange={setAddPointDialogOpen}>
                   <DialogContent className="max-w-md">
                     <DialogHeader>
-                      <DialogTitle>Add New Delivery Point</DialogTitle>
+                      <DialogTitle>{addDialogTitle}</DialogTitle>
                       <DialogDescription>
-                        Enter details for the new delivery location
+                        {addDialogDescription}
                       </DialogDescription>
                     </DialogHeader>
                     
                     <div className="space-y-4 py-4">
+                      {isPlaygroundMode && (
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-medium">
+                            Existing Location <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            className="w-full p-2 rounded border border-border bg-background text-[11px] md:text-[11px]"
+                            value={selectedExistingLocationCode}
+                            onChange={(e) => handleExistingLocationSelect(e.target.value)}
+                          >
+                            <option value="">Choose location...</option>
+                            {existingLocationOptions.map(option => {
+                              const alreadyInCurrentRoute = deliveryPoints.some(point => point.code === option.code)
+                              return (
+                                <option
+                                  key={option.code}
+                                  value={option.code}
+                                  disabled={alreadyInCurrentRoute}
+                                >
+                                  {option.code} - {option.name} ({option.routeName})
+                                  {alreadyInCurrentRoute ? ' - already in this route' : ''}
+                                </option>
+                              )
+                            })}
+                          </select>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-[11px] font-medium">
                             Code <span className="text-red-500">*</span>
                           </label>
-                          <Input
-                            placeholder="0000"
-                            value={newPoint.code}
-                            onChange={(e) => handleCodeChange(e.target.value)}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={4}
-                            className={codeError ? "border-red-500" : ""}
-                          />
+                          {isPlaygroundMode ? (
+                            <Input
+                              placeholder="Select location first"
+                              value={newPoint.code}
+                              readOnly
+                              className={codeError ? "border-red-500" : ""}
+                            />
+                          ) : (
+                            <Input
+                              placeholder="0000"
+                              value={newPoint.code}
+                              onChange={(e) => handleCodeChange(e.target.value)}
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              maxLength={4}
+                              className={codeError ? "border-red-500" : ""}
+                            />
+                          )}
                           {codeError && (
                             <p className="text-xs text-red-500">{codeError}</p>
                           )}
@@ -2757,38 +2891,57 @@ export function RouteList() {
                         </div>
                       </div>
                       
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-medium">Name</label>
-                        <Input
-                          placeholder="Enter location name"
-                          value={newPoint.name}
-                          onChange={(e) => setNewPoint({ ...newPoint, name: e.target.value })}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-[11px] font-medium">Latitude</label>
-                          <Input
-                            type="number"
-                            step="0.0001"
-                            placeholder="0.0000"
-                            value={newPoint.latitude || ""}
-                            onChange={(e) => setNewPoint({ ...newPoint, latitude: parseFloat(e.target.value) || 0 })}
-                          />
+                      {isPlaygroundMode ? (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-[11px] font-medium">Name</label>
+                            <Input value={newPoint.name} readOnly />
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[11px] font-medium">Source</label>
+                            <Input
+                              value={existingLocationOptions.find(option => option.code === selectedExistingLocationCode)?.routeName ?? ""}
+                              readOnly
+                            />
+                          </div>
                         </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-[11px] font-medium">Longitude</label>
-                          <Input
-                            type="number"
-                            step="0.0001"
-                            placeholder="0.0000"
-                            value={newPoint.longitude || ""}
-                            onChange={(e) => setNewPoint({ ...newPoint, longitude: parseFloat(e.target.value) || 0 })}
-                          />
-                        </div>
-                      </div>
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <label className="text-[11px] font-medium">Name</label>
+                            <Input
+                              placeholder="Enter location name"
+                              value={newPoint.name}
+                              onChange={(e) => setNewPoint({ ...newPoint, name: e.target.value })}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-[11px] font-medium">Latitude</label>
+                              <Input
+                                type="number"
+                                step="0.0001"
+                                placeholder="0.0000"
+                                value={newPoint.latitude || ""}
+                                onChange={(e) => setNewPoint({ ...newPoint, latitude: parseFloat(e.target.value) || 0 })}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-[11px] font-medium">Longitude</label>
+                              <Input
+                                type="number"
+                                step="0.0001"
+                                placeholder="0.0000"
+                                value={newPoint.longitude || ""}
+                                onChange={(e) => setNewPoint({ ...newPoint, longitude: parseFloat(e.target.value) || 0 })}
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                     
                     <div className="flex justify-end gap-2">
@@ -2803,7 +2956,7 @@ export function RouteList() {
                       </Button>
                       <Button
                         onClick={handleAddNewPoint}
-                        disabled={!newPoint.code || !!codeError}
+                        disabled={isPlaygroundMode ? (!selectedExistingLocationCode || !!codeError) : (!newPoint.code || !!codeError)}
                       >
                         Add Point
                       </Button>

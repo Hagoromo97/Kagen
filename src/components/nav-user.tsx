@@ -2,6 +2,7 @@ import {
   Bell,
   ChevronsUpDown,
   LogOut,
+  User,
 } from "lucide-react"
 
 import {
@@ -85,6 +86,10 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => onNavigate?.("settings-profile")}>
+                <User />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onNavigate?.("settings-notifications")}>
                 <Bell />
                 Notifications

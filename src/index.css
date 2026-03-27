@@ -196,26 +196,6 @@ html {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Collapsible slide animations — matches Colour Expired panel on homepage */
-@keyframes collapsible-slide-down {
-  from { height: 0; }
-  to   { height: var(--radix-collapsible-content-height); }
-}
-@keyframes collapsible-slide-up {
-  from { height: var(--radix-collapsible-content-height); }
-  to   { height: 0; }
-}
-.nav-collapsible-content {
-  overflow: hidden;
-}
-.nav-collapsible-content[data-state="open"] {
-  animation: collapsible-slide-down 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-.nav-collapsible-content[data-state="closed"] {
-  animation: collapsible-slide-up 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-
 /* Safe area support for notch/island devices */
 html {
   height: 100%;

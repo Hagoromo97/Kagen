@@ -3,7 +3,6 @@ import { ChevronRight, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
-  CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import {
@@ -105,23 +104,33 @@ export function NavMain({
                         <span className="sr-only">Toggle</span>
                       </SidebarMenuAction>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="nav-collapsible-content">
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              className="transition-colors duration-150"
-                              isActive={currentPage === subItem.page}
-                              onClick={() => {
-                                if (subItem.page) onSubItemClick?.(subItem.page)
-                              }}
-                            >
-                              <span>{subItem.title}</span>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
+                    <div
+                      aria-hidden={!isOpen}
+                      style={{
+                        display: "grid",
+                        gridTemplateRows: isOpen ? "1fr" : "0fr",
+                        transition:
+                          "grid-template-rows 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                      }}
+                    >
+                      <div className="overflow-hidden">
+                        <SidebarMenuSub className={!isOpen ? "pointer-events-none" : undefined}>
+                          {item.items?.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                className="transition-colors duration-150"
+                                isActive={currentPage === subItem.page}
+                                onClick={() => {
+                                  if (subItem.page) onSubItemClick?.(subItem.page)
+                                }}
+                              >
+                                <span>{subItem.title}</span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </div>
+                    </div>
                   </>
                 ) : null}
               </SidebarMenuItem>
