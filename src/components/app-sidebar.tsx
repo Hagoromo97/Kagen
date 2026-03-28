@@ -192,14 +192,18 @@ export function AppSidebar({
             <SidebarMenuButton 
               size="lg" 
               asChild
+              className="!h-auto !w-fit !gap-0 !p-0"
               onClick={() => onNavigate?.("home")}
             >
-              <a href="#" className="!gap-0 !pl-0" style={{ gap: 0 }}>
-                <img src={weedLogo} alt="logo" className="object-contain" style={{ width: 62, height: 62, marginRight: -16 }} />
-                <div className="grid flex-1 text-left text-sm leading-none gap-0">
-                  <span className="truncate font-medium">Data Brutal</span>
-                  <span className="truncate text-xs text-muted-foreground">Info for driver bejad</span>
-                </div>
+              <a href="#" className="-ml-2 flex items-center !pl-0">
+                <img
+                  src={weedLogo}
+                  alt="Data Brutal logo"
+                  className="h-[72px] w-[72px] -mr-4 shrink-0 object-contain"
+                />
+                <span className="truncate text-left text-base font-semibold leading-none">
+                  Data Brutal
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

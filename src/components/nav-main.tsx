@@ -88,7 +88,7 @@ export function NavMain({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip={item.title}
-                  className="font-semibold transition-colors duration-150"
+                  className="font-medium transition-colors duration-150"
                   onClick={() => handleToggle(item.title, hasChildren, item.page)}
                 >
                   <item.icon style={item.color ? { color: item.color } : undefined} />
@@ -118,7 +118,7 @@ export function NavMain({
                           {item.items?.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.title}>
                               <SidebarMenuSubButton
-                                className="transition-colors duration-150"
+                                className="font-medium transition-colors duration-150"
                                 isActive={currentPage === subItem.page}
                                 onClick={() => {
                                   if (subItem.page) onSubItemClick?.(subItem.page)

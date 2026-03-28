@@ -821,6 +821,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     pts.map((p) => ({ code: p.code, position: '', name: p.name, delivery: p.delivery }))
   const [draftRowOrder, setDraftRowOrder] = useState<RowOrderEntry[]>([])
   const [savedRowOrders, setSavedRowOrders] = useState<SavedRowOrder[]>([])
+  const [draftRowOrderName, setDraftRowOrderName] = useState<string>("")
+  const [editingSavedOrderId, setEditingSavedOrderId] = useState<string | null>(null)
+  const [editingSavedOrderName, setEditingSavedOrderName] = useState<string>("")
   const [rowOrderError, setRowOrderError] = useState<string>("")
   const [rowSaving, setRowSaving] = useState(false)
   const [rowSaved, setRowSaved] = useState(false)
@@ -839,10 +842,29 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     try {
       const stored = localStorage.getItem(`fcalendar_my_sorts_${routeId}`)
       const parsed = stored ? JSON.parse(stored) : []
-      setSavedRowOrders(Array.isArray(parsed) ? parsed : [])
+      if (Array.isArray(parsed)) {
+        const normalized = parsed
+          .filter((entry): entry is SavedRowOrder => Boolean(entry && typeof entry === 'object' && typeof entry.id === 'string' && Array.isArray(entry.order)))
+          .map((entry, index) => ({
+            ...entry,
+            label: typeof entry.label === 'string' && entry.label.trim() !== ''
+              ? entry.label.trim()
+              : `Order ${index + 1}`,
+          }))
+        setSavedRowOrders(normalized)
+      } else {
+        setSavedRowOrders([])
+      }
     } catch { setSavedRowOrders([]) }
+    setDraftRowOrderName("")
+    setEditingSavedOrderId(null)
+    setEditingSavedOrderName("")
     setSettingsOpen(true)
   }
+
+  const persistSavedRowOrders = useCallback((updated: SavedRowOrder[], routeId: string) => {
+    try { localStorage.setItem(`fcalendar_my_sorts_${routeId}`, JSON.stringify(updated)) } catch {}
+  }, [])
 
   // Column helpers
   const moveDraftCol = (idx: number, dir: -1 | 1) => {
@@ -882,14 +904,44 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     setRowSaved(true)
     setTimeout(() => setRowSaved(false), 1500)
     const id = `roworder-${Date.now()}`
-    const label = `Order ${savedRowOrders.length + 1} (${new Date().toLocaleTimeString()})`
+    const customName = draftRowOrderName.trim()
+    const label = customName !== ''
+      ? customName
+      : `Order ${savedRowOrders.length + 1} (${new Date().toLocaleTimeString()})`
     const newEntry = { id, label, order: merged.map(r => r.code) }
     setSavedRowOrders(prev => {
       const updated = [...prev, newEntry]
-      try { localStorage.setItem(`fcalendar_my_sorts_${currentRouteId}`, JSON.stringify(updated)) } catch {}
+      persistSavedRowOrders(updated, currentRouteId)
       return updated
     })
+    setDraftRowOrderName("")
     setRowOrderError('')
+  }
+
+  const startRenameSavedOrder = (id: string, currentLabel: string) => {
+    setEditingSavedOrderId(id)
+    setEditingSavedOrderName(currentLabel)
+  }
+
+  const cancelRenameSavedOrder = () => {
+    setEditingSavedOrderId(null)
+    setEditingSavedOrderName("")
+  }
+
+  const saveRenameSavedOrder = (id: string) => {
+    const nextName = editingSavedOrderName.trim()
+    if (nextName === "") {
+      setRowOrderError("Order name cannot be empty")
+      return
+    }
+
+    setSavedRowOrders(prev => {
+      const updated = prev.map(order => order.id === id ? { ...order, label: nextName } : order)
+      persistSavedRowOrders(updated, currentRouteId)
+      return updated
+    })
+    setRowOrderError("")
+    cancelRenameSavedOrder()
   }
 
   // Apply sort to deliveryPoints
@@ -1857,7 +1909,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </div>
 
         {/* ── Card list ── */}
-        <div ref={cardContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div ref={cardContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
         {displayedRoutes.map((route, routeIndex) => {
           const markerColor = route.color || routeColorPalette[routeIndex % routeColorPalette.length]
           const cardPanel = getCardPanel(route.id)
@@ -2632,7 +2684,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </div>
 
                     {dialogView === 'table' && (
-                      <div className="border-t border-border bg-background/95 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0 backdrop-blur-sm">
+                      <div className="border-t border-border bg-background/95 px-4 py-2.5 min-h-[52px] flex flex-wrap items-center justify-between gap-2 shrink-0 backdrop-blur-sm">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           {!isEditMode && (
                             <span className="font-medium text-muted-foreground">
@@ -2694,7 +2746,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden gap-0">
                     <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 flex items-center justify-center shrink-0">
                           <Edit2 className="size-4 text-primary" />
                         </div>
                         <div>
@@ -2711,7 +2763,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         onClick={() => { setActionModalOpen(false); setMoveDialogOpen(true) }}
                         disabled={routes.length <= 1}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
                           <ArrowUp className="size-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
@@ -2723,7 +2775,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition-colors text-left"
                         onClick={() => { setActionModalOpen(false); setDeleteConfirmOpen(true) }}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
                           <Trash2 className="size-4 text-destructive" />
                         </div>
                         <div>
@@ -2745,7 +2797,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden gap-0">
                     <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 flex items-center justify-center shrink-0">
                           <ArrowUp className="size-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
@@ -2774,9 +2826,17 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       </select>
                     </div>
                     <div className="px-5 pb-5 flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { setMoveDialogOpen(false); setActionModalOpen(true) }}>Back</Button>
-                      <Button size="sm" onClick={handleMoveRows} disabled={!selectedTargetRoute}>
-                        <ArrowUp className="size-3.5 mr-1" />Move
+                      <Button variant="ghost" size="sm" onClick={() => { setMoveDialogOpen(false); setActionModalOpen(true) }}>
+                        Back
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary hover:text-primary"
+                        onClick={handleMoveRows}
+                        disabled={!selectedTargetRoute}
+                      >
+                        Move
                       </Button>
                     </div>
                   </DialogContent>
@@ -2787,7 +2847,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden gap-0">
                     <DialogHeader className="px-5 pt-5 pb-4 border-b border-border">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 flex items-center justify-center shrink-0">
                           <Trash2 className="size-4 text-destructive" />
                         </div>
                         <div>
@@ -2802,9 +2862,16 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       <p className="text-sm text-muted-foreground">This action <span className="font-semibold text-foreground">cannot be undone</span>. The selected delivery points will be permanently deleted.</p>
                     </div>
                     <div className="px-5 pb-5 flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { setDeleteConfirmOpen(false); setActionModalOpen(true) }}>Cancel</Button>
-                      <Button variant="destructive" size="sm" onClick={handleDeleteRows}>
-                        <Trash2 className="size-3.5 mr-1" />Delete
+                      <Button variant="ghost" size="sm" onClick={() => { setDeleteConfirmOpen(false); setActionModalOpen(true) }}>
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={handleDeleteRows}
+                      >
+                        Delete
                       </Button>
                     </div>
                   </DialogContent>
@@ -3420,16 +3487,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
       {/* ── Map Settings Modal ──────────────────────────────────────── */}
       <Dialog open={mapSettingsOpen} onOpenChange={setMapSettingsOpen}>
-        <DialogContent className="w-[92vw] max-w-lg h-[68vh] max-h-[560px] overflow-hidden flex flex-col gap-0 p-0">
+        <DialogContent className="w-[92vw] max-w-lg h-[60vh] max-h-[540px] overflow-hidden flex flex-col gap-0 p-0">
           <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
-                <MapPinned className="size-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-sm font-bold leading-tight">Map Settings</DialogTitle>
-                <DialogDescription className="text-xs mt-0.5">Select additional routes to combine on the map</DialogDescription>
-              </div>
+            <div className="text-center">
+              <DialogTitle className="text-sm font-bold leading-tight">Map Settings</DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">Select additional routes to combine on the map</DialogDescription>
             </div>
           </div>
           <div className="px-4 pt-3 border-b border-border shrink-0">
@@ -3723,7 +3785,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
               </>
             )}
           </div>
-          <div className="px-5 py-3.5 border-t border-border shrink-0 flex items-center justify-between gap-3">
+          <div className="px-5 py-3.5 border-t border-border shrink-0 min-h-[60px] flex items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
               {combinedDeliveryPoints.length} points shown
             </p>
@@ -3780,16 +3842,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
       {/* ── Settings Modal ──────────────────────────────────────────── */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="w-[92vw] max-w-lg h-[68vh] max-h-[560px] overflow-hidden flex flex-col gap-0 p-0">
+        <DialogContent className="w-[92vw] max-w-lg h-[60vh] max-h-[540px] overflow-hidden flex flex-col gap-0 p-0">
           <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
-                <TableProperties className="size-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-sm font-bold leading-tight">Table Settings</DialogTitle>
-                <DialogDescription className="text-xs mt-0.5">Customize how the table looks and behaves</DialogDescription>
-              </div>
+            <div className="text-center">
+              <DialogTitle className="text-sm font-bold leading-tight">Table Settings</DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">Customize how the table looks and behaves</DialogDescription>
             </div>
           </div>
 
@@ -3867,6 +3924,15 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
               <div className="space-y-4">
                 <div className="rounded-xl border border-border bg-background p-3">
                   <p className="text-[11px] text-muted-foreground">Input a position number to reorder rows. No duplicates allowed.</p>
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-[11px] font-medium text-foreground">Order Name (optional)</p>
+                    <Input
+                      value={draftRowOrderName}
+                      onChange={(e) => setDraftRowOrderName(e.target.value)}
+                      placeholder="Example: Monday Route Priority"
+                      className="h-8 text-xs"
+                    />
+                  </div>
                 </div>
                 {rowOrderError && (
                   <p className="text-[11px] text-destructive font-medium">{rowOrderError}</p>
@@ -3967,24 +4033,69 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     <div className="space-y-2">
                       {savedRowOrders.map((s) => (
                         <div key={s.id} className="flex items-center gap-2.5">
-                          <button
-                            onClick={() => setDraftSort({ type: 'saved', id: s.id })}
-                            className={`flex-1 py-2.5 px-4 text-sm rounded-lg border transition-colors text-left font-medium ${
-                              draftSort?.type === 'saved' && draftSort.id === s.id
-                                ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                                : 'border-border hover:bg-muted hover:border-border/80'
-                            }`}
-                          >
-                            {s.label}
-                          </button>
+                          {editingSavedOrderId === s.id ? (
+                            <div className="flex-1 flex items-center gap-2">
+                              <Input
+                                value={editingSavedOrderName}
+                                onChange={(e) => setEditingSavedOrderName(e.target.value)}
+                                className="h-9 text-sm"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    saveRenameSavedOrder(s.id)
+                                  }
+                                  if (e.key === 'Escape') {
+                                    e.preventDefault()
+                                    cancelRenameSavedOrder()
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => saveRenameSavedOrder(s.id)}
+                                className="p-2 rounded-lg hover:bg-emerald-500/10 hover:text-emerald-600 transition-colors text-muted-foreground shrink-0"
+                                title="Save name"
+                              >
+                                <Check className="size-4" />
+                              </button>
+                              <button
+                                onClick={cancelRenameSavedOrder}
+                                className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0"
+                                title="Cancel rename"
+                              >
+                                <X className="size-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setDraftSort({ type: 'saved', id: s.id })}
+                              className={`flex-1 py-2.5 px-4 text-sm rounded-lg border transition-colors text-left font-medium ${
+                                draftSort?.type === 'saved' && draftSort.id === s.id
+                                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                                  : 'border-border hover:bg-muted hover:border-border/80'
+                              }`}
+                            >
+                              {s.label}
+                            </button>
+                          )}
+                          {editingSavedOrderId !== s.id && (
+                            <button
+                              onClick={() => startRenameSavedOrder(s.id, s.label)}
+                              className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0"
+                              title="Edit sort name"
+                            >
+                              <Edit2 className="size-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setSavedRowOrders(prev => {
                                 const updated = prev.filter(r => r.id !== s.id)
-                                try { localStorage.setItem(`fcalendar_my_sorts_${currentRouteId}`, JSON.stringify(updated)) } catch {}
+                                persistSavedRowOrders(updated, currentRouteId)
                                 return updated
                               })
                               if (draftSort?.type === 'saved' && draftSort.id === s.id) setDraftSort(null)
+                              if (editingSavedOrderId === s.id) cancelRenameSavedOrder()
                             }}
                             className="p-2 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground shrink-0"
                             title="Delete this sort"
@@ -4010,7 +4121,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           </div>
 
           {/* ── Footer Buttons ── */}
-          <div className="px-5 py-3.5 border-t border-border shrink-0 bg-background">
+          <div className="px-5 py-3.5 border-t border-border shrink-0 min-h-[60px] bg-background">
             {settingsMenu === 'column' && (
               <div className="flex items-center gap-3">
                 {columnsCanReset && (

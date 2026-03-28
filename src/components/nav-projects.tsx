@@ -66,7 +66,7 @@ export function NavProjects({
             <SidebarMenuItem>
               <SidebarMenuButton
                 tooltip="Settings"
-                className="font-semibold transition-colors duration-150"
+                className="font-medium transition-colors duration-150"
                 onClick={() => { if (!isSearching) onSettingsOpenChange(!settingsOpen) }}
               >
                 <Settings2 className="text-primary" />
@@ -95,7 +95,7 @@ export function NavProjects({
                       <SidebarMenuSubItem key={item.page}>
                         <SidebarMenuSubButton
                           asChild
-                          className="transition-colors duration-150"
+                          className="font-medium transition-colors duration-150"
                           isActive={currentPage === item.page}
                         >
                           <a
