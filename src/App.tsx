@@ -832,15 +832,17 @@ function AppContent() {
           <Separator orientation="vertical" className="mr-1 md:mr-2 h-4 shrink-0" />
           <Breadcrumb className="min-w-0 flex-1">
             <BreadcrumbList>
-              <BreadcrumbItem className="shrink-0">
-                <BreadcrumbLink
-                  href="#"
-                  onClick={() => handlePageChange("home")}
-                  className="flex items-center gap-1.5 font-semibold text-foreground hover:text-foreground/80 transition-colors"
-                >
-                  <Home className="size-4 shrink-0" />
-                </BreadcrumbLink>
-              </BreadcrumbItem>
+              {currentPage !== "home" && (
+                <BreadcrumbItem className="shrink-0">
+                  <BreadcrumbLink
+                    href="#"
+                    onClick={() => handlePageChange("home")}
+                    className="flex items-center gap-1.5 font-semibold text-foreground hover:text-foreground/80 transition-colors"
+                  >
+                    <Home className="size-4 shrink-0" />
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              )}
               {(() => {
                 const { parent, current } = getPageBreadcrumbs()
                 return (
@@ -857,7 +859,7 @@ function AppContent() {
                         </BreadcrumbItem>
                       </>
                     )}
-                    <BreadcrumbSeparator className={parent ? undefined : "hidden md:block"} />
+                    <BreadcrumbSeparator className={parent ? undefined : currentPage === "home" ? "hidden" : "hidden md:block"} />
                     <BreadcrumbItem
                       key={`current-${currentPage}`}
                       className="min-w-0 animate-in fade-in slide-in-from-left-2 duration-300"

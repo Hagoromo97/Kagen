@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import weedLogo from "../../icon/weed.png"
+import fmLogo from "../../icon/fmlogo.png"
 import {
   Moon,
   Package,
@@ -188,46 +188,44 @@ export function AppSidebar({
     <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex justify-center">
             <SidebarMenuButton 
               size="lg" 
               asChild
-              className="!h-auto !w-fit !gap-0 !p-0"
+              className="!h-auto !w-full !justify-center !gap-0 !p-0"
               onClick={() => onNavigate?.("home")}
             >
-              <a href="#" className="-ml-2 flex items-center !pl-0">
+              <a href="#" className="flex items-center justify-center">
                 <img
-                  src={weedLogo}
-                  alt="Data Brutal logo"
-                  className="h-[72px] w-[72px] -mr-4 shrink-0 object-contain"
+                  src={fmLogo}
+                  alt="FM logo"
+                  className="h-[72px] w-[72px] shrink-0 object-contain"
                 />
-                <span className="truncate text-left text-base font-semibold leading-none">
-                  Data Brutal
-                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        {/* Search field */}
-        <div className="relative mt-1 sidebar-search-wrapper">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none transition-colors" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="sidebar-search h-8 w-full rounded-md border border-input bg-background pl-8 pr-7 text-[11px] md:text-[11px] shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
       </SidebarHeader>
+      <Separator className="my-1" />
+      {/* Search field */}
+      <div className="relative mt-1 px-2 sidebar-search-wrapper">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none transition-colors" />
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="sidebar-search h-8 w-full rounded-md border border-input bg-background pl-8 pr-7 text-[11px] md:text-[11px] shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
       <SidebarContent>
         <NavMain
           items={filteredNavMain}

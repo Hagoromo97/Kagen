@@ -109,6 +109,12 @@ interface RouteListProps {
   variant?: 'route-list' | 'playground'
 }
 
+interface RouteListHeaderItem {
+  id: string
+  term: string
+  definition: string
+}
+
 interface ExistingLocationOption {
   code: string
   name: string
@@ -294,10 +300,12 @@ const DELIVERY_ITEMS = [
   { value: 'Alt 1',    label: 'Alt 1',     description: 'Odd dates (1, 3, 5…)',         bg: 'bg-violet-100 dark:bg-violet-900/40',  text: 'text-violet-700 dark:text-violet-300',  dot: '#8b5cf6' },
   { value: 'Alt 2',    label: 'Alt 2',     description: 'Even dates (2, 4, 6…)',        bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/40',text: 'text-fuchsia-700 dark:text-fuchsia-300',dot: '#d946ef' },
   { value: 'Weekday',   label: 'Weekday',   description: 'Sun – Thu',                    bg: 'bg-sky-100 dark:bg-sky-900/40',        text: 'text-sky-700 dark:text-sky-300',        dot: '#0ea5e9' },
-  { value: 'Weekday 2', label: 'Weekday 2', description: 'Mon – Fri',                    bg: 'bg-blue-100 dark:bg-blue-900/40',      text: 'text-blue-700 dark:text-blue-300',      dot: '#3b82f6' },
-  { value: 'Weekday 3', label: 'Weekday 3', description: 'Sun, Tue & Fri only',          bg: 'bg-indigo-100 dark:bg-indigo-900/40',  text: 'text-indigo-700 dark:text-indigo-300',  dot: '#6366f1' },
+  { value: 'Weekday 2', label: 'Weekday',   description: 'Mon – Fri',                    bg: 'bg-blue-100 dark:bg-blue-900/40',      text: 'text-blue-700 dark:text-blue-300',      dot: '#3b82f6' },
+  { value: 'Weekday 3', label: 'Weekday',   description: 'Sun, Tue & Fri',               bg: 'bg-indigo-100 dark:bg-indigo-900/40',  text: 'text-indigo-700 dark:text-indigo-300',  dot: '#6366f1' },
 ] as const
 const DELIVERY_MAP = new Map<string, typeof DELIVERY_ITEMS[number]>(DELIVERY_ITEMS.map(d => [d.value, d]))
+const getDeliveryLabel = (value: string) => DELIVERY_MAP.get(value)?.label ?? value
+const getDeliveryDescription = (value: string) => DELIVERY_MAP.get(value)?.description ?? ''
 const AUTO_DELIVERY_LABELS = DELIVERY_ITEMS.map(d => d.value)
 const AUTO_DELIVERY_LABEL_SET = new Set<string>(AUTO_DELIVERY_LABELS)
 
@@ -338,6 +346,53 @@ const SINGLE_ROUTE_MARKER_COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#a855f7', '#ec4899',
 ]
 
+const LS_ROUTE_LIST_HEADER = 'fcalendar_route_list_header'
+
+const DEFAULT_ROUTE_LIST_HEADER_ITEMS: RouteListHeaderItem[] = [
+  {
+    id: 'header-desc',
+    term: 'Description',
+    definition: 'A compact summary panel for route list operations.',
+  },
+  {
+    id: 'header-scope',
+    term: 'Scope',
+    definition: 'Use this page to search, filter, inspect, and update route records.',
+  },
+  {
+    id: 'header-edit',
+    term: 'Edit Mode',
+    definition: 'Enable Edit Mode to manage this header content and route data together.',
+  },
+]
+
+const loadRouteListHeaderItems = (): RouteListHeaderItem[] => {
+  try {
+    const raw = localStorage.getItem(LS_ROUTE_LIST_HEADER)
+    if (!raw) return DEFAULT_ROUTE_LIST_HEADER_ITEMS
+
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return DEFAULT_ROUTE_LIST_HEADER_ITEMS
+
+    const normalized = parsed
+      .map((item, index) => {
+        if (!item || typeof item !== 'object') return null
+        const term = typeof item.term === 'string' ? item.term : ''
+        const definition = typeof item.definition === 'string' ? item.definition : ''
+        if (term.trim() === '' && definition.trim() === '') return null
+        const id = typeof item.id === 'string' && item.id.trim() !== ''
+          ? item.id
+          : `header-item-${index + 1}`
+        return { id, term, definition }
+      })
+      .filter((item): item is RouteListHeaderItem => Boolean(item))
+
+    return normalized.length > 0 ? normalized : DEFAULT_ROUTE_LIST_HEADER_ITEMS
+  } catch {
+    return DEFAULT_ROUTE_LIST_HEADER_ITEMS
+  }
+}
+
 export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const isPlaygroundMode = variant === 'playground'
   const duplicateCheckScope: 'global' | 'current' = isPlaygroundMode ? 'current' : 'global'
@@ -373,6 +428,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [filterShift, setFilterShift] = useState<"all" | "AM" | "PM">("all")
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [showAllRoutes, setShowAllRoutes] = useState(false)
+  const [headerItems, setHeaderItems] = useState<RouteListHeaderItem[]>(loadRouteListHeaderItems)
+  const headerSnapshotRef = useRef<RouteListHeaderItem[]>([])
 
   // ── Per-card sliding panel state { info, edit } ───────────────────
   const [cardPanels, setCardPanels] = useState<Record<string, { info: boolean; edit: boolean }>>({})
@@ -632,6 +689,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [pendingSelectedRows, setPendingSelectedRows] = useState<string[]>([])
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false)
   const [deliveryModalCode, setDeliveryModalCode] = useState<string | null>(null)
+  const [deliveryModalDraft, setDeliveryModalDraft] = useState<string | null>(null)
   const [openKmTooltip, setOpenKmTooltip] = useState<string | null>(null)
   const [badgePopover, setBadgePopover] = useState<string | null>(null)
   const [editLabelInput, setEditLabelInput] = useState<Record<string, string>>({})
@@ -1280,6 +1338,37 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     setPopoverOpen({})
   }
 
+  const closeDeliveryTypeModal = () => {
+    setDeliveryModalOpen(false)
+    setDeliveryModalCode(null)
+    setDeliveryModalDraft(null)
+  }
+
+  const openDeliveryTypeModal = (point: DeliveryPoint) => {
+    setDeliveryModalCode(point.code)
+    setDeliveryModalDraft(point.delivery)
+    setDeliveryModalOpen(true)
+  }
+
+  const applyDeliveryTypeChange = () => {
+    if (!deliveryModalCode || !deliveryModalDraft) return
+    const currentPoint = deliveryPoints.find(point => point.code === deliveryModalCode)
+    if (!currentPoint || currentPoint.delivery === deliveryModalDraft) {
+      closeDeliveryTypeModal()
+      return
+    }
+
+    setDeliveryPoints(prev => prev.map(point =>
+      point.code === deliveryModalCode ? { ...point, delivery: deliveryModalDraft } : point
+    ))
+    setPendingCellEdits(prev => {
+      const next = new Set(prev)
+      next.add(`${deliveryModalCode}-delivery`)
+      return next
+    })
+    closeDeliveryTypeModal()
+  }
+
   const toggleRowSelection = (code: string) => {
     setSelectedRows(prev => 
       prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
@@ -1505,9 +1594,38 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     })
   }
 
+  const updateHeaderItem = (id: string, field: 'term' | 'definition', value: string) => {
+    if (!isEditMode) return
+    setHasUnsavedChanges(true)
+    setHeaderItems(prev => prev.map(item => (item.id === id ? { ...item, [field]: value } : item)))
+  }
+
+  const handleAddHeaderItem = () => {
+    if (!isEditMode) return
+    setHasUnsavedChanges(true)
+    setHeaderItems(prev => ([
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        term: 'New term',
+        definition: 'New definition',
+      },
+    ]))
+  }
+
+  const handleRemoveHeaderItem = (id: string) => {
+    if (!isEditMode) return
+    setHasUnsavedChanges(true)
+    setHeaderItems(prev => {
+      if (prev.length <= 1) return prev
+      return prev.filter(item => item.id !== id)
+    })
+  }
+
   const doSave = useCallback(async () => {
     // Snapshot before state for changelog
     const before = routesSnapshotRef.current
+    const beforeHeaderItems = headerSnapshotRef.current
 
     // Determine which routes actually changed so the API only updates their updated_at
     const changedRouteIds: string[] = []
@@ -1521,6 +1639,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                              JSON.stringify(toCustomLabels(route.labels).slice().sort())
       if (hasMetaChange || hasPtsChange || hasLabelChange) changedRouteIds.push(route.id)
     })
+    const headerChanged = JSON.stringify(beforeHeaderItems) !== JSON.stringify(headerItems)
 
     const res = await fetch('/api/routes', {
       method: 'POST',
@@ -1529,6 +1648,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     })
     const data = await res.json()
     if (!data.success) throw new Error(data.error || 'Save failed')
+
+    if (headerChanged) {
+      localStorage.setItem(LS_ROUTE_LIST_HEADER, JSON.stringify(headerItems))
+    }
 
     type ChangelogEntry = { text: string; sortKey: string }
     const buildRowEntry = (code: string, text: string): ChangelogEntry => ({
@@ -1684,7 +1807,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       icon: <Save className="size-4 text-primary" />,
       duration: 3000,
     })
-  }, [routes, fetchRoutes, currentRouteId])
+  }, [routes, headerItems, fetchRoutes, currentRouteId])
 
   useEffect(() => {
     registerSaveHandler(doSave)
@@ -1694,6 +1817,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   useEffect(() => {
     if (isEditMode) {
       routesSnapshotRef.current = JSON.parse(JSON.stringify(routes))
+      headerSnapshotRef.current = JSON.parse(JSON.stringify(headerItems))
     }
   }, [isEditMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1702,6 +1826,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     registerDiscardHandler(() => {
       // Restore data
       setRoutes(routesSnapshotRef.current)
+      setHeaderItems(headerSnapshotRef.current)
       // Clear card panels
       setCardPanels({})
       setEditPanelState({})
@@ -1814,17 +1939,76 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         {/* Page header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <List className="size-4 shrink-0 text-primary" />
-            <h2 className="text-base font-semibold tracking-tight text-foreground">{pageTitle}</h2>
+            <List className="size-3.5 shrink-0 text-primary" />
+            <h2 className="text-[13px] font-semibold tracking-tight text-foreground">{pageTitle}</h2>
           </div>
-          <p className="ml-7 text-sm text-muted-foreground leading-relaxed">
-            {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
-            {(filterRegion !== 'all' || filterShift !== 'all') && <span className="ml-1 text-primary font-medium">· filtered</span>}
-          </p>
+          <div className="ml-7 mt-3 rounded-xl border border-border/70 bg-card/60 px-4 py-3 shadow-sm">
+            <dl className="grid grid-cols-1 gap-y-3 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-x-4">
+              <dt className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Total Routes</dt>
+              <dd className="text-[11px] text-foreground/90">
+                {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
+                {(filterRegion !== 'all' || filterShift !== 'all') && <span className="ml-1 text-primary font-medium">· filtered</span>}
+              </dd>
+
+              {headerItems.map(item => (
+                <div key={item.id} className="contents">
+                  <dt className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {isEditMode ? (
+                      <Input
+                        value={item.term}
+                        onChange={(e) => updateHeaderItem(item.id, 'term', e.target.value)}
+                        placeholder="Term"
+                        className="h-8 text-xs"
+                      />
+                    ) : (
+                      <span className="truncate">{item.term || 'Untitled term'}</span>
+                    )}
+                  </dt>
+                  <dd className="text-[11px] text-foreground/90">
+                    {isEditMode ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={item.definition}
+                          onChange={(e) => updateHeaderItem(item.id, 'definition', e.target.value)}
+                          placeholder="Definition"
+                          className="h-8 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveHeaderItem(item.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/70 text-muted-foreground hover:bg-muted/70 hover:text-foreground disabled:opacity-50"
+                          disabled={headerItems.length <= 1}
+                          title="Remove row"
+                          aria-label="Remove row"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span>{item.definition}</span>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            {isEditMode && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleAddHeaderItem}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/70 px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <Plus className="size-3.5" />
+                  Add Header Row
+                </button>
+              </div>
+            )}
+          </div>
           <Separator className="mt-4" />
         </div>
         {/* Search + Filter */}
-        <div className="mb-6 flex items-center justify-center gap-3">
+        <div className="sticky top-0 z-20 mb-6 flex items-center justify-center gap-3 bg-background/80 backdrop-blur-md -mx-5 md:-mx-8 px-5 md:px-8 py-2.5 border-b border-border/40">
           <div className="relative z-30 w-full max-w-sm">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50 pointer-events-none" />
             <input
@@ -2047,14 +2231,14 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               <Popover key={type} open={isOpen} onOpenChange={open => setBadgePopover(open ? popKey : null)}>
                                 <PopoverTrigger asChild>
                                   <span onClick={() => setBadgePopover(isOpen ? null : popKey)} style={{ display: 'inline-flex', alignItems: 'center', fontSize: `calc(${badgeFs} + 1px)`, fontWeight: 700, color: badgeTextColor, background: badgeBackground, padding: '2px 9px', borderRadius: '6px', border: `1px solid ${badgeBorder}`, flexShrink: 0, letterSpacing: '0.03em', textShadow: badgeTextShadow, cursor: 'pointer', opacity: isOpen ? 0.75 : 1, transition: 'opacity 0.15s' }}>
-                                    {type}&nbsp;<span style={{ opacity: isDark ? 0.45 : 0.55, fontWeight: 500 }}>&bull;</span>&nbsp;<span style={{ color: badgeCountColor, fontWeight: 700 }}>{pts.length}</span>
+                                    {getDeliveryLabel(type)}&nbsp;<span style={{ opacity: isDark ? 0.45 : 0.55, fontWeight: 500 }}>&bull;</span>&nbsp;<span style={{ color: badgeCountColor, fontWeight: 700 }}>{pts.length}</span>
                                   </span>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-64 p-0 z-50 backdrop-blur-xl bg-background/90 dark:bg-card/90 border border-border/60 shadow-2xl rounded-2xl overflow-hidden" align="center" side="top">
                                   {/* Header */}
                                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/60" style={{ background: `${markerColor}14` }}>
                                     <span className="size-2.5 rounded-full shrink-0" style={{ background: markerColor }} />
-                                    <span className="text-xs font-bold tracking-wide" style={{ color: markerColor }}>{type}</span>
+                                    <span className="text-xs font-bold tracking-wide" style={{ color: markerColor }}>{getDeliveryLabel(type)}</span>
                                     <span className="ml-auto text-[10px] font-semibold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">{pts.length}</span>
                                   </div>
                                   {/* Point list */}
@@ -2597,18 +2781,15 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         {isEditMode ? (
                                           <button
                                             className="group inline-flex items-center gap-1.5 hover:opacity-70 transition-opacity mx-auto"
-                                            onClick={() => {
-                                              setDeliveryModalCode(point.code)
-                                              setDeliveryModalOpen(true)
-                                            }}
+                                            onClick={() => openDeliveryTypeModal(point)}
                                           >
                                             <span className={`text-[11px] font-semibold ${isPending ? 'text-amber-600 dark:text-amber-400' : ''}`}>
-                                              {point.delivery}
+                                              {getDeliveryLabel(point.delivery)}
                                             </span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         ) : (
-                                          <span className="text-[11px] font-semibold">{point.delivery}</span>
+                                          <span className="text-[11px] font-semibold">{getDeliveryLabel(point.delivery)}</span>
                                         )}
                                       </td>
                                     )
@@ -3033,8 +3214,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 
                 {/* Delivery Edit Modal */}
                 <Dialog open={deliveryModalOpen && currentRouteId === route.id} onOpenChange={(open) => {
-                  setDeliveryModalOpen(open)
-                  if (!open) setDeliveryModalCode(null)
+                  if (!open) closeDeliveryTypeModal()
                 }}>
                   <DialogContent className="max-w-xs p-0 gap-0 overflow-hidden rounded-2xl">
                     <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
@@ -3043,7 +3223,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         {deliveryModalCode && (() => {
                           const pt = deliveryPoints.find(p => p.code === deliveryModalCode)
                           if (!pt) return ''
-                          const active = isDeliveryActive(pt.delivery)
+                          const selectedDelivery = deliveryModalDraft ?? pt.delivery
+                          const active = isDeliveryActive(selectedDelivery)
                           return (
                             <span className="flex items-center gap-2">
                               <span>{pt.code} — {pt.name}</span>
@@ -3062,50 +3243,62 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     {deliveryModalCode && (() => {
                       const pt = deliveryPoints.find(p => p.code === deliveryModalCode)
                       if (!pt) return null
+                      const selectedDelivery = deliveryModalDraft ?? pt.delivery
+                      const hasPendingChange = selectedDelivery !== pt.delivery
                       // Build item list: known items + any unknown value already set
-                      const extraVal = DELIVERY_MAP.has(pt.delivery) ? [] : [{ value: pt.delivery, label: pt.delivery, description: '(existing)', bg: 'bg-muted', text: 'text-muted-foreground', dot: '#6b7280' }]
+                      const extraVal = DELIVERY_MAP.has(selectedDelivery) ? [] : [{ value: selectedDelivery, label: selectedDelivery, description: '(existing)', bg: 'bg-muted', text: 'text-muted-foreground', dot: '#6b7280' }]
                       const items = [...DELIVERY_ITEMS, ...extraVal]
                       return (
-                        <div className="py-1.5 px-1.5">
-                          {items.map(item => {
-                            const isSelected = pt.delivery === item.value
-                            return (
+                        <>
+                          <div className="py-1.5 px-1.5">
+                            {items.map(item => {
+                              const isSelected = selectedDelivery === item.value
+                              return (
+                                <button
+                                  key={item.value}
+                                  onClick={() => setDeliveryModalDraft(item.value)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                                    isSelected ? 'bg-primary/10 dark:bg-primary/20' : 'hover:bg-muted/70'
+                                  }`}
+                                >
+                                  <span className="w-3 h-3 rounded-full shrink-0 ring-1 ring-black/10" style={{ backgroundColor: item.dot }} />
+                                  <span className="flex-1 min-w-0">
+                                    <span className="block text-sm font-bold text-foreground">{item.label}</span>
+                                    <span className="block text-[11px] text-muted-foreground leading-tight">{item.description}</span>
+                                  </span>
+                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                    isDeliveryActive(item.value) ? 'bg-green-500/15 text-green-700 dark:text-green-400' : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                  }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${isDeliveryActive(item.value) ? 'bg-green-500' : 'bg-red-500'}`} />
+                                    {isDeliveryActive(item.value) ? 'ON' : 'OFF'}
+                                  </span>
+                                  {isSelected && <Check className="size-3.5 shrink-0 text-primary" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="px-5 pb-4 pt-2 flex justify-end gap-4 border-t border-border">
+                            <button
+                              type="button"
+                              onClick={closeDeliveryTypeModal}
+                              className="text-sm font-semibold text-red-600 transition-colors hover:text-red-700"
+                            >
+                              Close
+                            </button>
+                            {hasPendingChange && (
                               <button
-                                key={item.value}
-                                onClick={() => {
-                                  setDeliveryPoints(prev => prev.map(p =>
-                                    p.code === deliveryModalCode ? { ...p, delivery: item.value } : p
-                                  ))
-                                  if (deliveryModalCode) {
-                                    setPendingCellEdits(prev => { const n = new Set(prev); n.add(`${deliveryModalCode}-delivery`); return n })
-                                  }
-                                }}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                                  isSelected ? 'bg-primary/10 dark:bg-primary/20' : 'hover:bg-muted/70'
-                                }`}
+                                type="button"
+                                onClick={applyDeliveryTypeChange}
+                                className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
                               >
-                                <span className="w-3 h-3 rounded-full shrink-0 ring-1 ring-black/10" style={{ backgroundColor: item.dot }} />
-                                <span className="flex-1 min-w-0">
-                                  <span className={`block text-sm font-bold ${item.text}`}>{item.label}</span>
-                                  <span className="block text-[11px] text-muted-foreground leading-tight">{item.description}</span>
-                                </span>
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                                  isDeliveryActive(item.value) ? 'bg-green-500/15 text-green-700 dark:text-green-400' : 'bg-red-500/15 text-red-600 dark:text-red-400'
-                                }`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${isDeliveryActive(item.value) ? 'bg-green-500' : 'bg-red-500'}`} />
-                                  {isDeliveryActive(item.value) ? 'ON' : 'OFF'}
-                                </span>
-                                {isSelected && <Check className="size-3.5 shrink-0 text-primary" />}
+                                Apply
                               </button>
-                            )
-                          })}
-                        </div>
+                            )}
+                          </div>
+                        </>
                       )
                     })()}
-
-                    <div className="px-5 pb-4 pt-2 flex justify-end border-t border-border">
-                      <Button size="sm" variant="ghost" onClick={() => { setDeliveryModalOpen(false); setDeliveryModalCode(null) }}>Close</Button>
-                    </div>
                   </DialogContent>
                 </Dialog>
 

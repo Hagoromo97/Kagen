@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { ArrowRight, CalendarDays, MapPin, Package, Layers, Users } from "lucide-react"
 import landingBackground from "../../icon/landingp.jpeg"
-import weedLogo from "../../icon/weed.png"
 
 const FEATURES = [
   {
@@ -79,22 +78,12 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
       {/* Hero */}
       <div className="relative z-10 flex flex-col items-center justify-center gap-7 px-5 sm:px-6 pt-20 sm:pt-24 pb-12 sm:pb-16 text-center">
-        {/* App icon with animation */}
-        <img
-          src={weedLogo}
-          alt="logo"
-          style={{ width: 90, height: 90 }}
-          className={`object-contain transition-all duration-700 ${
-            visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
-          }`}
-        />
-
         {/* Brand with animation */}
         <div className={`flex flex-col gap-3 transition-all duration-700 ${
           visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
-            FCalendar
+          <h1 className="text-[26px] sm:text-[38px] lg:text-[50px] font-bold tracking-tight text-white drop-shadow-lg">
+            Data Brutal
           </h1>
           <p className="max-w-sm text-sm sm:text-base leading-relaxed text-white/85">
             Route planning &amp; delivery management — all in one place.
@@ -153,7 +142,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         visible ? "opacity-100" : "opacity-0"
       }`}>
         <p className="text-xs text-white/50 font-medium tracking-wider">
-          FCalendar — internal tool for delivery route management
+          Data Brutal — internal tool for delivery route management
         </p>
       </div>
     </div>
