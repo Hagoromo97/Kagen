@@ -4038,8 +4038,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
       {/* ── Settings Modal ──────────────────────────────────────────── */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="w-[92vw] max-w-lg h-[60vh] max-h-[540px] overflow-hidden flex flex-col gap-0 p-0">
-          <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
+        <DialogContent className="w-[92vw] max-w-lg h-[56vh] max-h-[500px] overflow-hidden flex flex-col gap-0 p-0">
+          <div className="px-5 pt-4 pb-3 border-b border-border shrink-0">
             <div className="text-center">
               <DialogTitle className="text-sm font-bold leading-tight">Table Settings</DialogTitle>
               <DialogDescription className="text-xs mt-0.5">Customize how the table looks and behaves</DialogDescription>
@@ -4047,13 +4047,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           </div>
 
           {/* Tab Menu */}
-          <div className="px-4 pt-3 border-b border-border shrink-0">
+          <div className="px-4 pt-2.5 border-b border-border shrink-0">
             <div className="grid grid-cols-3 gap-2">
             {(['column', 'row', 'sorting'] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setSettingsMenu(m)}
-                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-lg border text-[11px] font-semibold transition-colors ${
                   settingsMenu === m
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
@@ -4065,18 +4065,18 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4">
+          <div className="flex-1 min-h-0 p-3">
 
             {/* ── COLUMN CUSTOMIZE ── */}
             {settingsMenu === 'column' && (
-              <div className="space-y-3">
-                <div className="rounded-xl border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">Toggle visibility and reorder columns.</p>
+              <div className="h-full min-h-0 flex flex-col gap-2.5">
+                <div className="rounded-xl border border-border bg-background p-2.5">
+                  <p className="text-[11px] text-muted-foreground">Toggle visibility and reorder columns.</p>
                 </div>
-                <div className="max-h-[220px] overflow-y-auto pr-1 space-y-2.5">
+                <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
                   {draftColumns.map((col, idx) => {
                     return (
-                    <div key={col.key} className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-background">
+                    <div key={col.key} className="flex items-center gap-2.5 p-2.5 rounded-xl border border-border bg-background">
                       <input
                         type="checkbox"
                         checked={col.visible}
@@ -4087,7 +4087,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         }
                         className="w-4 h-4 cursor-pointer accent-primary"
                       />
-                      <span className="flex-1 text-[13px] font-medium">{col.label}</span>
+                      <span className="flex-1 text-xs font-medium">{col.label}</span>
                       <div className="flex gap-1.5">
                         <Button
                           variant="ghost"
@@ -4117,23 +4117,23 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
             {/* ── ROW CUSTOMIZE ── */}
             {settingsMenu === 'row' && (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-border bg-background p-3">
+              <div className="h-full min-h-0 flex flex-col gap-2.5">
+                <div className="rounded-xl border border-border bg-background p-2.5">
                   <p className="text-[11px] text-muted-foreground">Input a position number to reorder rows. No duplicates allowed.</p>
-                  <div className="mt-3 space-y-1.5">
+                  <div className="mt-2 space-y-1">
                     <p className="text-[11px] font-medium text-foreground">Order Name (optional)</p>
                     <Input
                       value={draftRowOrderName}
                       onChange={(e) => setDraftRowOrderName(e.target.value)}
                       placeholder="Example: Monday Route Priority"
-                      className="h-8 text-xs"
+                      className="h-7 text-xs"
                     />
                   </div>
                 </div>
                 {rowOrderError && (
                   <p className="text-[11px] text-destructive font-medium">{rowOrderError}</p>
                 )}
-                <div className={`max-h-[240px] overflow-y-auto pr-1 space-y-2.5 relative transition-opacity duration-300 ${rowSaving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                <div className={`flex-1 min-h-0 overflow-y-auto pr-1 space-y-2 relative transition-opacity duration-300 ${rowSaving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                   {rowSaving && (
                     <div className="absolute inset-0 flex items-center justify-center z-10">
                       <div className="bg-background/90 backdrop-blur-sm rounded-xl px-5 py-3 flex items-center gap-2.5 shadow-lg border border-border">
@@ -4143,7 +4143,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </div>
                   )}
                   {draftRowOrder.map((row) => (
-                    <div key={row.code} className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-background">
+                    <div key={row.code} className="flex items-center gap-2.5 p-2.5 rounded-xl border border-border bg-background">
                       <div className="relative w-16 shrink-0">
                         <Input
                           value={row.position}
@@ -4170,10 +4170,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
             {/* ── SORTING ── */}
             {settingsMenu === 'sorting' && (
-              <div className="space-y-4">
+              <div className="h-full min-h-0 overflow-y-auto pr-1 space-y-2.5">
                 {/* Sort by Column */}
                 <div className="space-y-2">
-                  <div className="rounded-xl border border-border bg-background p-3">
+                  <div className="rounded-xl border border-border bg-background p-2.5">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sort by Column</p>
                   </div>
                   <div className="rounded-xl border border-border overflow-hidden bg-background">
@@ -4194,7 +4194,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               setDraftSort({ type: 'column', key, dir: 'asc' })
                             }
                           }}
-                          className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors${
+                          className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs transition-colors${
                             i < arr.length - 1 ? ' border-b border-border/50' : ''
                           }${
                             isActive
@@ -4216,25 +4216,25 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
                 {/* My Sort List */}
                 <div className="space-y-2">
-                  <div className="rounded-xl border border-border bg-background p-3 space-y-1">
+                  <div className="rounded-xl border border-border bg-background p-2.5 space-y-1">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">My Sort List</p>
                     <p className="text-xs text-muted-foreground">Saved custom row orders - specific to this route only.</p>
                   </div>
                   {savedRowOrders.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm bg-muted/20 rounded-xl border border-border/50">
+                    <div className="text-center py-6 text-muted-foreground text-sm bg-muted/20 rounded-xl border border-border/50">
                       <p>No saved sort orders yet.</p>
                       <p className="text-xs mt-1.5">Go to <strong>Row Customize</strong> and save a custom order.</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {savedRowOrders.map((s) => (
-                        <div key={s.id} className="flex items-center gap-2.5">
+                        <div key={s.id} className="flex items-center gap-2">
                           {editingSavedOrderId === s.id ? (
                             <div className="flex-1 flex items-center gap-2">
                               <Input
                                 value={editingSavedOrderName}
                                 onChange={(e) => setEditingSavedOrderName(e.target.value)}
-                                className="h-9 text-sm"
+                                className="h-8 text-xs"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
@@ -4265,7 +4265,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                           ) : (
                             <button
                               onClick={() => setDraftSort({ type: 'saved', id: s.id })}
-                              className={`flex-1 py-2.5 px-4 text-sm rounded-lg border transition-colors text-left font-medium ${
+                              className={`flex-1 py-2 px-3 text-xs rounded-lg border transition-colors text-left font-medium ${
                                 draftSort?.type === 'saved' && draftSort.id === s.id
                                   ? 'border-primary bg-primary/10 text-primary shadow-sm'
                                   : 'border-border hover:bg-muted hover:border-border/80'
@@ -4317,12 +4317,19 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           </div>
 
           {/* ── Footer Buttons ── */}
-          <div className="px-5 py-3.5 border-t border-border shrink-0 min-h-[60px] bg-background">
+          <div className="px-5 py-2.5 border-t border-border shrink-0 min-h-[52px] flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              {settingsMenu === 'column'
+                ? `${draftColumns.filter(c => c.visible).length} / ${draftColumns.length} columns visible`
+                : settingsMenu === 'row'
+                  ? `${draftRowOrder.length} rows available`
+                  : `${savedRowOrders.length} saved sort list(s)`}
+            </p>
             {settingsMenu === 'column' && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {columnsCanReset && (
                   <button
-                    className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
+                    className="text-sm font-semibold text-red-600 transition-colors hover:text-red-700"
                     onClick={() => {
                       setDraftColumns([...DEFAULT_COLUMNS])
                       setColumns([...DEFAULT_COLUMNS])
@@ -4343,7 +4350,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 <div className="flex-1" />
                 {columnsDirty && (
                   <button
-                    className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                    className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
                     onClick={() => setColumnApplyScopeOpen(true)}
                   >
                     Apply Changes
@@ -4353,12 +4360,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             )}
 
             {settingsMenu === 'row' && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className="flex-1" />
                 {draftRowOrder.some(r => r.position !== '') && !rowOrderError && (
                   <button
                     disabled={rowSaving}
-                    className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                    className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700 disabled:opacity-50 flex items-center gap-1.5"
                     onClick={saveRowOrder}
                   >
                     {rowSaving ? (
@@ -4374,10 +4381,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             )}
 
             {settingsMenu === 'sorting' && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {activeSortConfig !== null && (
                   <button
-                    className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
+                    className="text-sm font-semibold text-red-600 transition-colors hover:text-red-700"
                     onClick={() => { setDraftSort(null); setActiveSortConfig(null) }}
                   >
                     Reset to Default
@@ -4386,7 +4393,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 <div className="flex-1" />
                 {JSON.stringify(draftSort) !== JSON.stringify(activeSortConfig) && (
                   <button
-                    className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                    className="text-sm font-semibold text-green-600 transition-colors hover:text-green-700"
                     onClick={() => {
                       if (activeSortConfig?.type === 'saved' && draftSort?.type === 'column') {
                         setSortConflictPending(draftSort)

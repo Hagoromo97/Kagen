@@ -270,6 +270,25 @@ export function DeliveryTableDialog() {
     if (filterRoutes.size > 0)     list = list.filter(p => filterRoutes.has(p.routeId))
     if (filterDeliveries.size > 0) list = list.filter(p => filterDeliveries.has(p.delivery))
 
+    if (activeCustomSort) {
+      const orderIndex = new Map(activeCustomSort.order.map((code, idx) => [code, idx]))
+      return [...list].sort((a, b) => {
+        const ai = orderIndex.get(a.code)
+        const bi = orderIndex.get(b.code)
+
+        if (ai == null && bi == null) {
+          // Keep unsorted items deterministic at the bottom.
+          return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" })
+        }
+        if (ai == null) return 1
+        if (bi == null) return -1
+        if (ai !== bi) return ai - bi
+
+        // Fallback for duplicate codes in a route.
+        return a._rowIndex - b._rowIndex
+      })
+    }
+
     return [...list].sort((a, b) => {
       let av = "", bv = ""
       if (sortKey === "code")     { av = a.code;      bv = b.code }
@@ -279,7 +298,7 @@ export function DeliveryTableDialog() {
       const cmp = av.localeCompare(bv, undefined, { numeric: true, sensitivity: "base" })
       return sortDir === "asc" ? cmp : -cmp
     })
-  }, [flat, search, filterRoutes, filterDeliveries, sortKey, sortDir])
+  }, [flat, search, filterRoutes, filterDeliveries, sortKey, sortDir, activeCustomSort])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc")
