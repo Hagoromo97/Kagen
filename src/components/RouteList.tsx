@@ -305,7 +305,6 @@ const DELIVERY_ITEMS = [
 ] as const
 const DELIVERY_MAP = new Map<string, typeof DELIVERY_ITEMS[number]>(DELIVERY_ITEMS.map(d => [d.value, d]))
 const getDeliveryLabel = (value: string) => DELIVERY_MAP.get(value)?.label ?? value
-const getDeliveryDescription = (value: string) => DELIVERY_MAP.get(value)?.description ?? ''
 const AUTO_DELIVERY_LABELS = DELIVERY_ITEMS.map(d => d.value)
 const AUTO_DELIVERY_LABEL_SET = new Set<string>(AUTO_DELIVERY_LABELS)
 
