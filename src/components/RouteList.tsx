@@ -3723,52 +3723,54 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2">
+          <div className="flex-1 min-h-0 p-4">
             {mapSettingsTab === 'route' ? (
-              <>
-                {routes
-                  .slice()
-                  .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
-                  .map(r => {
-                    const isCurrentRoute = r.id === currentRouteId
-                    const checked = draftCombinedRouteIds.has(r.id)
-                    const rColor = r.color ?? routeColorPalette[(routes.indexOf(r)) % routeColorPalette.length] ?? '#6b7280'
-                    return (
-                      <label
-                        key={r.id}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
-                          checked ? 'border-primary/40 bg-primary/5' : 'border-border bg-background hover:bg-muted/40'
-                        } ${isCurrentRoute ? 'opacity-70 cursor-default' : ''}`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded accent-primary cursor-pointer"
-                          checked={checked}
-                          disabled={isCurrentRoute}
-                          onChange={() => {
-                            if (isCurrentRoute) return
-                            setDraftCombinedRouteIds(prev => {
-                              const next = new Set(prev)
-                              if (next.has(r.id)) next.delete(r.id)
-                              else next.add(r.id)
-                              return next
-                            })
-                          }}
-                        />
-                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: rColor }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold truncate">{r.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{r.code} · {r.shift} · {r.deliveryPoints.length} pts</p>
-                        </div>
-                        {isCurrentRoute && (
-                          <span className="text-[10px] font-medium text-primary shrink-0">Current</span>
-                        )}
-                      </label>
-                    )
-                  })}
-              </>
+              <div className="h-full min-h-0">
+                <div className="h-full overflow-y-auto space-y-2 pr-1">
+                  {routes
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+                    .map(r => {
+                      const isCurrentRoute = r.id === currentRouteId
+                      const checked = draftCombinedRouteIds.has(r.id)
+                      const rColor = r.color ?? routeColorPalette[(routes.indexOf(r)) % routeColorPalette.length] ?? '#6b7280'
+                      return (
+                        <label
+                          key={r.id}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
+                            checked ? 'border-primary/40 bg-primary/5' : 'border-border bg-background hover:bg-muted/40'
+                          } ${isCurrentRoute ? 'opacity-70 cursor-default' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded accent-primary cursor-pointer"
+                            checked={checked}
+                            disabled={isCurrentRoute}
+                            onChange={() => {
+                              if (isCurrentRoute) return
+                              setDraftCombinedRouteIds(prev => {
+                                const next = new Set(prev)
+                                if (next.has(r.id)) next.delete(r.id)
+                                else next.add(r.id)
+                                return next
+                              })
+                            }}
+                          />
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: rColor }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold truncate">{r.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{r.code} · {r.shift} · {r.deliveryPoints.length} pts</p>
+                          </div>
+                          {isCurrentRoute && (
+                            <span className="text-[10px] font-medium text-primary shrink-0">Current</span>
+                          )}
+                        </label>
+                      )
+                    })}
+                </div>
+              </div>
             ) : mapSettingsTab === 'markerpoly' ? (
-              <>
+              <div className="h-full overflow-y-auto space-y-2 pr-1">
                 <div className="rounded-xl border border-border bg-background p-3 space-y-2">
                   <p className="text-xs font-semibold">Marker Design</p>
                   <div className="grid grid-cols-3 gap-2">
@@ -3896,9 +3898,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </Button>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="h-full min-h-0 flex flex-col gap-2">
                 <div className="rounded-xl border border-border bg-background p-3">
                   <p className="text-xs text-muted-foreground">Set latitude and longitude for each location in this route.</p>
                   {!isEditMode && (
@@ -3911,70 +3913,72 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Latitude</span>
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Longitude</span>
                 </div>
-                {deliveryPoints
-                  .slice()
-                  .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }))
-                  .map(point => {
-                    const draftCoordinate = draftCoordinates[point.code]
-                    const baselineCoordinate = coordinateBaseline[point.code]
-                    const hasDraftCoordinateChange = !!draftCoordinate && !!baselineCoordinate && (
-                      draftCoordinate.lat !== baselineCoordinate.lat || draftCoordinate.lng !== baselineCoordinate.lng
-                    )
-                    const hasPendingCoordinate =
-                      hasDraftCoordinateChange
-                      || pendingCellEdits.has(`${point.code}-latitude`)
-                      || pendingCellEdits.has(`${point.code}-longitude`)
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
+                  {deliveryPoints
+                    .slice()
+                    .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }))
+                    .map(point => {
+                      const draftCoordinate = draftCoordinates[point.code]
+                      const baselineCoordinate = coordinateBaseline[point.code]
+                      const hasDraftCoordinateChange = !!draftCoordinate && !!baselineCoordinate && (
+                        draftCoordinate.lat !== baselineCoordinate.lat || draftCoordinate.lng !== baselineCoordinate.lng
+                      )
+                      const hasPendingCoordinate =
+                        hasDraftCoordinateChange
+                        || pendingCellEdits.has(`${point.code}-latitude`)
+                        || pendingCellEdits.has(`${point.code}-longitude`)
 
-                    return (
-                      <div
-                        key={point.code}
-                        className={`grid grid-cols-[1fr_100px_100px] items-center gap-2 rounded-lg border px-2 py-1.5 ${
-                          hasPendingCoordinate
-                            ? 'border-amber-400/50 bg-amber-50/40 dark:bg-amber-900/10'
-                            : 'border-border bg-background'
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold truncate leading-tight">{point.name || '-'}</p>
+                      return (
+                        <div
+                          key={point.code}
+                          className={`grid grid-cols-[1fr_100px_100px] items-center gap-2 rounded-lg border px-2 py-1.5 ${
+                            hasPendingCoordinate
+                              ? 'border-amber-400/50 bg-amber-50/40 dark:bg-amber-900/10'
+                              : 'border-border bg-background'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold truncate leading-tight">{point.name || '-'}</p>
+                          </div>
+                          <Input
+                            type="number"
+                            step="0.000001"
+                            value={draftCoordinates[point.code]?.lat ?? ''}
+                            onChange={(e) => {
+                              setDraftCoordinates((prev) => ({
+                                ...prev,
+                                [point.code]: {
+                                  lat: e.target.value,
+                                  lng: prev[point.code]?.lng ?? (Number.isFinite(point.longitude) ? String(point.longitude) : ''),
+                                },
+                              }))
+                            }}
+                            disabled={!isEditMode}
+                            className="h-6 text-[10px] px-1.5 font-mono text-center"
+                            placeholder="0.000000"
+                          />
+                          <Input
+                            type="number"
+                            step="0.000001"
+                            value={draftCoordinates[point.code]?.lng ?? ''}
+                            onChange={(e) => {
+                              setDraftCoordinates((prev) => ({
+                                ...prev,
+                                [point.code]: {
+                                  lat: prev[point.code]?.lat ?? (Number.isFinite(point.latitude) ? String(point.latitude) : ''),
+                                  lng: e.target.value,
+                                },
+                              }))
+                            }}
+                            disabled={!isEditMode}
+                            className="h-6 text-[10px] px-1.5 font-mono text-center"
+                            placeholder="0.000000"
+                          />
                         </div>
-                        <Input
-                          type="number"
-                          step="0.000001"
-                          value={draftCoordinates[point.code]?.lat ?? ''}
-                          onChange={(e) => {
-                            setDraftCoordinates((prev) => ({
-                              ...prev,
-                              [point.code]: {
-                                lat: e.target.value,
-                                lng: prev[point.code]?.lng ?? (Number.isFinite(point.longitude) ? String(point.longitude) : ''),
-                              },
-                            }))
-                          }}
-                          disabled={!isEditMode}
-                          className="h-6 text-[10px] px-1.5 font-mono text-center"
-                          placeholder="0.000000"
-                        />
-                        <Input
-                          type="number"
-                          step="0.000001"
-                          value={draftCoordinates[point.code]?.lng ?? ''}
-                          onChange={(e) => {
-                            setDraftCoordinates((prev) => ({
-                              ...prev,
-                              [point.code]: {
-                                lat: prev[point.code]?.lat ?? (Number.isFinite(point.latitude) ? String(point.latitude) : ''),
-                                lng: e.target.value,
-                              },
-                            }))
-                          }}
-                          disabled={!isEditMode}
-                          className="h-6 text-[10px] px-1.5 font-mono text-center"
-                          placeholder="0.000000"
-                        />
-                      </div>
-                    )
-                  })}
-              </>
+                      )
+                    })}
+                </div>
+              </div>
             )}
           </div>
           <div className="px-5 py-3.5 border-t border-border shrink-0 min-h-[60px] flex items-center justify-between gap-3">
@@ -4069,7 +4073,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 <div className="rounded-xl border border-border bg-background p-3">
                   <p className="text-xs text-muted-foreground">Toggle visibility and reorder columns.</p>
                 </div>
-                <div className="space-y-2.5">
+                <div className="max-h-[220px] overflow-y-auto pr-1 space-y-2.5">
                   {draftColumns.map((col, idx) => {
                     return (
                     <div key={col.key} className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-background">
@@ -4129,7 +4133,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 {rowOrderError && (
                   <p className="text-[11px] text-destructive font-medium">{rowOrderError}</p>
                 )}
-                <div className={`space-y-2.5 relative transition-opacity duration-300 ${rowSaving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                <div className={`max-h-[240px] overflow-y-auto pr-1 space-y-2.5 relative transition-opacity duration-300 ${rowSaving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                   {rowSaving && (
                     <div className="absolute inset-0 flex items-center justify-center z-10">
                       <div className="bg-background/90 backdrop-blur-sm rounded-xl px-5 py-3 flex items-center gap-2.5 shadow-lg border border-border">
