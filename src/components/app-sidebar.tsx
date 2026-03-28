@@ -77,11 +77,7 @@ const data = {
           url: "#",
           page: "deliveries",
         },
-        {
-          title: "Playground",
-          url: "#",
-          page: "playground",
-        },
+
       ],
     },
     {

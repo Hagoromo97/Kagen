@@ -744,8 +744,6 @@ function AppContent() {
     switch (currentPage) {
       case "route-list":
         return <RouteList />
-      case "playground":
-        return <RouteList variant="playground" />
       case "deliveries":
         return (
           <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 md:p-6">
@@ -789,8 +787,6 @@ function AppContent() {
     switch (currentPage) {
       case "route-list":
         return { parent: { label: "Vending Machine", icon: Package }, current: "Route List" }
-      case "playground":
-        return { parent: { label: "Vending Machine", icon: Package }, current: "Playground" }
       case "deliveries":
         return { parent: { label: "Vending Machine", icon: Package }, current: "Location" }
       case "rooster":
