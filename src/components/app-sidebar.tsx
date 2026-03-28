@@ -199,7 +199,7 @@ export function AppSidebar({
                 <img
                   src={fmLogo}
                   alt="FM logo"
-                  className="h-[72px] w-[72px] shrink-0 object-contain"
+                  className="h-[80px] w-[80px] shrink-0 object-contain"
                 />
               </a>
             </SidebarMenuButton>

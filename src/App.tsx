@@ -727,6 +727,7 @@ function AppContent() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [roosterViewMode, setRoosterViewMode] = useState<"month" | "week">("week")
   const { open, openMobile, isMobile, toggleSidebar, setOpen, setOpenMobile } = useSidebar()
+  const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
 
   const handlePageChange = (page: string) => {
     if (page === currentPage) return
@@ -819,14 +820,17 @@ function AppContent() {
       <AppSidebar onNavigate={handlePageChange} currentPage={currentPage} />
       
       {/* Backdrop for desktop sidebar */}
-      {!isMobile && open && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/30 transition-opacity duration-300"
+      {!isMobile && (
+        <div
+          className={`fixed inset-0 z-40 bg-black/45 transition-all duration-350 ease-out ${open ? "opacity-100 backdrop-blur-md pointer-events-auto" : "opacity-0 backdrop-blur-0 pointer-events-none"}`}
           onClick={toggleSidebar}
         />
       )}
       
-      <main className={`relative flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background transition-opacity duration-300 ${(isMobile && openMobile) || (!isMobile && open) ? 'opacity-75' : 'opacity-100'}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <main
+        className={`relative flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background origin-center transition-all duration-350 ease-out will-change-[transform,filter,opacity] ${isSidebarActive ? "opacity-70 scale-[0.955] blur-[3px] saturate-75" : "opacity-100 scale-100 blur-0 saturate-100"}`}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <header className="glass-header sticky top-0 z-30 flex shrink-0 items-center gap-2 px-3 md:px-5 transition-colors duration-300" style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)', paddingBottom: '0.5rem', minHeight: 'calc(3.25rem + max(env(safe-area-inset-top), 10px))' }}>
           <SidebarTrigger className="-ml-1 shrink-0" />
           <Separator orientation="vertical" className="mr-1 md:mr-2 h-4 shrink-0" />
