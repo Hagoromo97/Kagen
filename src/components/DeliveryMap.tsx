@@ -46,6 +46,29 @@ interface TileConfigItem {
   maxNativeZoom: number
 }
 
+function isDeliveryOnToday(delivery: string, date: Date = new Date()): boolean {
+  const dayOfWeek = date.getDay() // 0=Sun, 1=Mon, ...
+  const localNoon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
+  const epochDay = Math.floor(localNoon.getTime() / 86400000)
+
+  switch (delivery) {
+    case "Daily":
+      return true
+    case "Alt 1":
+      return epochDay % 2 !== 0
+    case "Alt 2":
+      return epochDay % 2 === 0
+    case "Weekday":
+      return dayOfWeek >= 0 && dayOfWeek <= 4
+    case "Weekday 2":
+      return dayOfWeek >= 1 && dayOfWeek <= 5
+    case "Weekday 3":
+      return [0, 2, 5].includes(dayOfWeek)
+    default:
+      return true
+  }
+}
+
 const TILE_CONFIG: Record<"google-streets" | "google-satellite" | "osm", TileConfigItem> = {
   "google-streets": {
     attribution: "Map data © Google",
@@ -72,8 +95,8 @@ const TILE_CONFIG: Record<"google-streets" | "google-satellite" | "osm", TileCon
 
 function createPinIcon(color: string, active = false): L.Icon {
   // Use the standard Leaflet marker images but tinted via a coloured shadow trick
-  // with a compact size (14×23 instead of default 25×41)
-  const size: [number, number]   = active ? [18, 30] : [14, 23]
+  // with a compact size (12×20 instead of default 25×41)
+  const size: [number, number]   = active ? [16, 27] : [12, 20]
   const anchor: [number, number] = [size[0] / 2, size[1]]
 
   // Build a data-URI that recolours the default Leaflet pin SVG
@@ -92,7 +115,7 @@ function createPinIcon(color: string, active = false): L.Icon {
 }
 
 function createDotIcon(color: string, active = false): L.DivIcon {
-  const size = active ? 12 : 9
+  const size = active ? 10 : 8
   return L.divIcon({
     className: "",
     iconAnchor: [size / 2, size / 2],
@@ -102,8 +125,8 @@ function createDotIcon(color: string, active = false): L.DivIcon {
 }
 
 function createRingIcon(color: string, active = false): L.DivIcon {
-  const outer = active ? 16 : 12
-  const inner = active ? 7 : 5
+  const outer = active ? 14 : 10
+  const inner = active ? 6 : 4
   return L.divIcon({
     className: "",
     iconAnchor: [outer / 2, outer / 2],
@@ -284,8 +307,11 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
   const polylineGroups = useMemo(() => {
     if (!showPolyline) return [] as Array<{ id: string; positions: [number, number][] }>
 
+    // Polyline follows only locations that are active for today's delivery schedule.
+    const polylinePoints = deferredPoints.filter((point) => isDeliveryOnToday(point.delivery))
+
     const grouped = new Map<string, [number, number][]>();
-    deferredPoints.forEach((point) => {
+    polylinePoints.forEach((point) => {
       const groupId = point.routeId ?? "single-route"
       const positions = grouped.get(groupId) ?? (startPoint ? [[startPoint.lat, startPoint.lng]] as [number, number][] : [])
       positions.push([point.latitude, point.longitude])
