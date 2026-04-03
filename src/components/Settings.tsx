@@ -509,10 +509,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
               <div className="space-y-2.5">
                 {DATABASE_STORAGE_ITEMS.map((item) => (
                   <div key={item.store} className="rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-foreground">{item.section}</p>
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[11px] text-primary">{item.store}</span>
-                    </div>
+                    <p className="text-sm font-semibold text-foreground">{item.section}</p>
                     <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.purpose}</p>
                   </div>
                 ))}
@@ -524,10 +521,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
                   <div className="space-y-2.5">
                     {LOCAL_STORAGE_ITEMS.map((item) => (
                       <div key={item.store} className="rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-foreground">{item.section}</p>
-                          <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 font-mono text-[11px] text-sky-600 dark:text-sky-400">{item.store}</span>
-                        </div>
+                        <p className="text-sm font-semibold text-foreground">{item.section}</p>
                         <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.purpose}</p>
                       </div>
                     ))}
@@ -541,10 +535,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
                   <div className="space-y-2.5">
                     {SESSION_STORAGE_ITEMS.map((item) => (
                       <div key={item.store} className="rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-foreground">{item.section}</p>
-                          <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 font-mono text-[11px] text-amber-600 dark:text-amber-400">{item.store}</span>
-                        </div>
+                        <p className="text-sm font-semibold text-foreground">{item.section}</p>
                         <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{item.purpose}</p>
                       </div>
                     ))}

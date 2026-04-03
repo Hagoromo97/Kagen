@@ -161,8 +161,8 @@ function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
       <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
         <Plus className="size-4" />
       </span>
-      <p className="text-xs font-semibold text-foreground">Tambah Card</p>
-      <p className="text-[11px] text-muted-foreground">Maksimum 4</p>
+      <p className="text-xs font-semibold text-foreground">Add Card</p>
+      <p className="text-[11px] text-muted-foreground">Maximum 4</p>
     </button>
   )
 }
@@ -185,15 +185,16 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       return DEFAULT_QUICK_ACCESS
     }
   })
-  const [archiveState, setArchiveState] = useState<{ colorGuide: boolean; colorExpired: boolean }>(() => {
+  const [archiveState, setArchiveState] = useState<{ colorGuide: boolean; colorExpired: boolean; toolEquipment: boolean }>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem(LS_HOME_ARCHIVE) || "{}")
       return {
         colorGuide: Boolean(stored?.colorGuide),
         colorExpired: Boolean(stored?.colorExpired),
+        toolEquipment: Boolean(stored?.toolEquipment),
       }
     } catch {
-      return { colorGuide: false, colorExpired: false }
+      return { colorGuide: false, colorExpired: false, toolEquipment: false }
     }
   })
   const todayIndex = (new Date().getDay() + 6) % 7
@@ -211,7 +212,8 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const availableQuickOptions = QUICK_ACCESS_OPTIONS.filter(opt => !quickAccess.includes(opt.id))
   const showColorGuide = !archiveState.colorGuide || isEditMode
   const showColorExpired = !archiveState.colorExpired || isEditMode
-  const hasHomeArchiveContent = showColorGuide || showColorExpired
+  const showToolEquipment = !archiveState.toolEquipment || isEditMode
+  const hasHomeArchiveContent = showColorGuide || showColorExpired || showToolEquipment
 
   const updateQuickAccess = (next: QuickAccessId[]) => {
     const limited = next.slice(0, QUICK_ACCESS_LIMIT)
@@ -229,7 +231,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     updateQuickAccess(quickAccess.filter(item => item !== id))
   }
 
-  const toggleArchive = (key: "colorGuide" | "colorExpired") => {
+  const toggleArchive = (key: "colorGuide" | "colorExpired" | "toolEquipment") => {
     setArchiveState(prev => {
       const next = { ...prev, [key]: !prev[key] }
       localStorage.setItem(LS_HOME_ARCHIVE, JSON.stringify(next))
@@ -247,6 +249,58 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
         }}
         className="fixed inset-0 z-[45] bg-black/45 backdrop-blur-md transition-opacity duration-200"
       />,
+      document.body
+    )
+    : null
+
+  const isQuickPickerModalOpen = isEditMode && showQuickPicker && quickAccess.length < QUICK_ACCESS_LIMIT
+  const quickPickerModal = isQuickPickerModalOpen && typeof document !== "undefined"
+    ? createPortal(
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <button
+          type="button"
+          aria-label="Close quick access picker"
+          className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+          onClick={() => setShowQuickPicker(false)}
+        />
+        <div className="relative z-10 w-full max-w-lg rounded-xl border border-border bg-card p-4 shadow-xl">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Add Quick Access</p>
+              <p className="text-xs text-muted-foreground">Choose a card to add to Home.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowQuickPicker(false)}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+              aria-label="Close"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {availableQuickOptions.length === 0 ? (
+            <p className="text-xs text-muted-foreground">All cards are already in use.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {availableQuickOptions.map(option => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => addQuickAccess(option.id)}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-left hover:bg-muted/40 transition-colors"
+                >
+                  <option.icon className={`size-4 shrink-0 ${option.iconClass ?? "text-muted-foreground"}`} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate">{option.label}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{option.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>,
       document.body
     )
     : null
@@ -281,6 +335,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       style={{ paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))" }}
     >
       {toolPopoverBackdrop}
+      {quickPickerModal}
 
       {/* ── Pinned Routes ─────────────────────────────────────── */}
       {pinnedRoutes.length > 0 && (
@@ -372,34 +427,8 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           )}
         </div>
 
-        {isEditMode && showQuickPicker && quickAccess.length < QUICK_ACCESS_LIMIT && (
-          <div className="mt-3 rounded-xl border border-dashed border-border bg-card/50 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Pilih card untuk ditambah</p>
-            {availableQuickOptions.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Semua card sudah dipakai.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {availableQuickOptions.map(option => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => addQuickAccess(option.id)}
-                    className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-left hover:bg-muted/40 transition-colors"
-                  >
-                    <option.icon className={`size-4 shrink-0 ${option.iconClass ?? "text-muted-foreground"}`} />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{option.label}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{option.description}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {isEditMode && quickAccess.length === 0 && (
-          <p className="mt-3 text-xs text-muted-foreground px-0.5">Tiada card. Tekan `+` untuk tambah Quick Access.</p>
+          <p className="mt-3 text-xs text-muted-foreground px-0.5">No cards yet. Tap `+` to add Quick Access.</p>
         )}
       </div>
 
@@ -533,9 +562,21 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       {hasHomeArchiveContent && <hr className="border-border/40" />}
 
       {/* ── Tool & Equipment ──────────────────────────────────── */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-3 px-0.5">
+      {showToolEquipment && (
+      <div className={archiveState.toolEquipment ? "opacity-60" : undefined}>
+        <div className="mb-3 flex items-center justify-between gap-2 px-0.5">
           <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Tool &amp; Equipment</p>
+          {isEditMode && (
+            <button
+              type="button"
+              onClick={() => toggleArchive("toolEquipment")}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+              title={archiveState.toolEquipment ? "Unarchive Tool & Equipment" : "Archive Tool & Equipment"}
+            >
+              {archiveState.toolEquipment ? <ArchiveRestore className="size-3" /> : <Archive className="size-3" />}
+              {archiveState.toolEquipment ? "Unarchive" : "Archive"}
+            </button>
+          )}
         </div>
         <div className="rounded-2xl overflow-hidden border border-border/60 shadow-sm bg-card divide-y divide-border/40">
           {[
@@ -718,6 +759,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           </Popover>
         </div>
       </div>
+      )}
     </div>
   )
 }

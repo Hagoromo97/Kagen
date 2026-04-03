@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import bgDark from "../../icon/darkm.jpeg"
 import bgLight from "../../icon/lightm.jpeg"
-import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, SlidersHorizontal, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
+import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, SlidersHorizontal, Filter, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
@@ -629,7 +629,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         const matchSearch =
           route.name.toLowerCase().includes(query) ||
           route.code.toLowerCase().includes(query) ||
-          route.shift.toLowerCase().includes(query)
+          route.shift.toLowerCase().includes(query) ||
+          route.deliveryPoints.some(point =>
+            point.name.toLowerCase().includes(query) ||
+            point.code.toLowerCase().includes(query)
+          )
         if (!matchSearch) return false
       }
       if (filterRegion !== "all") {
@@ -660,7 +664,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       .filter(route =>
         route.name.toLowerCase().includes(q) ||
         route.code.toLowerCase().includes(q) ||
-        route.shift.toLowerCase().includes(q)
+        route.shift.toLowerCase().includes(q) ||
+        route.deliveryPoints.some(point =>
+          point.name.toLowerCase().includes(q) ||
+          point.code.toLowerCase().includes(q)
+        )
       )
       .slice(0, SEARCH_SUGGESTION_LIMIT)
   }, [routes, searchQuery])
@@ -1941,7 +1949,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             <List className="size-3.5 shrink-0 text-primary" />
             <h2 className="text-[13px] font-semibold tracking-tight text-foreground">{pageTitle}</h2>
           </div>
-          <div className="ml-7 mt-3 rounded-xl border border-border/70 bg-card/60 px-4 py-3 shadow-sm">
+          <div className="ml-7 mt-3 px-4 py-3">
             <dl className="grid grid-cols-1 gap-y-3 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-x-4">
               <dt className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Total Routes</dt>
               <dd className="text-[11px] text-foreground/90">
@@ -2083,7 +2091,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 : "bg-card/75 text-muted-foreground ring-border/60 hover:bg-muted/80"
             }`}
           >
-            <SlidersHorizontal className="size-5" />
+            <Filter className="size-5" />
             {(filterRegion !== "all" || filterShift !== "all") && (
               <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-orange-400 ring-2 ring-background" />
             )}
