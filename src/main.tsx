@@ -13,9 +13,9 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
     const zoom = localStorage.getItem("app-zoom") ?? "120"
     document.body.style.zoom = `${zoom}%`
 
-    // Text size (rem base)
+    // Text size (root scale via CSS variable)
     const textSize = localStorage.getItem("text-size")
-    if (textSize) document.documentElement.style.fontSize = `${textSize}px`
+    if (textSize) document.documentElement.style.setProperty("--text-size-base", `${textSize}px`)
 
     // Font family
     const storedFont = localStorage.getItem("app-font")

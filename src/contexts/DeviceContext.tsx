@@ -7,7 +7,7 @@ interface DeviceContextValue {
   isTablet: boolean
   isDesktop: boolean
   isTouch: boolean
-  /** CSS-friendly font scale factor — 0.875 on mobile, 0.9375 on tablet, 1 on desktop */
+  /** Compatibility font scale factor (kept stable at 1). */
   fontScale: number
 }
 
@@ -25,8 +25,8 @@ const DeviceContext = React.createContext<DeviceContextValue>({
  * – Detects device type (mobile / tablet / desktop) via window resize listener.
  * – Writes `data-device` and `data-touch` to the root <html> element so CSS
  *   can target each breakpoint with plain attribute selectors.
- * – Adjusts `--app-font-scale` CSS custom property so every rem-based value
- *   scales uniformly without touching individual component classes.
+ * – Keeps `--app-font-scale` stable at 1 so typography stays consistent
+ *   across device categories.
  */
 export function DeviceProvider({ children }: { children: React.ReactNode }) {
   const device = useDeviceType()
@@ -38,14 +38,14 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
     () => typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0),
     []
   )
-  const fontScale = isMobile ? 0.875 : isTablet ? 0.9375 : 1
+  const fontScale = 1
 
   // Sync HTML data-attributes whenever device changes
   React.useEffect(() => {
     const html = document.documentElement
     html.setAttribute("data-device", device)
     html.setAttribute("data-touch", isTouch ? "true" : "false")
-    // Fluid font scale via CSS custom property
+    // Keep font scale deterministic across all devices.
     html.style.setProperty("--app-font-scale", String(fontScale))
   }, [device, isTouch, fontScale])
 

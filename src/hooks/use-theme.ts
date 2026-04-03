@@ -113,7 +113,7 @@ export function useTheme() {
     localStorage.setItem("app-zoom", appZoom)
   }, [appZoom])
 
-  // Apply text size — stored in CSS custom property so DeviceProvider can scale it
+  // Apply text size via CSS custom property as single source of truth
   useEffect(() => {
     document.documentElement.style.setProperty("--text-size-base", `${textSize}px`)
     localStorage.setItem("text-size", textSize)
