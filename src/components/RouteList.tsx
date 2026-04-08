@@ -437,6 +437,16 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   // ── Per-card edit form state ───────────────────────────────────────
   const [editPanelState, setEditPanelState] = useState<Record<string, { name: string; code: string; shift: string; color: string; labels: string[] }>>({})
   const getCardPanel = (id: string) => cardPanels[id] ?? { info: false, edit: false }
+  const openExclusiveCardPanel = useCallback((routeId: string, panel: 'info' | 'edit') => {
+    setCardPanels(prev => {
+      const resetPanels: Record<string, { info: boolean; edit: boolean }> = {}
+      for (const id of Object.keys(prev)) {
+        resetPanels[id] = { info: false, edit: false }
+      }
+      resetPanels[routeId] = { info: panel === 'info', edit: panel === 'edit' }
+      return resetPanels
+    })
+  }, [])
 
   // Close edit panels when edit mode turns off
   useEffect(() => {
@@ -489,9 +499,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     const el = cardContainerRef.current
     if (!el) return
     const ro = new ResizeObserver(entries => {
-      const w = entries[0].contentRect.width
-      setCardW(Math.min(340, w))
-      setCardH(Math.min(580, Math.max(400, window.innerHeight / 1.2 - 220)))
+      const containerWidth = entries[0].contentRect.width
+      const viewportWidth = window.innerWidth
+      const mobileInset = viewportWidth < 640 ? 32 : viewportWidth < 1024 ? 48 : 64
+      const nextCardWidth = Math.min(360, Math.max(280, Math.min(containerWidth, viewportWidth - mobileInset)))
+      setCardW(nextCardWidth)
+      setCardH(Math.min(580, Math.max(400, window.innerHeight / 1.2 - (viewportWidth < 640 ? 180 : 220))))
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -1601,34 +1614,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     })
   }
 
-  const updateHeaderItem = (id: string, field: 'term' | 'definition', value: string) => {
-    if (!isEditMode) return
-    setHasUnsavedChanges(true)
-    setHeaderItems(prev => prev.map(item => (item.id === id ? { ...item, [field]: value } : item)))
-  }
-
-  const handleAddHeaderItem = () => {
-    if (!isEditMode) return
-    setHasUnsavedChanges(true)
-    setHeaderItems(prev => ([
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        term: 'New term',
-        definition: 'New definition',
-      },
-    ]))
-  }
-
-  const handleRemoveHeaderItem = (id: string) => {
-    if (!isEditMode) return
-    setHasUnsavedChanges(true)
-    setHeaderItems(prev => {
-      if (prev.length <= 1) return prev
-      return prev.filter(item => item.id !== id)
-    })
-  }
-
   const doSave = useCallback(async () => {
     // Snapshot before state for changelog
     const before = routesSnapshotRef.current
@@ -1890,9 +1875,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
-        <Loader2 className="size-5 animate-spin" />
-        <span className="text-sm loading-text">Loading Routes…</span>
+      <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+        <div className="loading-shell flex items-center gap-2.5 text-muted-foreground">
+          <Loader2 className="loading-spinner size-5 animate-spin" />
+          <span className="text-sm loading-text">Loading Routes…</span>
+        </div>
       </div>
     )
   }
@@ -1942,80 +1929,23 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         />
       )}
       {/* Route List */}
-      <div className="p-5 md:p-8 max-w-[1400px] mx-auto" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+      <div className="mx-auto max-w-[1440px] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         {/* Page header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
+        <div className="mb-5 sm:mb-6">
+          <div className="mb-1.5 flex items-center gap-2.5 sm:gap-3">
             <List className="size-3.5 shrink-0 text-primary" />
             <h2 className="text-[13px] font-semibold tracking-tight text-foreground">{pageTitle}</h2>
           </div>
-          <div className="ml-7 mt-3 px-4 py-3">
-            <dl className="grid grid-cols-1 gap-y-3 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-x-4">
-              <dt className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Total Routes</dt>
-              <dd className="text-[11px] text-foreground/90">
-                {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
-                {(filterRegion !== 'all' || filterShift !== 'all') && <span className="ml-1 text-primary font-medium">· filtered</span>}
-              </dd>
-
-              {headerItems.map(item => (
-                <div key={item.id} className="contents">
-                  <dt className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {isEditMode ? (
-                      <Input
-                        value={item.term}
-                        onChange={(e) => updateHeaderItem(item.id, 'term', e.target.value)}
-                        placeholder="Term"
-                        className="h-8 text-xs"
-                      />
-                    ) : (
-                      <span className="truncate">{item.term || 'Untitled term'}</span>
-                    )}
-                  </dt>
-                  <dd className="text-[11px] text-foreground/90">
-                    {isEditMode ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={item.definition}
-                          onChange={(e) => updateHeaderItem(item.id, 'definition', e.target.value)}
-                          placeholder="Definition"
-                          className="h-8 text-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveHeaderItem(item.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/70 text-muted-foreground hover:bg-muted/70 hover:text-foreground disabled:opacity-50"
-                          disabled={headerItems.length <= 1}
-                          title="Remove row"
-                          aria-label="Remove row"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <span>{item.definition}</span>
-                    )}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-
-            {isEditMode && (
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleAddHeaderItem}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/70 px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  <Plus className="size-3.5" />
-                  Add Header Row
-                </button>
-              </div>
-            )}
+          <div className="ml-6 mt-2.5 px-3 py-2 sm:ml-7 sm:mt-3 sm:px-4 sm:py-2.5">
+            <p className="text-[11px] text-foreground/90">
+              {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
+              {(filterRegion !== 'all' || filterShift !== 'all') && <span className="ml-1 text-primary font-medium">· filtered</span>}
+            </p>
           </div>
-          <Separator className="mt-4" />
+          <Separator className="mt-3 sm:mt-4" />
         </div>
         {/* Search + Filter */}
-        <div className="sticky top-0 z-20 mb-6 flex items-center justify-center gap-3 bg-background/80 backdrop-blur-md -mx-5 md:-mx-8 px-5 md:px-8 py-2.5 border-b border-border/40">
+        <div className="sticky top-0 z-20 mb-5 flex items-center justify-center gap-2.5 border-b border-border/40 bg-background/80 px-4 py-2 backdrop-blur-md sm:-mx-5 sm:mb-6 sm:gap-3 sm:px-5 sm:py-2.5 lg:-mx-8 lg:px-8">
           <div className="relative z-30 w-full max-w-sm">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50 pointer-events-none" />
             <input
@@ -2100,7 +2030,15 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </div>
 
         {/* ── Card list ── */}
-        <div ref={cardContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        <div
+          ref={cardContainerRef}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+            gap: 'clamp(1rem, 2vw, 1.75rem)',
+            alignItems: 'start',
+          }}
+        >
         {displayedRoutes.map((route, routeIndex) => {
           const markerColor = route.color || routeColorPalette[routeIndex % routeColorPalette.length]
           const cardPanel = getCardPanel(route.id)
@@ -2108,9 +2046,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           const savedCustomLabels = toCustomLabels(route.labels)
           const ep = editPanelState[route.id] ?? { name: route.name, code: route.code, shift: route.shift, color: route.color || markerColor, labels: savedCustomLabels }
           return (
-          <div key={route.id} style={{ display: 'flex', justifyContent: 'center' }}>
+          <div key={route.id} style={{ display: 'flex', justifyContent: 'center', minWidth: 0 }}>
             {/* ── Route Card ── */}
-            <div style={{ width: cardW, height: cardH, borderRadius: 22, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', border: `1.5px solid ${markerColor}55`, boxShadow: `0 2px 10px ${markerColor}0e, 0 0 0 1px ${markerColor}10` }}>
+            <div style={{ width: '100%', maxWidth: cardW, height: cardH, borderRadius: 22, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', border: `1.5px solid ${markerColor}55`, boxShadow: `0 2px 10px ${markerColor}0e, 0 0 0 1px ${markerColor}10` }}>
               {/* Background image – subtle */}
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${isDark ? bgDark : bgLight})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18, zIndex: 0, pointerEvents: 'none' }} />
               {/* Sliding wrapper */}
@@ -2291,17 +2229,46 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         </div>
                       )
                     })()}
+
+                    {/* Custom badges from route.labels */}
+                    {savedCustomLabels.length > 0 && (
+                      <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '0.15rem' }}>
+                        {savedCustomLabels.map(lbl => {
+                          const badgeTextColor = isDark ? '#d1d5db' : '#525866'
+                          const badgeBg = isDark ? 'linear-gradient(135deg, #434b59, #2f3744)' : 'linear-gradient(135deg, #eef1f4, #d3d9e1)'
+                          const badgeBorder = isDark ? '#626d7d' : '#b7c0cc'
+                          const badgeTextShadow = isDark ? '0 1px 0 #0008' : '0 1px 0 #fff8'
+                          return (
+                          <span
+                            key={lbl}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center',
+                              fontSize: `calc(${badgeFs} + 1px)`, fontWeight: 700,
+                              color: badgeTextColor,
+                              background: badgeBg,
+                              padding: '2px 9px', borderRadius: '6px',
+                              border: `1px solid ${badgeBorder}`,
+                              letterSpacing: '0.03em',
+                              textShadow: badgeTextShadow,
+                            }}
+                          >
+                            {lbl}
+                          </span>
+                          )
+                        })}
+                      </div>
+                    )}
                     </div>{/* end divider+badges wrapper */}
                   </div>{/* end Body */}
 
                   {/* Footer */}
                   <div style={{ padding: `${rowGap} ${cardPad} ${cardPadV}`, display: 'flex', gap: '0.45rem', borderTop: `1px solid ${markerColor}55` }}>
                     {isEditMode && (
-                      <button onClick={() => setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: true } }))} style={{ flex: 1, borderRadius: 11, fontSize: btnFs, fontWeight: 700, padding: `${btnPad} 0`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: markerColor, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}44` }}>
+                      <button onClick={() => openExclusiveCardPanel(route.id, 'edit')} style={{ flex: 1, borderRadius: 11, fontSize: btnFs, fontWeight: 700, padding: `${btnPad} 0`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: markerColor, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}44` }}>
                         <Edit2 style={{ width: iconSz * 0.6, height: iconSz * 0.6 }} /> Edit
                       </button>
                     )}
-                    <button onClick={() => setCardPanels(prev => ({ ...prev, [route.id]: { edit: false, info: true } }))} style={{ flex: 1, borderRadius: 11, fontSize: btnFs, fontWeight: 700, padding: `${btnPad} 0`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: markerColor, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 2px 6px ${markerColor}2e` }}>
+                    <button onClick={() => openExclusiveCardPanel(route.id, 'info')} style={{ flex: 1, borderRadius: 11, fontSize: btnFs, fontWeight: 700, padding: `${btnPad} 0`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: markerColor, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 2px 6px ${markerColor}2e` }}>
                       <History style={{ width: iconSz * 0.6, height: iconSz * 0.6 }} /> Log
                     </button>
                     <button
@@ -2411,7 +2378,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       <div style={{ fontSize: editMetaFs, color: 'hsl(var(--muted-foreground))' }}>Route · Code · Labels</div>
                     </div>
                   </div>
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     <div>
                       <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: 4, marginBottom: '0.4rem' }}>Route Name</label>
                       <input value={ep.name} onChange={e => setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, name: e.target.value } }))} placeholder="Route name..." style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1.5px solid hsl(var(--border))', fontSize: editInputFs, fontWeight: 600, color: 'hsl(var(--foreground))', background: 'hsl(var(--background))', outline: 'none', boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor = markerColor} onBlur={e => e.target.style.borderColor = 'hsl(var(--border))'} />
@@ -2430,24 +2397,31 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </div>
                     {/* Labels manager */}
                     <div>
-                      <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: 4, marginBottom: '0.4rem' }}>Delivery Type (Auto)</label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.32rem', marginBottom: '0.55rem', minHeight: 24 }}>
+                      <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: 4, marginBottom: '0.3rem' }}>Delivery Type (Auto)</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.32rem', marginBottom: '0.4rem', minHeight: 24 }}>
                         {autoLabels.map((lbl) => {
+                          const badgeTextColor = isDark ? '#d1d5db' : '#525866'
+                          const badgeBg = isDark ? 'linear-gradient(135deg, #434b59, #2f3744)' : 'linear-gradient(135deg, #eef1f4, #d3d9e1)'
+                          const badgeBorder = isDark ? '#626d7d' : '#b7c0cc'
                           return (
-                            <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${ep.color}14`, color: ep.color, fontSize: editChipFs, fontWeight: 700, padding: '2px 10px 2px 11px', borderRadius: '999px', border: `1px solid ${ep.color}40` }}>
+                            <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: badgeBg, color: badgeTextColor, fontSize: editChipFs, fontWeight: 700, lineHeight: 1, padding: '3px 10px', borderRadius: '6px', border: `1px solid ${badgeBorder}`, letterSpacing: '0.03em', textShadow: isDark ? '0 1px 0 #0008' : '0 1px 0 #fff8' }}>
                               {lbl}
                             </span>
                           )
                         })}
                       </div>
 
-                      <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: 4, marginBottom: '0.4rem' }}>Custom Badges</label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.32rem', marginBottom: '0.45rem', minHeight: 24 }}>
+                      <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: 4, marginBottom: '0.3rem' }}>Custom Badges</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.32rem', marginBottom: '0.4rem', minHeight: 24 }}>
                         {ep.labels.map((lbl) => {
+                          const badgeTextColor = isDark ? '#d1d5db' : '#525866'
+                          const badgeBg = isDark ? 'linear-gradient(135deg, #434b59, #2f3744)' : 'linear-gradient(135deg, #eef1f4, #d3d9e1)'
+                          const badgeBorder = isDark ? '#626d7d' : '#b7c0cc'
+                          const badgeTextShadow = isDark ? '0 1px 0 #0008' : '0 1px 0 #fff8'
                           return (
-                            <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${ep.color}18`, color: ep.color, fontSize: editChipFs, fontWeight: 600, padding: '2px 10px 2px 11px', borderRadius: '999px', border: `1px solid ${ep.color}44` }}>
+                            <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: badgeBg, color: badgeTextColor, fontSize: editChipFs, fontWeight: 700, lineHeight: 1, padding: '3px 10px', borderRadius: '6px', border: `1px solid ${badgeBorder}`, letterSpacing: '0.03em', textShadow: badgeTextShadow }}>
                               {lbl}
-                              <button onClick={() => setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, labels: ep.labels.filter(l => l !== lbl) } }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: ep.color, padding: '0 1px', display: 'flex', lineHeight: 1, opacity: 0.75, fontSize: '0.85rem' }}>×</button>
+                              <button onClick={() => setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, labels: ep.labels.filter(l => l !== lbl) } }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: badgeTextColor, padding: 0, margin: 0, display: 'flex', alignItems: 'center', lineHeight: 1, height: editChipFs, opacity: 0.6, fontSize: editChipFs, flexShrink: 0 }}>×</button>
                             </span>
                           )
                         })}
@@ -2493,7 +2467,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       <X style={{ width: 12, height: 12 }} /> Cancel
                     </button>
                     {(() => {
-                      const hasEditChanges = ep.name !== route.name || ep.code !== route.code || ep.shift !== route.shift || ep.labels.join(',') !== savedCustomLabels.join(',')
+                      const hasEditChanges = ep.name !== route.name || ep.code !== route.code || ep.shift !== route.shift || ep.color !== (route.color || markerColor) || ep.labels.join(',') !== savedCustomLabels.join(',')
                       return (
                         <button
                           disabled={!hasEditChanges}
@@ -3329,7 +3303,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </div> {/* end card list */}
         {/* Show more / show less button */}
         {filteredRoutes.length > 4 && (
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', paddingTop: '0.25rem' }}>
+          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', paddingTop: '0.5rem', paddingBottom: '0.25rem' }}>
             <button
               onClick={() => setShowAllRoutes(prev => !prev)}
               style={{
@@ -3353,7 +3327,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
         {/* No Results Message */}
         {filteredRoutes.length === 0 && (searchQuery || filterRegion !== "all") && (
-          <div className="flex flex-col items-center justify-center py-16 text-center" style={{ width: '100%' }}>
+          <div className="flex w-full flex-col items-center justify-center py-12 text-center sm:py-16">
             <div className="relative mb-6">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center">
                 <Search className="size-10 text-muted-foreground/50" />
@@ -3381,11 +3355,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         {/* Add New Route Card */}
         {isEditMode && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'center' }}><div
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'clamp(1rem, 2vw, 1.75rem)' }}><div
             onClick={() => setAddRouteDialogOpen(true)}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.background = '#6366f108' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'hsl(var(--border))'; e.currentTarget.style.background = 'transparent' }}
-            style={{ width: cardW, height: cardH, borderRadius: 16, border: '2.5px dashed hsl(var(--border))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.1rem', cursor: 'pointer', background: 'transparent', transition: 'border-color 0.25s, background 0.25s' }}
+            style={{ width: '100%', maxWidth: cardW, height: cardH, borderRadius: 16, border: '2.5px dashed hsl(var(--border))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.1rem', cursor: 'pointer', background: 'transparent', transition: 'border-color 0.25s, background 0.25s' }}
           >
             <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'hsl(var(--muted))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Plus style={{ width: 28, height: 28, color: 'hsl(var(--muted-foreground))' }} />
@@ -3962,7 +3936,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               }))
                             }}
                             disabled={!isEditMode}
-                            className="h-6 text-[10px] px-1.5 font-mono text-center"
+                            className="h-6 text-[10px] px-1.5 text-center"
                             placeholder="0.000000"
                           />
                           <Input
@@ -3979,7 +3953,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               }))
                             }}
                             disabled={!isEditMode}
-                            className="h-6 text-[10px] px-1.5 font-mono text-center"
+                            className="h-6 text-[10px] px-1.5 text-center"
                             placeholder="0.000000"
                           />
                         </div>

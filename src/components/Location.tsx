@@ -44,6 +44,33 @@ interface SavedRowOrder {
   order: string[]  // array of point.code in order
 }
 
+const DEFAULT_MAP_CENTER = { lat: 3.06955, lng: 101.5469179 }
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function formatKm(km: number): string {
+  const rounded = Math.round(km * 10) / 10
+  return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)} Km`
+}
+
+function areSetsEqual<T>(left: Set<T>, right: Set<T>): boolean {
+  if (left.size !== right.size) return false
+  for (const value of left) {
+    if (!right.has(value)) return false
+  }
+  return true
+}
+
 // ─── Column definitions ───────────────────────────────────────────────────────
 const ALL_COLUMNS = [
   { key: "no",       label: "#",             description: "Row number" },
@@ -51,8 +78,12 @@ const ALL_COLUMNS = [
   { key: "code",     label: "Code",          description: "Location code" },
   { key: "name",     label: "Location Name", description: "Delivery point name" },
   { key: "delivery", label: "Delivery",      description: "Delivery schedule" },
+  { key: "km",       label: "KM",            description: "Distance from start point" },
+  { key: "action",   label: "Action",        description: "Quick row action" },
 ] as const
 type ColumnKey = typeof ALL_COLUMNS[number]["key"]
+
+const DEFAULT_VISIBLE_COLUMNS: ColumnKey[] = ["no", "code", "name", "delivery", "action"]
 
 // ─── Delivery option definitions ─────────────────────────────────────────────
 interface DeliveryItem {
@@ -115,6 +146,7 @@ export function DeliveryTableDialog() {
   const [routes, setRoutes]   = useState<Route[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
+  const [activeActionPoint, setActiveActionPoint] = useState<FlatPoint | null>(null)
 
   // Pending edits: key = `${routeId}::${rowIndex}`, value = new delivery string
   const [pendingEdits, setPendingEdits] = useState<Map<string, string>>(new Map())
@@ -126,20 +158,30 @@ export function DeliveryTableDialog() {
   const [filterRoutes, setFilterRoutes]         = useState<Set<string>>(new Set())
   const [filterDeliveries, setFilterDeliveries] = useState<Set<string>>(new Set())
   const [filterOpen, setFilterOpen]             = useState(false)
+  const [draftFilterRoutes, setDraftFilterRoutes] = useState<Set<string>>(new Set())
+  const [draftFilterDeliveries, setDraftFilterDeliveries] = useState<Set<string>>(new Set())
   const [settingsOpen, setSettingsOpen]         = useState(false)
   const [filterTab, setFilterTab]               = useState<"routes" | "delivery" | "columns">("routes")
   const [sortOpen, setSortOpen]                 = useState(false)
-  const [visibleColumns, setVisibleColumns]     = useState<Set<ColumnKey>>(new Set(["no", "route", "code", "name", "delivery"]))
+  const [visibleColumns, setVisibleColumns]     = useState<Set<ColumnKey>>(new Set(DEFAULT_VISIBLE_COLUMNS))
+  const [draftVisibleColumns, setDraftVisibleColumns] = useState<Set<ColumnKey>>(new Set(DEFAULT_VISIBLE_COLUMNS))
 
-  const toggleColumn = (key: ColumnKey) =>
-    setVisibleColumns(prev => {
+  const toggleColumn = (key: ColumnKey, scope: "live" | "draft" = "live") => {
+    const updateColumns = scope === "draft" ? setDraftVisibleColumns : setVisibleColumns
+    updateColumns(prev => {
       if (prev.size === 1 && prev.has(key)) return prev // keep at least one
       const s = new Set(prev)
       s.has(key) ? s.delete(key) : s.add(key)
       return s
     })
+  }
 
   const hiddenColCount = ALL_COLUMNS.length - visibleColumns.size
+  const draftHiddenColCount = ALL_COLUMNS.length - draftVisibleColumns.size
+  const hasDraftFilterChanges =
+    !areSetsEqual(filterRoutes, draftFilterRoutes) ||
+    !areSetsEqual(filterDeliveries, draftFilterDeliveries) ||
+    !areSetsEqual(visibleColumns, draftVisibleColumns)
 
   // Sort — default: code asc
   const [sortKey, setSortKey] = useState<SortKey>("code")
@@ -167,6 +209,13 @@ export function DeliveryTableDialog() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterRoutes])
+
+  useEffect(() => {
+    if (!filterOpen) return
+    setDraftFilterRoutes(new Set(filterRoutes))
+    setDraftFilterDeliveries(new Set(filterDeliveries))
+    setDraftVisibleColumns(new Set(visibleColumns))
+  }, [filterOpen, filterRoutes, filterDeliveries, visibleColumns])
 
   const fetchRoutes = useCallback(async () => {
     setLoading(true)
@@ -306,6 +355,32 @@ export function DeliveryTableDialog() {
   }
 
   const totalPoints = flat.length
+  const pointDistances = useMemo(() => {
+    const distances = new Map<string, string>()
+
+    displayed.forEach((pt) => {
+      const hasCoordinates = pt.latitude !== 0 || pt.longitude !== 0
+      if (!hasCoordinates) return
+
+      distances.set(
+        pointKey(pt),
+        formatKm(haversineKm(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng, pt.latitude, pt.longitude))
+      )
+    })
+
+    return distances
+  }, [displayed])
+
+  const updateDelivery = (pt: FlatPoint, nextDelivery: string) => {
+    const key = pointKey(pt)
+    setPendingEdits((prev) => {
+      const next = new Map(prev)
+      if (nextDelivery === pt.delivery) next.delete(key)
+      else next.set(key, nextDelivery)
+      return next
+    })
+    setActiveActionPoint(null)
+  }
 
   return (
     <div className="flex flex-col flex-1 min-h-0 border rounded-xl overflow-hidden shadow-sm bg-background">
@@ -499,21 +574,21 @@ export function DeliveryTableDialog() {
                 )}
               >
                 {tab === "routes"
-                  ? `Routes${filterRoutes.size > 0 ? ` (${filterRoutes.size})` : ""}`
+                  ? `Routes${draftFilterRoutes.size > 0 ? ` (${draftFilterRoutes.size})` : ""}`
                   : tab === "delivery"
-                  ? `Delivery${filterDeliveries.size > 0 ? ` (${filterDeliveries.size})` : ""}`
-                  : <span className="flex items-center gap-1"><Columns2 className="w-3 h-3" />Columns{hiddenColCount > 0 ? ` (${hiddenColCount})` : ""}</span>}
+                  ? `Delivery${draftFilterDeliveries.size > 0 ? ` (${draftFilterDeliveries.size})` : ""}`
+                  : <span className="flex items-center gap-1"><Columns2 className="w-3 h-3" />Columns{draftHiddenColCount > 0 ? ` (${draftHiddenColCount})` : ""}</span>}
               </button>
             ))}
           </div>
           {/* Tab content */}
           <div className="overflow-y-auto max-h-72 p-3 space-y-1.5">
             {filterTab === "routes" && routeOptions.map(([id, label]) => {
-              const checked = filterRoutes.has(id)
+              const checked = draftFilterRoutes.has(id)
               return (
                 <button
                   key={id}
-                  onClick={() => setFilterRoutes(prev => { const s = new Set(prev); checked ? s.delete(id) : s.add(id); return s })}
+                  onClick={() => setDraftFilterRoutes(prev => { const s = new Set(prev); checked ? s.delete(id) : s.add(id); return s })}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-xs text-left transition-colors",
                     checked ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted/40"
@@ -528,11 +603,11 @@ export function DeliveryTableDialog() {
             })}
             {filterTab === "delivery" && deliveryOptions.map(d => {
               const item = DELIVERY_MAP.get(d)
-              const checked = filterDeliveries.has(d)
+              const checked = draftFilterDeliveries.has(d)
               return (
                 <button
                   key={d}
-                  onClick={() => setFilterDeliveries(prev => { const s = new Set(prev); checked ? s.delete(d) : s.add(d); return s })}
+                  onClick={() => setDraftFilterDeliveries(prev => { const s = new Set(prev); checked ? s.delete(d) : s.add(d); return s })}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-xs text-left transition-colors",
                     checked ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted/40"
@@ -550,11 +625,11 @@ export function DeliveryTableDialog() {
               <>
                 <p className="text-[10px] text-muted-foreground px-1 pb-1">Toggle which columns are visible in the table.</p>
                 {ALL_COLUMNS.map(col => {
-                  const visible = visibleColumns.has(col.key)
+                  const visible = draftVisibleColumns.has(col.key)
                   return (
                     <button
                       key={col.key}
-                      onClick={() => toggleColumn(col.key)}
+                      onClick={() => toggleColumn(col.key, "draft")}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-xs text-left transition-colors",
                         visible ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted/40 text-muted-foreground"
@@ -576,23 +651,96 @@ export function DeliveryTableDialog() {
             <button
               onClick={() => {
                 if (filterTab === "columns") {
-                  setVisibleColumns(new Set(["no", "route", "code", "name", "delivery"]))
+                  setDraftVisibleColumns(new Set(ALL_COLUMNS.map((col) => col.key)))
                 } else {
-                  setFilterRoutes(new Set()); setFilterDeliveries(new Set())
+                  setDraftFilterRoutes(new Set())
+                  setDraftFilterDeliveries(new Set())
                 }
               }}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
+              className="text-xs font-semibold text-orange-800 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300"
             >{filterTab === "columns" ? "Show all" : "Clear all"}</button>
-            <Button size="sm" onClick={() => setFilterOpen(false)} className="h-7 text-xs px-4">Done</Button>
+            {hasDraftFilterChanges && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterRoutes(new Set(draftFilterRoutes))
+                  setFilterDeliveries(new Set(draftFilterDeliveries))
+                  setVisibleColumns(new Set(draftVisibleColumns))
+                  setFilterOpen(false)
+                }}
+                className="text-xs font-semibold text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+              >
+                Apply
+              </button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!activeActionPoint} onOpenChange={(open) => { if (!open) setActiveActionPoint(null) }}>
+        <DialogContent className="w-[92vw] max-w-sm rounded-2xl p-0 gap-0 overflow-hidden">
+          <div className="px-5 pt-5 pb-3 border-b border-border">
+            <DialogHeader className="text-center items-center">
+              <DialogTitle className="text-sm font-bold">Update Delivery</DialogTitle>
+            </DialogHeader>
+            {activeActionPoint && (
+              <div className="mt-2 text-center">
+                <p className="text-xs font-medium text-foreground">{activeActionPoint.name}</p>
+                <p className="text-[11px] text-muted-foreground">Code {activeActionPoint.code}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="px-4 py-4 space-y-2 max-h-80 overflow-y-auto">
+            {activeActionPoint && DELIVERY_ITEMS.map((item) => {
+              const selected = effectiveDelivery(activeActionPoint) === item.value
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => updateDelivery(activeActionPoint, item.value)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors",
+                    selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted/40"
+                  )}
+                >
+                  <span className={cn("flex shrink-0 items-center justify-center w-4 h-4 rounded border", selected ? "bg-primary border-primary" : "border-muted-foreground/40")}>
+                    {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                  </span>
+                  <span className="text-xs font-medium">{item.label}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">{item.description}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="px-4 py-3 border-t border-border flex items-center justify-between gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => {
+                if (!activeActionPoint) return
+                updateDelivery(activeActionPoint, activeActionPoint.delivery)
+              }}
+            >
+              Reset
+            </Button>
+            <Button type="button" size="sm" className="h-8 text-xs px-4" onClick={() => setActiveActionPoint(null)}>
+              Done
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* ── Loading ──────────────────────────────────────────────────── */}
       {loading && !flat.length && (
-        <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
-          <Loader2 className="size-5 animate-spin" />
-          <span className="text-sm loading-text">Loading routes…</span>
+        <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
+          <div className="loading-shell flex items-center gap-2.5 text-muted-foreground">
+            <Loader2 className="loading-spinner size-5 animate-spin" />
+            <span className="text-sm loading-text">Loading routes…</span>
+          </div>
         </div>
       )}
 
@@ -615,6 +763,8 @@ export function DeliveryTableDialog() {
                 {visibleColumns.has("code")     && <th className="px-3 py-3 text-center">Code</th>}
                 {visibleColumns.has("name")     && <th className="px-3 py-3 text-center">Location Name</th>}
                 {visibleColumns.has("delivery") && <th className="px-3 py-3 text-center">Delivery</th>}
+                {visibleColumns.has("km")       && <th className="px-3 py-3 text-center">KM</th>}
+                {visibleColumns.has("action")   && <th className="px-3 py-3 text-center">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -645,7 +795,7 @@ export function DeliveryTableDialog() {
                     )}
                     {visibleColumns.has("code") && (
                       <td className="px-3 py-3 text-center">
-                        <span className={cn("font-mono text-xs font-medium", pt._dupCode && "text-amber-600 dark:text-amber-400 font-bold")}>
+                        <span className={cn("text-xs font-medium", pt._dupCode && "text-amber-600 dark:text-amber-400 font-bold")}>
                           {pt.code}
                         </span>
                         {pt._dupCode && <AlertTriangle className="inline w-3 h-3 ml-1 text-amber-500" />}
@@ -662,6 +812,24 @@ export function DeliveryTableDialog() {
                     {visibleColumns.has("delivery") && (
                       <td className="px-3 py-3 text-center text-xs">
                         {effectiveDelivery(pt)}
+                      </td>
+                    )}
+                    {visibleColumns.has("km") && (
+                      <td className="px-3 py-3 text-center text-xs tabular-nums text-muted-foreground">
+                        {pointDistances.get(pointKey(pt)) ?? ""}
+                      </td>
+                    )}
+                    {visibleColumns.has("action") && (
+                      <td className="px-3 py-3 text-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2.5 text-[11px]"
+                          onClick={() => setActiveActionPoint(pt)}
+                        >
+                          Edit
+                        </Button>
                       </td>
                     )}
                   </tr>
@@ -719,6 +887,16 @@ export function DeliveryTableDialog() {
                 </button>
               </div>
             )}
+
+            <div className="space-y-2.5 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-foreground">Column Preset</p>
+              <button
+                onClick={() => setVisibleColumns(new Set(DEFAULT_VISIBLE_COLUMNS))}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-primary bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/15 transition-colors"
+              >
+                Reset to default columns
+              </button>
+            </div>
           </div>
 
           <div className="px-5 py-3 border-t border-border flex justify-end gap-2 shrink-0">

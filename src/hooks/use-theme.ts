@@ -65,7 +65,7 @@ function loadGoogleFont(googleId: string) {
 
 export function useTheme() {
   const [mode, setMode] = useState<ColorMode>(() =>
-    (localStorage.getItem("colorMode") as ColorMode) ?? "light"
+    (localStorage.getItem("colorMode") as ColorMode) ?? "dark"
   )
   const [appFont, setAppFont] = useState<AppFont>(() =>
     getStoredOrDefaultFont()

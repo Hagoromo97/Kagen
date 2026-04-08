@@ -13,24 +13,38 @@
   pointer-events: auto !important;
 }
 
-/* ── Loading text shine animation ────────────────────────────────────────── */
-@keyframes loading-shine {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
+/* ── Loading text animation (visibility-first) ──────────────────────────── */
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; }
 }
+
 .loading-text {
-  background: linear-gradient(
-    90deg,
-    var(--muted-foreground, #888) 30%,
-    #ffffff 50%,
-    var(--muted-foreground, #888) 70%
-  );
-  background-size: 300% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: loading-shine 1.6s linear infinite;
+  display: inline-block;
+  color: hsl(var(--muted-foreground));
+  -webkit-text-fill-color: currentColor;
+  animation: loading-pulse 1.6s ease-in-out infinite;
+}
+
+.loading-shell {
+  border: 1px solid hsl(var(--border) / 0.58);
+  background:
+    radial-gradient(120% 80% at 10% 0%, hsl(var(--primary) / 0.08), transparent 55%),
+    linear-gradient(180deg, hsl(var(--card) / 0.92), hsl(var(--muted) / 0.52));
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 10px 30px -24px hsl(var(--foreground) / 0.4);
+}
+
+.loading-spinner {
+  color: hsl(var(--primary) / 0.88);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-text {
+    animation: none;
+    color: hsl(var(--muted-foreground));
+  }
 }
 
 /* ── PrimeReact InputSwitch — minimal custom styles ──────────────────────────────── */
@@ -296,40 +310,40 @@ body {
     --radius: 0.75rem;
 
     /* Surfaces */
-    --background:        hsl(220 20% 96%);
-    --foreground:        hsl(222 35% 10%);
-    --card:              hsl(0 0% 100%);
-    --card-foreground:   hsl(222 35% 10%);
-    --card-border:       hsl(220 16% 88%);
-    --popover:           hsl(0 0% 100%);
-    --popover-foreground: hsl(222 35% 10%);
+  --background:        hsl(216 22% 97%);
+  --foreground:        hsl(222 26% 16%);
+  --card:              hsl(220 22% 99%);
+  --card-foreground:   hsl(222 26% 16%);
+  --card-border:       hsl(220 14% 86%);
+  --popover:           hsl(220 22% 99%);
+  --popover-foreground: hsl(222 26% 16%);
 
-    /* Brand — indigo */
-    --primary:           hsl(243 75% 59%);
+  /* Brand — calm blue */
+  --primary:           hsl(226 57% 52%);
     --primary-foreground: hsl(0 0% 100%);
 
     /* Utility surfaces */
-    --secondary:         hsl(220 16% 92%);
-    --secondary-foreground: hsl(222 30% 14%);
-    --muted:             hsl(220 14% 91%);
-    --muted-foreground:  hsl(220 10% 46%);
-    --accent:            hsl(243 56% 95%);
-    --accent-foreground: hsl(243 72% 42%);
+  --secondary:         hsl(218 16% 93%);
+  --secondary-foreground: hsl(222 24% 21%);
+  --muted:             hsl(218 15% 92%);
+  --muted-foreground:  hsl(220 10% 42%);
+  --accent:            hsl(224 42% 94%);
+  --accent-foreground: hsl(226 45% 36%);
 
     /* Status */
     --destructive:       hsl(0 72% 52%);
 
     /* Chrome */
-    --border:  hsl(220 14% 86%);
-    --input:   hsl(220 14% 86%);
-    --ring:    hsl(243 75% 59%);
+    --border:  hsl(220 12% 84%);
+    --input:   hsl(220 12% 84%);
+    --ring:    hsl(226 57% 52%);
 
     /* Charts */
-    --chart-1: hsl(243 72% 58%);
-    --chart-2: hsl(162 60% 42%);
-    --chart-3: hsl(38 82% 50%);
-    --chart-4: hsl(280 60% 56%);
-    --chart-5: hsl(16 80% 52%);
+    --chart-1: hsl(226 54% 55%);
+    --chart-2: hsl(166 44% 43%);
+    --chart-3: hsl(35 74% 53%);
+    --chart-4: hsl(276 42% 56%);
+    --chart-5: hsl(14 68% 54%);
 
     /* Elevation helpers */
     --button-outline: rgba(0, 0, 0, 0.07);
@@ -337,68 +351,68 @@ body {
     --elevate-2:      rgba(0, 0, 0, 0.05);
 
     /* Sidebar */
-    --sidebar:                    hsl(220 20% 93%);
-    --sidebar-foreground:         hsl(222 30% 13%);
-    --sidebar-primary:            hsl(243 75% 59%);
+    --sidebar:                    hsl(218 18% 92%);
+    --sidebar-foreground:         hsl(222 24% 18%);
+    --sidebar-primary:            hsl(226 57% 52%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:             hsl(220 16% 90%);
-    --sidebar-accent-foreground:  hsl(222 30% 10%);
-    --sidebar-border:             hsl(220 14% 85%);
-    --sidebar-ring:               hsl(243 75% 59%);
+    --sidebar-accent:             hsl(218 16% 89%);
+    --sidebar-accent-foreground:  hsl(222 22% 17%);
+    --sidebar-border:             hsl(220 12% 83%);
+    --sidebar-ring:               hsl(226 57% 52%);
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────── */
 .dark {
     /* Surfaces */
-    --background:        hsl(224 30% 7%);
-    --foreground:        hsl(218 22% 92%);
-    --card:              hsl(224 26% 10%);
-    --card-foreground:   hsl(218 22% 92%);
-    --card-border:       hsl(224 20% 18%);
-    --popover:           hsl(224 26% 10%);
-    --popover-foreground: hsl(218 22% 92%);
+  --background:        hsl(222 22% 5%);
+  --foreground:        hsl(220 16% 82%);
+  --card:              hsl(222 20% 8%);
+  --card-foreground:   hsl(220 16% 82%);
+  --card-border:       hsl(220 14% 13%);
+  --popover:           hsl(222 20% 8%);
+  --popover-foreground: hsl(220 16% 82%);
 
-    /* Brand — brighter indigo in dark */
-    --primary:           hsl(243 80% 68%);
-    --primary-foreground: hsl(0 0% 100%);
+  /* Brand — soft blue in dark */
+  --primary:           hsl(223 62% 62%);
+  --primary-foreground: hsl(222 32% 10%);
 
     /* Utility surfaces */
-    --secondary:         hsl(224 20% 15%);
-    --secondary-foreground: hsl(218 20% 89%);
-    --muted:             hsl(224 20% 13%);
-    --muted-foreground:  hsl(218 14% 55%);
-    --accent:            hsl(243 38% 18%);
-    --accent-foreground: hsl(243 70% 76%);
+  --secondary:         hsl(220 18% 10%);
+  --secondary-foreground: hsl(220 15% 80%);
+  --muted:             hsl(220 18% 9%);
+  --muted-foreground:  hsl(220 10% 52%);
+  --accent:            hsl(223 34% 12%);
+  --accent-foreground: hsl(223 58% 74%);
 
     /* Status */
-    --destructive:       hsl(0 68% 58%);
+    --destructive:       hsl(0 64% 58%);
 
     /* Chrome */
-    --border:  hsl(224 20% 20%);
-    --input:   hsl(224 20% 16%);
-    --ring:    hsl(243 80% 68%);
+    --border:  hsl(220 14% 14%);
+    --input:   hsl(220 14% 11%);
+    --ring:    hsl(223 62% 62%);
 
     /* Charts */
-    --chart-1: hsl(243 76% 68%);
-    --chart-2: hsl(162 58% 52%);
-    --chart-3: hsl(38 76% 60%);
-    --chart-4: hsl(280 58% 64%);
-    --chart-5: hsl(16 76% 58%);
+    --chart-1: hsl(223 58% 67%);
+    --chart-2: hsl(164 45% 56%);
+    --chart-3: hsl(36 68% 64%);
+    --chart-4: hsl(276 44% 66%);
+    --chart-5: hsl(16 64% 62%);
 
     /* Elevation helpers */
-    --button-outline: rgba(255, 255, 255, 0.07);
-    --elevate-1:      rgba(255, 255, 255, 0.03);
-    --elevate-2:      rgba(255, 255, 255, 0.07);
+    --button-outline: rgba(255, 255, 255, 0.05);
+    --elevate-1:      rgba(255, 255, 255, 0.02);
+    --elevate-2:      rgba(255, 255, 255, 0.05);
 
     /* Sidebar */
-    --sidebar:                    hsl(224 30% 8%);
-    --sidebar-foreground:         hsl(218 18% 87%);
-    --sidebar-primary:            hsl(243 80% 68%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:             hsl(224 20% 14%);
-    --sidebar-accent-foreground:  hsl(218 18% 87%);
-    --sidebar-border:             hsl(224 20% 17%);
-    --sidebar-ring:               hsl(243 80% 68%);
+    --sidebar:                    hsl(222 22% 6%);
+    --sidebar-foreground:         hsl(220 14% 80%);
+    --sidebar-primary:            hsl(223 62% 62%);
+    --sidebar-primary-foreground: hsl(222 32% 10%);
+    --sidebar-accent:             hsl(220 18% 10%);
+    --sidebar-accent-foreground:  hsl(220 14% 80%);
+    --sidebar-border:             hsl(220 14% 13%);
+    --sidebar-ring:               hsl(223 62% 62%);
 }
 
 

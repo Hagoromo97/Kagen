@@ -129,7 +129,7 @@ export function AppSidebar({
   const { isEditMode, setIsEditMode, hasUnsavedChanges, saveChanges, isSaving, discardChanges } = useEditMode()
   const { mode, toggleMode } = useTheme()
 
-  // Mutually exclusive: opening a Platform submenu closes Settings, and vice versa
+  // Mutually exclusive: opening a Main submenu closes Settings, and vice versa
   const handleNavItemChange = (item: string | null) => {
     setOpenNavItem(item)
     if (item !== null) setSettingsOpen(false)
@@ -188,18 +188,18 @@ export function AppSidebar({
     <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex justify-center">
+          <SidebarMenuItem className="flex w-full items-center justify-center">
             <SidebarMenuButton 
               size="lg" 
               asChild
               className="!h-auto !w-full !justify-center !gap-0 !p-0"
               onClick={() => onNavigate?.("home")}
             >
-              <a href="#" className="flex items-center justify-center">
+              <a href="#" className="flex w-full items-center justify-center">
                 <img
                   src={fmLogo}
                   alt="FM logo"
-                  className="h-[80px] w-[80px] shrink-0 object-contain"
+                  className="mx-auto h-[92px] w-[92px] shrink-0 object-contain"
                 />
               </a>
             </SidebarMenuButton>
@@ -208,7 +208,7 @@ export function AppSidebar({
       </SidebarHeader>
       <Separator className="my-1" />
       {/* Search field */}
-      <div className="relative mt-1 px-2 sidebar-search-wrapper">
+      <div className="relative mt-1 mb-2 px-2 sidebar-search-wrapper">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none transition-colors" />
         <input
           type="text"

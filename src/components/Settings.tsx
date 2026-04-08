@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import {
   User, Bell, Lock, Globe, Mail, Phone, Save, Shield,
   Eye, EyeOff, Check, Type, Copy,
-  Navigation, Palette, Database, HardDrive, Clock3,
+  Navigation, Palette, Database, HardDrive, Clock3, Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -393,7 +393,12 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
             <SectionHeader icon={<Palette className="size-5" />} title="Route Card Colours" description="Set a colour for each route. It applies to the route card, map marker, and rooster schedule." />
 
             {routesListLoading ? (
-              <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">Loading routes...</div>
+              <div className="flex items-center justify-center py-10 sm:py-16">
+                <div className="loading-shell flex items-center gap-2.5 text-muted-foreground text-sm">
+                  <Loader2 className="loading-spinner size-4 animate-spin" />
+                  <span className="loading-text">Loading routes...</span>
+                </div>
+              </div>
             ) : routesList.length === 0 ? (
               <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">No routes found.</div>
             ) : (

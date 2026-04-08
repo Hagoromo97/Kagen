@@ -334,14 +334,14 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                 </button>
               </div>
             ) : (
-              <div className="rounded-xl border border-border overflow-hidden">
+              <div className="rounded-xl overflow-hidden">
                 {drafts && drafts.length > 0 ? (
                   drafts.map((d, i) => (
                     <div
                       key={i}
-                      className={`flex items-center border-b border-border last:border-0 group transition-colors duration-150 hover:bg-primary/5 cursor-default ${i % 2 === 1 ? "bg-muted/10" : "bg-background"}`}
+                      className="flex items-center cursor-default"
                     >
-                      <span className="w-[80px] shrink-0 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-2.5 py-2 bg-muted/50 group-hover:bg-muted/80 border-r border-border truncate transition-colors duration-150">
+                      <span className="w-[80px] shrink-0 text-xs font-medium text-muted-foreground px-2.5 py-2 truncate">
                         {d.key}
                       </span>
                       <span className="flex-1 text-xs font-medium text-foreground px-2.5 py-2">
