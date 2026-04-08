@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react"
-import { Plus, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon, Pencil, MoreVertical, ArrowUp, ArrowDown, Upload, Link, Loader2, Save, Layers, Search } from "lucide-react"
+import { Plus, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon, Pencil, MoreVertical, ArrowUp, ArrowDown, Upload, Link, Loader2, Save, Layers, Search, ChevronDown } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -74,6 +74,7 @@ export function PlanoVM() {
   }, [])
 
   const [activePage, setActivePage] = useState<string>("")
+  const [pageListOpen, setPageListOpen] = useState(false)
   const [addPageDialog, setAddPageDialog] = useState(false)
   const [editPageDialog, setEditPageDialog] = useState<{ open: boolean; pageId?: string }>({ open: false })
   const [deletePageDialog, setDeletePageDialog] = useState<{ open: boolean; pageId?: string }>({ open: false })
@@ -102,6 +103,14 @@ export function PlanoVM() {
   const editFileRef = useRef<HTMLInputElement>(null)
 
   const currentPage = pages.find(p => p.id === activePage)
+
+  const getPagePreviewImage = (page: PlanoPage): string | null => {
+    for (const row of page.rows) {
+      const firstImage = row.images[0]
+      if (firstImage?.url) return firstImage.url
+    }
+    return null
+  }
 
   const filteredRows = useMemo(() => {
     if (!currentPage) return [] as PlanoRow[]
@@ -498,108 +507,180 @@ export function PlanoVM() {
                     {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                 )}
-                <Dialog open={addPageDialog} onOpenChange={setAddPageDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="size-4 mr-2" />
-                      Add Page
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Page</DialogTitle>
-                      <DialogDescription>Add a new planogram page</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <Input
-                        placeholder="Page name (e.g., Store Layout 1)"
-                        value={newPageName}
-                        onChange={(e) => setNewPageName(e.target.value)}
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setAddPageDialog(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleAddPage}>Create Page</Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </div>
             )}
           </div>
           <Separator className="mt-4" />
         </div>
 
-        {/* Page Tabs */}
+        {/* Page Picker and Search */}
         <div className="mb-8">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-            {pages.map((page) => (
-              <div key={page.id} className="flex items-center gap-1">
-                <button
-                  onClick={() => setActivePage(page.id)}
-                  className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    activePage === page.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted hover:bg-accent"
-                  }`}
-                >
-                  {page.name}
-                </button>
-                {isEditMode && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                      >
-                        <MoreVertical className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+              <Dialog open={pageListOpen} onOpenChange={setPageListOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 min-w-[220px] justify-between rounded-xl px-3"
+                  >
+                    <span className="flex min-w-0 items-center gap-3 text-left">
+                      {currentPage && getPagePreviewImage(currentPage) ? (
+                        <img
+                          src={getPagePreviewImage(currentPage)!}
+                          alt={currentPage.name}
+                          className="size-8 rounded-md object-cover border border-border"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = "none"
+                          }}
+                        />
+                      ) : (
+                        <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                          <Layers className="size-4" />
+                        </span>
+                      )}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">
+                          {currentPage?.name ?? "Select Page"}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {currentPage ? `${currentPage.rows.length} ${currentPage.rows.length === 1 ? 'row' : 'rows'}` : 'Open page list'}
+                        </span>
+                      </span>
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg p-0 overflow-hidden">
+                  <DialogHeader className="px-6 pt-6 pb-3">
+                    <DialogTitle>Page List</DialogTitle>
+                    <DialogDescription>Select a page to view its planogram</DialogDescription>
+                  </DialogHeader>
+
+                  <div className="max-h-[70vh] overflow-y-auto px-6 pb-6">
+                    <div className="space-y-3 pb-4">
+                      {pages.map((page) => {
+                        const previewImage = getPagePreviewImage(page)
+                        const itemCount = page.rows.reduce((count, row) => count + row.images.length, 0)
+
+                        return (
+                          <div
+                            key={page.id}
+                            className={`flex items-center gap-3 rounded-2xl border p-3 transition-colors ${
+                              activePage === page.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/40 hover:bg-muted/30"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActivePage(page.id)
+                                setPageListOpen(false)
+                              }}
+                              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                            >
+                              {previewImage ? (
+                                <img
+                                  src={previewImage}
+                                  alt={page.name}
+                                  className="h-14 w-14 rounded-xl object-cover border border-border bg-muted"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='112'%3E%3Crect width='112' height='112' rx='16' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%239ca3af'%3ENo Image%3C/text%3E%3C/svg%3E"
+                                  }}
+                                />
+                              ) : (
+                                <span className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
+                                  <ImageIcon className="size-5" />
+                                </span>
+                              )}
+
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-semibold text-foreground">{page.name}</span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {page.rows.length} {page.rows.length === 1 ? 'row' : 'rows'} • {itemCount} {itemCount === 1 ? 'image' : 'images'}
+                                </span>
+                              </span>
+                            </button>
+
+                            {isEditMode && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-9 w-9 shrink-0 p-0"
+                                  >
+                                    <MoreVertical className="size-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditPageName(page.name)
+                                      setEditPageDialog({ open: true, pageId: page.id })
+                                    }}
+                                  >
+                                    <Pencil className="size-4 mr-2" />
+                                    Rename Page
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => setDeletePageDialog({ open: true, pageId: page.id })}
+                                    className="text-destructive focus:text-destructive"
+                                    disabled={pages.length === 1}
+                                  >
+                                    <Trash2 className="size-4 mr-2" />
+                                    Delete Page
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {isEditMode && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2 w-full justify-center rounded-xl border-dashed"
                         onClick={() => {
-                          setEditPageName(page.name)
-                          setEditPageDialog({ open: true, pageId: page.id })
+                          setPageListOpen(false)
+                          setAddPageDialog(true)
                         }}
                       >
-                        <Pencil className="size-4 mr-2" />
-                        Rename Page
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => setDeletePageDialog({ open: true, pageId: page.id })}
-                        className="text-destructive focus:text-destructive"
-                        disabled={pages.length === 1}
-                      >
-                        <Trash2 className="size-4 mr-2" />
-                        Delete Page
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <Plus className="size-4 mr-2" />
+                        Add Page
+                      </Button>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search row or image..."
+                  className="h-12 rounded-xl pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 )}
               </div>
-            ))}
-          </div>
-
-          <div className="mt-4 relative w-full max-w-sm">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search row or image..."
-              className="h-10 pl-10 pr-10"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            )}
+            </div>
           </div>
         </div>
 
@@ -1183,6 +1264,31 @@ export function PlanoVM() {
               </Button>
               <Button onClick={handleEditPage} disabled={!editPageName}>
                 Update Page
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Page Dialog */}
+      <Dialog open={addPageDialog} onOpenChange={setAddPageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Page</DialogTitle>
+            <DialogDescription>Add a new planogram page</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="Page name (e.g., Store Layout 1)"
+              value={newPageName}
+              onChange={(e) => setNewPageName(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAddPageDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddPage} disabled={!newPageName.trim()}>
+                Create Page
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2 } from "lucide-react"
+import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -767,10 +767,13 @@ export function DeliveryTableDialog() {
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2.5 text-[11px]"
+                          className="size-7 p-0"
+                          aria-label={`View info for ${pt.name}`}
+                          title={`View info for ${pt.name}`}
                           onClick={() => setActiveActionPoint(pt)}
                         >
-                          Info
+                          <Info className="size-3.5" />
+                          <span className="sr-only">Info</span>
                         </Button>
                       </td>
                     )}
