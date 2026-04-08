@@ -88,7 +88,7 @@ const OFF_SUB_TYPES = [
 ] as const
 type OffSubTypeId = typeof OFF_SUB_TYPES[number]["id"]
 type ShiftTypeId = "route" | "off"
-const OFF_LABELS = new Set(OFF_SUB_TYPES.map(t => t.label))
+const OFF_LABELS: ReadonlySet<string> = new Set(OFF_SUB_TYPES.map(t => t.label))
 
 function detectShiftType(title: string): ShiftTypeId {
   return OFF_LABELS.has(title) ? "off" : "route"
