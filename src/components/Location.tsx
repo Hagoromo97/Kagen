@@ -3,6 +3,7 @@ import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, C
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { RowInfoModal } from "@/components/RowInfoModal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ const ALL_COLUMNS = [
   { key: "name",     label: "Location Name", description: "Delivery point name" },
   { key: "delivery", label: "Delivery",      description: "Delivery schedule" },
   { key: "km",       label: "KM",            description: "Distance from start point" },
-  { key: "action",   label: "Action",        description: "Quick row action" },
+  { key: "action",   label: "Action",        description: "Open row information" },
 ] as const
 type ColumnKey = typeof ALL_COLUMNS[number]["key"]
 
@@ -677,62 +678,14 @@ export function DeliveryTableDialog() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!activeActionPoint} onOpenChange={(open) => { if (!open) setActiveActionPoint(null) }}>
-        <DialogContent className="w-[92vw] max-w-sm rounded-2xl p-0 gap-0 overflow-hidden">
-          <div className="px-5 pt-5 pb-3 border-b border-border">
-            <DialogHeader className="text-center items-center">
-              <DialogTitle className="text-sm font-bold">Update Delivery</DialogTitle>
-            </DialogHeader>
-            {activeActionPoint && (
-              <div className="mt-2 text-center">
-                <p className="text-xs font-medium text-foreground">{activeActionPoint.name}</p>
-                <p className="text-[11px] text-muted-foreground">Code {activeActionPoint.code}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="px-4 py-4 space-y-2 max-h-80 overflow-y-auto">
-            {activeActionPoint && DELIVERY_ITEMS.map((item) => {
-              const selected = effectiveDelivery(activeActionPoint) === item.value
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => updateDelivery(activeActionPoint, item.value)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors",
-                    selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted/40"
-                  )}
-                >
-                  <span className={cn("flex shrink-0 items-center justify-center w-4 h-4 rounded border", selected ? "bg-primary border-primary" : "border-muted-foreground/40")}>
-                    {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
-                  </span>
-                  <span className="text-xs font-medium">{item.label}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">{item.description}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="px-4 py-3 border-t border-border flex items-center justify-between gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-8 text-xs"
-              onClick={() => {
-                if (!activeActionPoint) return
-                updateDelivery(activeActionPoint, activeActionPoint.delivery)
-              }}
-            >
-              Reset
-            </Button>
-            <Button type="button" size="sm" className="h-8 text-xs px-4" onClick={() => setActiveActionPoint(null)}>
-              Done
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {activeActionPoint && (
+        <RowInfoModal
+          open={!!activeActionPoint}
+          onOpenChange={(open) => { if (!open) setActiveActionPoint(null) }}
+          point={activeActionPoint}
+          isEditMode={false}
+        />
+      )}
 
       {/* ── Loading ──────────────────────────────────────────────────── */}
       {loading && !flat.length && (
@@ -828,7 +781,7 @@ export function DeliveryTableDialog() {
                           className="h-7 px-2.5 text-[11px]"
                           onClick={() => setActiveActionPoint(pt)}
                         >
-                          Edit
+                          Info
                         </Button>
                       </td>
                     )}
