@@ -372,17 +372,6 @@ export function DeliveryTableDialog() {
     return distances
   }, [displayed])
 
-  const updateDelivery = (pt: FlatPoint, nextDelivery: string) => {
-    const key = pointKey(pt)
-    setPendingEdits((prev) => {
-      const next = new Map(prev)
-      if (nextDelivery === pt.delivery) next.delete(key)
-      else next.set(key, nextDelivery)
-      return next
-    })
-    setActiveActionPoint(null)
-  }
-
   return (
     <div className="flex flex-col flex-1 min-h-0 border rounded-xl overflow-hidden shadow-sm bg-background">
 
