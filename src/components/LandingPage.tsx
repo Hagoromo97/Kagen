@@ -63,12 +63,12 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.10),transparent_38%),radial-gradient(circle_at_80%_70%,rgba(20,184,166,0.08),transparent_42%)]" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-full px-5 sm:px-8 py-16 sm:py-20">
+      <div className="relative z-10 flex flex-col items-center justify-start sm:justify-center min-h-full px-5 sm:px-8 pt-12 pb-16 sm:py-20">
         {/* Hero Section */}
         <div className="w-full max-w-3xl mx-auto text-center space-y-8">
           {/* Main Title */}
           <h1
-            className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white transition-all duration-700 ${
+            className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.8rem,10vw,3rem)] sm:text-4xl lg:text-5xl font-bold tracking-tight text-white break-words [text-wrap:balance] transition-all duration-700 ${
               visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
             }`}
             style={{ transitionDelay: visible ? "100ms" : "0ms" }}
