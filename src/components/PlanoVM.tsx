@@ -516,13 +516,32 @@ export function PlanoVM() {
         {/* Page Picker and Search */}
         <div className="mb-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <div className="relative w-full sm:max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search row or image..."
+                  className="h-12 rounded-xl pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
               <Dialog open={pageListOpen} onOpenChange={setPageListOpen}>
                 <DialogTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-12 min-w-[220px] justify-between rounded-xl px-3"
+                    className="h-12 w-full justify-between rounded-xl px-3 sm:ml-auto sm:w-auto sm:min-w-[240px]"
                   >
                     <span className="flex min-w-0 items-center gap-3 text-left">
                       {currentPage && getPagePreviewImage(currentPage) ? (
@@ -661,25 +680,6 @@ export function PlanoVM() {
                   </div>
                 </DialogContent>
               </Dialog>
-
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search row or image..."
-                  className="h-12 rounded-xl pl-10 pr-10"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
-                    aria-label="Clear search"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
-                )}
-              </div>
             </div>
           </div>
         </div>

@@ -311,108 +311,108 @@ body {
 
     /* Surfaces */
   --background:        hsl(216 22% 97%);
-  --foreground:        hsl(222 26% 16%);
+  --foreground:        hsl(222 28% 12%);
   --card:              hsl(220 22% 99%);
-  --card-foreground:   hsl(222 26% 16%);
-  --card-border:       hsl(220 14% 86%);
+  --card-foreground:   hsl(222 28% 12%);
+  --card-border:       hsl(220 14% 82%);
   --popover:           hsl(220 22% 99%);
-  --popover-foreground: hsl(222 26% 16%);
+  --popover-foreground: hsl(222 28% 12%);
 
-  /* Brand — calm blue */
-  --primary:           hsl(226 57% 52%);
+  /* Brand — vibrant blue */
+  --primary:           hsl(226 75% 48%);
     --primary-foreground: hsl(0 0% 100%);
 
     /* Utility surfaces */
   --secondary:         hsl(218 16% 93%);
-  --secondary-foreground: hsl(222 24% 21%);
-  --muted:             hsl(218 15% 92%);
-  --muted-foreground:  hsl(220 10% 42%);
-  --accent:            hsl(224 42% 94%);
-  --accent-foreground: hsl(226 45% 36%);
+  --secondary-foreground: hsl(222 26% 18%);
+  --muted:             hsl(218 15% 91%);
+  --muted-foreground:  hsl(220 10% 45%);
+  --accent:            hsl(224 55% 88%);
+  --accent-foreground: hsl(226 55% 32%);
 
     /* Status */
-    --destructive:       hsl(0 72% 52%);
+    --destructive:       hsl(0 84% 54%);
 
     /* Chrome */
-    --border:  hsl(220 12% 84%);
-    --input:   hsl(220 12% 84%);
-    --ring:    hsl(226 57% 52%);
+    --border:  hsl(220 12% 82%);
+    --input:   hsl(220 12% 82%);
+    --ring:    hsl(226 75% 48%);
 
     /* Charts */
-    --chart-1: hsl(226 54% 55%);
-    --chart-2: hsl(166 44% 43%);
-    --chart-3: hsl(35 74% 53%);
-    --chart-4: hsl(276 42% 56%);
-    --chart-5: hsl(14 68% 54%);
+    --chart-1: hsl(226 72% 52%);
+    --chart-2: hsl(166 62% 38%);
+    --chart-3: hsl(35 94% 48%);
+    --chart-4: hsl(276 62% 52%);
+    --chart-5: hsl(14 84% 50%);
 
     /* Elevation helpers */
-    --button-outline: rgba(0, 0, 0, 0.07);
-    --elevate-1:      rgba(0, 0, 0, 0.02);
-    --elevate-2:      rgba(0, 0, 0, 0.05);
+    --button-outline: rgba(0, 0, 0, 0.08);
+    --elevate-1:      rgba(0, 0, 0, 0.03);
+    --elevate-2:      rgba(0, 0, 0, 0.06);
 
     /* Sidebar */
-    --sidebar:                    hsl(218 18% 92%);
-    --sidebar-foreground:         hsl(222 24% 18%);
-    --sidebar-primary:            hsl(226 57% 52%);
+    --sidebar:                    hsl(218 18% 91%);
+    --sidebar-foreground:         hsl(222 26% 16%);
+    --sidebar-primary:            hsl(226 75% 48%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:             hsl(218 16% 89%);
-    --sidebar-accent-foreground:  hsl(222 22% 17%);
-    --sidebar-border:             hsl(220 12% 83%);
-    --sidebar-ring:               hsl(226 57% 52%);
+    --sidebar-accent:             hsl(218 16% 86%);
+    --sidebar-accent-foreground:  hsl(222 26% 14%);
+    --sidebar-border:             hsl(220 12% 79%);
+    --sidebar-ring:               hsl(226 75% 48%);
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────── */
 .dark {
     /* Surfaces */
-  --background:        hsl(222 22% 5%);
-  --foreground:        hsl(220 16% 82%);
-  --card:              hsl(222 20% 8%);
-  --card-foreground:   hsl(220 16% 82%);
-  --card-border:       hsl(220 14% 13%);
-  --popover:           hsl(222 20% 8%);
-  --popover-foreground: hsl(220 16% 82%);
+  --background:        hsl(222 22% 4%);
+  --foreground:        hsl(220 18% 85%);
+  --card:              hsl(222 20% 7%);
+  --card-foreground:   hsl(220 18% 85%);
+  --card-border:       hsl(220 14% 16%);
+  --popover:           hsl(222 20% 7%);
+  --popover-foreground: hsl(220 18% 85%);
 
-  /* Brand — soft blue in dark */
-  --primary:           hsl(223 62% 62%);
-  --primary-foreground: hsl(222 32% 10%);
+  /* Brand — vibrant blue in dark */
+  --primary:           hsl(223 80% 60%);
+  --primary-foreground: hsl(222 32% 8%);
 
     /* Utility surfaces */
   --secondary:         hsl(220 18% 10%);
-  --secondary-foreground: hsl(220 15% 80%);
-  --muted:             hsl(220 18% 9%);
-  --muted-foreground:  hsl(220 10% 52%);
-  --accent:            hsl(223 34% 12%);
-  --accent-foreground: hsl(223 58% 74%);
+  --secondary-foreground: hsl(220 15% 82%);
+  --muted:             hsl(220 18% 8%);
+  --muted-foreground:  hsl(220 10% 55%);
+  --accent:            hsl(223 45% 16%);
+  --accent-foreground: hsl(223 70% 78%);
 
     /* Status */
-    --destructive:       hsl(0 64% 58%);
+    --destructive:       hsl(0 76% 62%);
 
     /* Chrome */
-    --border:  hsl(220 14% 14%);
-    --input:   hsl(220 14% 11%);
-    --ring:    hsl(223 62% 62%);
+    --border:  hsl(220 14% 18%);
+    --input:   hsl(220 14% 14%);
+    --ring:    hsl(223 80% 60%);
 
     /* Charts */
-    --chart-1: hsl(223 58% 67%);
-    --chart-2: hsl(164 45% 56%);
-    --chart-3: hsl(36 68% 64%);
-    --chart-4: hsl(276 44% 66%);
-    --chart-5: hsl(16 64% 62%);
+    --chart-1: hsl(223 76% 70%);
+    --chart-2: hsl(164 62% 60%);
+    --chart-3: hsl(36 88% 68%);
+    --chart-4: hsl(276 62% 70%);
+    --chart-5: hsl(16 80% 66%);
 
     /* Elevation helpers */
-    --button-outline: rgba(255, 255, 255, 0.05);
-    --elevate-1:      rgba(255, 255, 255, 0.02);
-    --elevate-2:      rgba(255, 255, 255, 0.05);
+    --button-outline: rgba(255, 255, 255, 0.08);
+    --elevate-1:      rgba(255, 255, 255, 0.03);
+    --elevate-2:      rgba(255, 255, 255, 0.06);
 
     /* Sidebar */
-    --sidebar:                    hsl(222 22% 6%);
-    --sidebar-foreground:         hsl(220 14% 80%);
-    --sidebar-primary:            hsl(223 62% 62%);
-    --sidebar-primary-foreground: hsl(222 32% 10%);
-    --sidebar-accent:             hsl(220 18% 10%);
-    --sidebar-accent-foreground:  hsl(220 14% 80%);
-    --sidebar-border:             hsl(220 14% 13%);
-    --sidebar-ring:               hsl(223 62% 62%);
+    --sidebar:                    hsl(222 22% 5%);
+    --sidebar-foreground:         hsl(220 16% 82%);
+    --sidebar-primary:            hsl(223 80% 60%);
+    --sidebar-primary-foreground: hsl(222 32% 8%);
+    --sidebar-accent:             hsl(220 18% 11%);
+    --sidebar-accent-foreground:  hsl(220 16% 82%);
+    --sidebar-border:             hsl(220 14% 16%);
+    --sidebar-ring:               hsl(223 80% 60%);
 }
 
 

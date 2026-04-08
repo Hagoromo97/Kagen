@@ -174,6 +174,10 @@ function arePointsEqual(left: { lat: number; lng: number }, right: { lat: number
   return left.lat === right.lat && left.lng === right.lng
 }
 
+function formatCoordinateInput(value: number): string {
+  return Number.isFinite(value) ? value.toFixed(6) : ''
+}
+
 const DEFAULT_ROUTES: Route[] = [
   {
     id: "route-1",
@@ -846,8 +850,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       deliveryPoints.map((point) => [
         point.code,
         {
-          lat: Number.isFinite(point.latitude) ? String(point.latitude) : '',
-          lng: Number.isFinite(point.longitude) ? String(point.longitude) : '',
+          lat: formatCoordinateInput(point.latitude),
+          lng: formatCoordinateInput(point.longitude),
         },
       ])
     )
@@ -1200,7 +1204,17 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       changedKeys.forEach((key) => next.add(key))
       return next
     })
-    setCoordinateBaseline(draftCoordinates)
+    const normalizedCoordinates = Object.fromEntries(
+      nextDeliveryPoints.map((point) => [
+        point.code,
+        {
+          lat: formatCoordinateInput(point.latitude),
+          lng: formatCoordinateInput(point.longitude),
+        },
+      ])
+    )
+    setDraftCoordinates(normalizedCoordinates)
+    setCoordinateBaseline(normalizedCoordinates)
     setMapRefitToken((value) => value + 1)
   }
 
@@ -3875,6 +3889,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       size="sm"
                       variant="outline"
                       onClick={() => setDraftKmStartPoint(DEFAULT_MAP_CENTER)}
+                      className="text-xs"
                     >
                       Reset Start Point
                     </Button>
@@ -3882,20 +3897,20 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 </div>
               </div>
             ) : (
-              <div className="h-full min-h-0 flex flex-col gap-2">
+              <div className="h-full min-h-0 flex flex-col gap-3">
                 <div className="rounded-xl border border-border bg-background p-3">
                   <p className="text-xs text-muted-foreground">Set latitude and longitude for each location in this route.</p>
                   {!isEditMode && (
-                    <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">Coordinates can only be edited when Edit Mode is active.</p>
+                    <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">Coordinates can only be edited when Edit Mode is active.</p>
                   )}
                 </div>
                 {/* Header row */}
-                <div className="grid grid-cols-[1fr_100px_100px] gap-2 px-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Location</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Latitude</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Longitude</span>
+                <div className="grid grid-cols-[1fr_100px_100px] gap-3 px-2 py-2 items-center border-b border-border/40">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center">Location</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center">Latitude</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center flex items-center justify-center">Longitude</span>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1">
                   {deliveryPoints
                     .slice()
                     .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }))
@@ -3913,14 +3928,14 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       return (
                         <div
                           key={point.code}
-                          className={`grid grid-cols-[1fr_100px_100px] items-center gap-2 rounded-lg border px-2 py-1.5 ${
+                          className={`grid grid-cols-[1fr_100px_100px] items-center gap-3 rounded-lg border px-3 py-2 ${
                             hasPendingCoordinate
                               ? 'border-amber-400/50 bg-amber-50/40 dark:bg-amber-900/10'
                               : 'border-border bg-background'
                           }`}
                         >
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-semibold truncate leading-tight">{point.name || '-'}</p>
+                          <div className="min-w-0 flex items-center justify-center">
+                            <p className="text-[10px] font-semibold truncate leading-tight text-center">{point.name || '-'}</p>
                           </div>
                           <Input
                             type="number"
@@ -3931,12 +3946,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 ...prev,
                                 [point.code]: {
                                   lat: e.target.value,
-                                  lng: prev[point.code]?.lng ?? (Number.isFinite(point.longitude) ? String(point.longitude) : ''),
+                                  lng: prev[point.code]?.lng ?? formatCoordinateInput(point.longitude),
                                 },
                               }))
                             }}
                             disabled={!isEditMode}
-                            className="h-6 text-[10px] px-1.5 text-center"
+                            className="h-7 text-[10px] px-2 text-center"
                             placeholder="0.000000"
                           />
                           <Input
@@ -3947,13 +3962,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               setDraftCoordinates((prev) => ({
                                 ...prev,
                                 [point.code]: {
-                                  lat: prev[point.code]?.lat ?? (Number.isFinite(point.latitude) ? String(point.latitude) : ''),
+                                  lat: prev[point.code]?.lat ?? formatCoordinateInput(point.latitude),
                                   lng: e.target.value,
                                 },
                               }))
                             }}
                             disabled={!isEditMode}
-                            className="h-6 text-[10px] px-1.5 text-center"
+                            className="h-7 text-[10px] px-2 text-center"
                             placeholder="0.000000"
                           />
                         </div>
