@@ -14,7 +14,7 @@ const Rooster = lazy(() => import("@/components/Rooster").then(m => ({ default: 
 import { EditModeProvider } from "@/contexts/EditModeContext"
 import { DeviceProvider } from "@/contexts/DeviceContext"
 import { Toaster } from "sonner"
-import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore } from "lucide-react"
+import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore, Search } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,6 +30,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const DAYS = [
   { en: "Monday",    my: "Isnin"  },
@@ -168,11 +175,28 @@ function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
 }
 
 function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
+  type PinnedRouteDetail = {
+    id: string
+    name: string
+    code: string
+    shift: string
+    deliveryPoints?: Array<{
+      code: string
+      name: string
+      delivery: string
+    }>
+  }
+
   const { isEditMode } = useEditMode()
   const [tableExpanded, setTableExpanded] = useState(false)
   const [legendOpen, setLegendOpen] = useState(false)
   const [confirmingLink, setConfirmingLink] = useState<string | null>(null)
   const [isRymnetPopoverOpen, setIsRymnetPopoverOpen] = useState(false)
+  const [pinnedDetailOpen, setPinnedDetailOpen] = useState(false)
+  const [pinnedDetailLoading, setPinnedDetailLoading] = useState(false)
+  const [pinnedDetailError, setPinnedDetailError] = useState<string | null>(null)
+  const [pinnedDetailRoute, setPinnedDetailRoute] = useState<PinnedRouteDetail | null>(null)
+  const [pinnedDetailSearchQuery, setPinnedDetailSearchQuery] = useState("")
   const [showQuickPicker, setShowQuickPicker] = useState(false)
   const [quickAccess, setQuickAccess] = useState<QuickAccessId[]>(() => {
     try {
@@ -328,6 +352,42 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   })
   const pinnedAM = pinnedRoutesOrdered.filter(r => r.shift === "AM").length
   const pinnedPM = pinnedRoutesOrdered.filter(r => r.shift === "PM").length
+  const pinnedDetailQuery = pinnedDetailSearchQuery.trim().toLowerCase()
+  const filteredPinnedDeliveryPoints = (pinnedDetailRoute?.deliveryPoints ?? []).filter((point) => {
+    if (!pinnedDetailQuery) return true
+    return (
+      point.code.toLowerCase().includes(pinnedDetailQuery) ||
+      point.name.toLowerCase().includes(pinnedDetailQuery) ||
+      point.delivery.toLowerCase().includes(pinnedDetailQuery)
+    )
+  })
+
+  const openPinnedRouteDetail = async (routeId: string) => {
+    setPinnedDetailOpen(true)
+    setPinnedDetailLoading(true)
+    setPinnedDetailError(null)
+    setPinnedDetailSearchQuery("")
+
+    try {
+      const response = await fetch("/api/routes")
+      const data = await response.json()
+      const routes = Array.isArray(data?.data) ? data.data : []
+      const foundRoute = routes.find((route: PinnedRouteDetail) => route.id === routeId)
+
+      if (!foundRoute) {
+        setPinnedDetailRoute(null)
+        setPinnedDetailError("Route not found.")
+        return
+      }
+
+      setPinnedDetailRoute(foundRoute)
+    } catch {
+      setPinnedDetailRoute(null)
+      setPinnedDetailError("Failed to load route details.")
+    } finally {
+      setPinnedDetailLoading(false)
+    }
+  }
 
   return (
     <div
@@ -369,7 +429,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                   key={r.id}
                   type="button"
                   className="group w-full flex flex-col items-start gap-2.5 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 active:scale-[0.97] transition-all duration-150"
-                  onClick={() => { sessionStorage.setItem("fcalendar_open_route", r.id); onNavigate("route-list") }}
+                  onClick={() => openPinnedRouteDetail(r.id)}
                 >
                   <div className="flex items-center gap-2.5 w-full">
                     {isKL
@@ -399,6 +459,98 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={pinnedDetailOpen}
+        onOpenChange={(open) => {
+          setPinnedDetailOpen(open)
+          if (!open) {
+            setPinnedDetailError(null)
+            setPinnedDetailSearchQuery("")
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{pinnedDetailRoute?.name ?? "Route Detail"}</DialogTitle>
+            <DialogDescription>View pinned route details without leaving Home page.</DialogDescription>
+          </DialogHeader>
+
+          {pinnedDetailLoading ? (
+            <p className="text-sm text-muted-foreground">Loading route details...</p>
+          ) : pinnedDetailError ? (
+            <p className="text-sm text-destructive">{pinnedDetailError}</p>
+          ) : pinnedDetailRoute ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="rounded-md border border-border bg-card px-2 py-0.5 font-mono text-muted-foreground">{pinnedDetailRoute.code}</span>
+                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full text-white tracking-wide ${
+                  pinnedDetailRoute.shift === "AM"
+                    ? "bg-blue-500"
+                    : pinnedDetailRoute.shift === "PM"
+                    ? "bg-orange-600"
+                    : "bg-muted text-muted-foreground"
+                }`}>{pinnedDetailRoute.shift || "-"}</span>
+                <span className="text-muted-foreground">{pinnedDetailRoute.deliveryPoints?.length ?? 0} points</span>
+              </div>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                <input
+                  value={pinnedDetailSearchQuery}
+                  onChange={(event) => setPinnedDetailSearchQuery(event.target.value)}
+                  placeholder="Search by code, name, delivery..."
+                  className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-8 text-[11px] outline-none ring-offset-background placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                {pinnedDetailSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setPinnedDetailSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-72 overflow-y-auto rounded-lg border border-border">
+                {(pinnedDetailRoute.deliveryPoints?.length ?? 0) === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">No delivery points in this route.</p>
+                ) : (
+                  filteredPinnedDeliveryPoints.length === 0 ? (
+                    <div className="flex items-center justify-center p-6 text-center text-muted-foreground">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">No matching delivery point</p>
+                        <p className="text-xs">Try a different keyword.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <table className="border-collapse text-[12px] min-w-max w-full text-left">
+                      <thead className="sticky top-0 z-10 backdrop-blur-sm bg-background/95">
+                        <tr>
+                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground w-[84px]">Code</th>
+                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground">Location</th>
+                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground w-[100px]">Delivery</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPinnedDeliveryPoints.map((point, index) => (
+                          <tr key={`${pinnedDetailRoute.id}-${point.code}-${index}`} className="border-b border-border/60 last:border-b-0 hover:bg-muted/30">
+                            <td className="px-3 py-2.5 text-[10px] font-mono text-muted-foreground align-middle">{point.code}</td>
+                            <td className="px-3 py-2.5 text-sm font-medium text-foreground align-middle">{point.name}</td>
+                            <td className="px-3 py-2.5 text-xs text-muted-foreground align-middle">{point.delivery}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                )}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div>
