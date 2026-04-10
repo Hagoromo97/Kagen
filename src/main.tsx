@@ -9,6 +9,10 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
 // ── Apply persisted display settings before first paint ──────────────────────
 ;(function applyStoredDisplaySettings() {
   try {
+    // Color mode — apply immediately to avoid flash
+    const colorMode = localStorage.getItem("colorMode") ?? "dark"
+    document.documentElement.classList.toggle("dark", colorMode === "dark")
+
     // App zoom
     const zoom = localStorage.getItem("app-zoom") ?? "120"
     document.body.style.zoom = `${zoom}%`

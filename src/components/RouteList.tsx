@@ -8,6 +8,7 @@ import { RowInfoModal } from "./RowInfoModal"
 import { DeliveryMap } from "@/components/DeliveryMap"
 import { useEditMode } from "@/contexts/EditModeContext"
 import { getRouteColorPalette } from "@/lib/route-colors"
+import { parseSmartQuery } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -640,16 +641,18 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   }
   // Filter routes based on search query + region, then sort A-Z / 1-10 by name
   const filteredRoutes = useMemo(() => {
+    const { nameQuery, shiftFilter: queryShift } = parseSmartQuery(searchQuery)
+    const q = nameQuery.toLowerCase()
+    const effectiveShift = queryShift ?? (filterShift !== "all" ? filterShift : null)
+
     const list = routes.filter(route => {
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase()
+      if (q) {
         const matchSearch =
-          route.name.toLowerCase().includes(query) ||
-          route.code.toLowerCase().includes(query) ||
-          route.shift.toLowerCase().includes(query) ||
+          route.name.toLowerCase().includes(q) ||
+          route.code.toLowerCase().includes(q) ||
           route.deliveryPoints.some(point =>
-            point.name.toLowerCase().includes(query) ||
-            point.code.toLowerCase().includes(query)
+            point.name.toLowerCase().includes(q) ||
+            point.code.toLowerCase().includes(q)
           )
         if (!matchSearch) return false
       }
@@ -658,7 +661,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         const needle = filterRegion.toLowerCase()
         if (!hay.includes(needle)) return false
       }
-      if (filterShift !== "all" && route.shift !== filterShift) return false
+      if (effectiveShift && route.shift !== effectiveShift) return false
       return true
     })
     return [...list].sort((a, b) =>
@@ -675,18 +678,22 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const SEARCH_SUGGESTION_LIMIT = 20
 
   const searchSuggestions = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return routes.slice(0, SEARCH_SUGGESTION_LIMIT)
+    const { nameQuery, shiftFilter: queryShift } = parseSmartQuery(searchQuery)
+    const q = nameQuery.toLowerCase()
+    if (!searchQuery.trim()) return routes.slice(0, SEARCH_SUGGESTION_LIMIT)
     return routes
-      .filter(route =>
-        route.name.toLowerCase().includes(q) ||
-        route.code.toLowerCase().includes(q) ||
-        route.shift.toLowerCase().includes(q) ||
-        route.deliveryPoints.some(point =>
-          point.name.toLowerCase().includes(q) ||
-          point.code.toLowerCase().includes(q)
+      .filter(route => {
+        if (queryShift && route.shift !== queryShift) return false
+        if (!q) return true
+        return (
+          route.name.toLowerCase().includes(q) ||
+          route.code.toLowerCase().includes(q) ||
+          route.deliveryPoints.some(point =>
+            point.name.toLowerCase().includes(q) ||
+            point.code.toLowerCase().includes(q)
+          )
         )
-      )
+      })
       .slice(0, SEARCH_SUGGESTION_LIMIT)
   }, [routes, searchQuery])
 
@@ -1964,7 +1971,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search routes…"
+              placeholder="Search routes… (e.g. KL am, Sel 3 pm)"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}

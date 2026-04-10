@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2, Info } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, parseSmartQuery } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RowInfoModal } from "@/components/RowInfoModal"
@@ -308,14 +308,20 @@ export function DeliveryTableDialog() {
   const displayed = useMemo(() => {
     let list = flat
     if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      list = list.filter(p =>
-        p.code.toLowerCase().includes(q) ||
-        p.name.toLowerCase().includes(q) ||
-        p.routeName.toLowerCase().includes(q) ||
-        p.routeCode.toLowerCase().includes(q) ||
-        p.delivery.toLowerCase().includes(q)
-      )
+      const { nameQuery, shiftFilter } = parseSmartQuery(search)
+      const q = nameQuery.toLowerCase()
+      if (q) {
+        list = list.filter(p =>
+          p.code.toLowerCase().includes(q) ||
+          p.name.toLowerCase().includes(q) ||
+          p.routeName.toLowerCase().includes(q) ||
+          p.routeCode.toLowerCase().includes(q) ||
+          p.delivery.toLowerCase().includes(q)
+        )
+      }
+      if (shiftFilter) {
+        list = list.filter(p => p.routeShift.toUpperCase() === shiftFilter)
+      }
     }
     if (filterRoutes.size > 0)     list = list.filter(p => filterRoutes.has(p.routeId))
     if (filterDeliveries.size > 0) list = list.filter(p => filterDeliveries.has(p.delivery))
@@ -420,7 +426,7 @@ export function DeliveryTableDialog() {
         <div className="relative flex-1 min-w-[140px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
           <Input
-            placeholder="Search code, name, route…"
+            placeholder="Search code, name, route… (e.g. KL am)"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-8 pr-8 h-9 text-[11px] md:text-[11px] rounded-lg"
