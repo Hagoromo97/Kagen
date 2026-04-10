@@ -146,11 +146,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
                 }`}
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <div className={`p-2.5 rounded-lg transition-colors ${color} ${
-                    isDark
-                      ? "bg-slate-800 group-hover:bg-slate-700"
-                      : "bg-slate-100 group-hover:bg-slate-200"
-                  }`}>
+                  <div className={color}>
                     <Icon className="size-5" />
                   </div>
                 </div>

@@ -712,7 +712,7 @@ export function DeliveryTableDialog() {
                 {visibleColumns.has("name")     && <th className="px-3 py-3 text-center">Location Name</th>}
                 {visibleColumns.has("delivery") && <th className="px-3 py-3 text-center">Delivery</th>}
                 {visibleColumns.has("km")       && <th className="px-3 py-3 text-center">KM</th>}
-                {visibleColumns.has("action")   && <th className="px-3 py-3 text-center">Action</th>}
+                {visibleColumns.has("action")   && <th className="px-2 py-3 text-center w-12">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -734,16 +734,16 @@ export function DeliveryTableDialog() {
                     )}
                   >
                     {visibleColumns.has("no") && (
-                      <td className="px-3 py-3 text-center text-muted-foreground w-10 text-xs tabular-nums">{idx + 1}</td>
+                      <td className="px-3 py-3 text-center text-muted-foreground w-10 text-[11px] tabular-nums">{idx + 1}</td>
                     )}
                     {visibleColumns.has("route") && (
                       <td className="px-3 py-3 text-center">
-                        <span className="text-xs text-foreground">{pt.routeName}</span>
+                        <span className="text-[11px] text-foreground">{pt.routeName}</span>
                       </td>
                     )}
                     {visibleColumns.has("code") && (
                       <td className="px-3 py-3 text-center">
-                        <span className={cn("text-xs font-medium", pt._dupCode && "text-amber-600 dark:text-amber-400 font-bold")}>
+                        <span className={cn("text-[11px] font-medium", pt._dupCode && "text-amber-600 dark:text-amber-400 font-bold")}>
                           {pt.code}
                         </span>
                         {pt._dupCode && <AlertTriangle className="inline w-3 h-3 ml-1 text-amber-500" />}
@@ -751,36 +751,34 @@ export function DeliveryTableDialog() {
                     )}
                     {visibleColumns.has("name") && (
                       <td className="px-3 py-3 text-center">
-                        <span className={cn("text-xs", pt._dupName && "text-rose-600 dark:text-rose-400 font-semibold")}>
+                        <span className={cn("text-[11px]", pt._dupName && "text-rose-600 dark:text-rose-400 font-semibold")}>
                           {pt.name}
                         </span>
                         {pt._dupName && <AlertTriangle className="inline w-3 h-3 ml-1 text-rose-500" />}
                       </td>
                     )}
                     {visibleColumns.has("delivery") && (
-                      <td className="px-3 py-3 text-center text-xs">
+                      <td className="px-3 py-3 text-center text-[11px]">
                         {effectiveDelivery(pt)}
                       </td>
                     )}
                     {visibleColumns.has("km") && (
-                      <td className="px-3 py-3 text-center text-xs tabular-nums text-muted-foreground">
+                      <td className="px-3 py-3 text-center text-[11px] tabular-nums text-muted-foreground">
                         {pointDistances.get(pointKey(pt)) ?? ""}
                       </td>
                     )}
                     {visibleColumns.has("action") && (
-                      <td className="px-3 py-3 text-center">
-                        <Button
+                      <td className="px-2 py-3 text-center">
+                        <button
                           type="button"
-                          size="sm"
-                          variant="outline"
-                          className="size-7 p-0"
+                          className="inline-flex size-6 items-center justify-center p-0 text-muted-foreground transition-colors hover:text-foreground"
                           aria-label={`View info for ${pt.name}`}
                           title={`View info for ${pt.name}`}
                           onClick={() => setActiveActionPoint(pt)}
                         >
                           <Info className="size-3.5" />
                           <span className="sr-only">Info</span>
-                        </Button>
+                        </button>
                       </td>
                     )}
                   </tr>
