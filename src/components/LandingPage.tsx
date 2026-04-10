@@ -97,7 +97,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <div className="w-full max-w-3xl mx-auto text-center space-y-8">
           {/* Main Title */}
           <h1
-            className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.65rem,8.5vw,2.6rem)] sm:text-3xl lg:text-4xl font-bold tracking-tight break-words [text-wrap:balance] transition-all duration-700 ${
+            className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.4rem,7.2vw,2.2rem)] sm:text-2xl lg:text-3xl font-bold tracking-tight break-words [text-wrap:balance] transition-all duration-700 ${
               isDark ? "text-white" : "text-slate-900"
             } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "100ms" : "0ms" }}

@@ -538,7 +538,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                         {filteredPinnedDeliveryPoints.map((point, index) => (
                           <tr key={`${pinnedDetailRoute.id}-${point.code}-${index}`} className="border-b border-border/60 last:border-b-0 hover:bg-muted/30">
                             <td className="px-3 py-2.5 text-[10px] font-mono text-muted-foreground align-middle">{point.code}</td>
-                            <td className="px-3 py-2.5 text-sm font-medium text-foreground align-middle">{point.name}</td>
+                            <td className="px-3 py-2.5 text-xs font-medium text-foreground align-middle">{point.name}</td>
                             <td className="px-3 py-2.5 text-xs text-muted-foreground align-middle">{point.delivery}</td>
                           </tr>
                         ))}

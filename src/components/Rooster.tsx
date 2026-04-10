@@ -384,7 +384,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   // Column dates for current view
   const monthDates = useMemo(() => getMonthDates(currentDate), [currentDate])
   const colDates: Date[] = viewMode === "month" ? monthDates : weekDates
-  const staffColWidth = 168
+  const staffColWidth = 156
   const dayColWidth = viewMode === "month" ? 92 : 112
 
   // ── Shift CRUD ────────────────────────────────────────────────────────────
@@ -655,6 +655,24 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                     {colDates.map(date => {
                       const dateKey = toDateKey(date)
                       const dayShifts = rowShifts.filter(s => s.date === dateKey)
+                      const orderedDayShifts = [...dayShifts].sort((a, b) => {
+                        const aPeriod = routes.find(r => r.name === a.title)?.shift?.toUpperCase()
+                        const bPeriod = routes.find(r => r.name === b.title)?.shift?.toUpperCase()
+
+                        const periodRank = (period?: string) => {
+                          if (period === "AM") return 0
+                          if (period === "PM") return 1
+                          return 2
+                        }
+
+                        const rankDiff = periodRank(aPeriod) - periodRank(bPeriod)
+                        if (rankDiff !== 0) return rankDiff
+
+                        const startDiff = a.startHour - b.startHour
+                        if (startDiff !== 0) return startDiff
+
+                        return a.title.localeCompare(b.title)
+                      })
                       const isToday = isSameDay(date, today)
                       return (
                         <td
@@ -666,7 +684,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                           onClick={() => { if (isEditMode) openAddShift(resource.id, dateKey) }}
                         >
                           <div className={`flex flex-col gap-1 ${isEditMode ? "items-center" : ""}`}>
-                            {dayShifts.map(shift => (
+                            {orderedDayShifts.map(shift => (
                               <ShiftBlock
                                 key={shift.id}
                                 shift={shift}
@@ -862,43 +880,65 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
               </div>
             </div>
 
-            {/* ── Route: AM row / PM row ── */}
+            {/* ── Route dropdown grouped by AM/PM ── */}
             {shiftType === "route" && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Route</label>
-                {(["AM", "PM"] as const).map(period => {
-                  const periodRoutes = routes.filter(r => r.shift?.toUpperCase() === period)
-                  if (periodRoutes.length === 0) return null
-                  return (
-                    <div key={period} className="flex flex-col gap-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{period}</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {periodRoutes.map(r => {
-                          const c = routeEffectiveColorMap.get(r.name) ?? "#3B82F6"
-                          const isSelected = shiftForm.title === r.name
-                          return (
-                            <button
-                              key={r.id}
-                              type="button"
-                              onClick={() => {
-                                const preset = getShiftPreset(r.shift ?? "")
-                                setShiftForm(p => ({ ...p, title: r.name, color: c, ...preset }))
-                              }}
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
-                                isSelected
-                                  ? "text-white border-transparent"
-                                  : "border-border bg-background text-foreground hover:border-primary/50"
-                              }`}
-                              style={isSelected ? { background: c } : {}}
-                            >
-                              {r.name}{r.code ? ` (${r.code})` : ""}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
+                <select
+                  value={shiftForm.title}
+                  onChange={e => {
+                    const selected = routes.find(r => r.name === e.target.value)
+                    if (!selected) {
+                      setShiftForm(p => ({ ...p, title: "" }))
+                      return
+                    }
+                    const preset = getShiftPreset(selected.shift ?? "")
+                    const effectiveColor = routeEffectiveColorMap.get(selected.name) ?? "#3B82F6"
+                    setShiftForm(p => ({ ...p, title: selected.name, color: effectiveColor, ...preset }))
+                  }}
+                  className="h-10 w-full rounded-xl border border-border/70 bg-gradient-to-b from-background to-muted/20 px-3 text-[12px] font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  <option value="">Select route</option>
+                  {routes.filter(r => r.shift?.toUpperCase() === "AM").length > 0 && (
+                    <optgroup label="AM">
+                      {routes
+                        .filter(r => r.shift?.toUpperCase() === "AM")
+                        .map(r => (
+                          <option key={r.id} value={r.name}>
+                            {r.name}{r.code ? ` (${r.code})` : ""}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+                  {routes.filter(r => r.shift?.toUpperCase() === "PM").length > 0 && (
+                    <optgroup label="PM">
+                      {routes
+                        .filter(r => r.shift?.toUpperCase() === "PM")
+                        .map(r => (
+                          <option key={r.id} value={r.name}>
+                            {r.name}{r.code ? ` (${r.code})` : ""}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+                  {routes.filter(r => {
+                    const shiftLabel = r.shift?.toUpperCase()
+                    return shiftLabel !== "AM" && shiftLabel !== "PM"
+                  }).length > 0 && (
+                    <optgroup label="Other">
+                      {routes
+                        .filter(r => {
+                          const shiftLabel = r.shift?.toUpperCase()
+                          return shiftLabel !== "AM" && shiftLabel !== "PM"
+                        })
+                        .map(r => (
+                          <option key={r.id} value={r.name}>
+                            {r.name}{r.code ? ` (${r.code})` : ""}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+                </select>
               </div>
             )}
 
@@ -906,27 +946,20 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
             {shiftType === "off" && (
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Jenis</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {OFF_SUB_TYPES.map(st => {
-                    const isActive = offSubType === st.id
-                    return (
-                      <button
-                        key={st.id}
-                        type="button"
-                        onClick={() => {
-                          setOffSubType(st.id as OffSubTypeId)
-                          setShiftForm(p => ({ ...p, title: st.label, color: st.color }))
-                        }}
-                        className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                          isActive ? "border-transparent text-white" : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40"
-                        }`}
-                        style={isActive ? { background: st.color } : {}}
-                      >
-                        {st.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                <select
+                  value={offSubType}
+                  onChange={e => {
+                    const selected = OFF_SUB_TYPES.find(st => st.id === e.target.value)
+                    if (!selected) return
+                    setOffSubType(selected.id as OffSubTypeId)
+                    setShiftForm(p => ({ ...p, title: selected.label, color: selected.color }))
+                  }}
+                  className="h-10 w-full rounded-xl border border-border/70 bg-gradient-to-b from-background to-muted/20 px-3 text-[12px] font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  {OFF_SUB_TYPES.map(st => (
+                    <option key={st.id} value={st.id}>{st.label}</option>
+                  ))}
+                </select>
               </div>
             )}
 
