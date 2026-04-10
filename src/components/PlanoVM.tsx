@@ -43,6 +43,13 @@ interface PlanoPage {
   rows: PlanoRow[]
 }
 
+interface AlbumImageOption extends PlanoImage {
+  pageId: string
+  pageName: string
+  rowId: string
+  rowTitle: string
+}
+
 export function PlanoVM() {
   const { isEditMode, setHasUnsavedChanges, registerSaveHandler, registerDiscardHandler, hasUnsavedChanges, isSaving, saveChanges } = useEditMode()
   const lightGalleryRefs = useRef<Map<string, any>>(new Map())
@@ -93,8 +100,12 @@ export function PlanoVM() {
   const [newImage, setNewImage] = useState({ url: "", title: "", description: "" })
   const [editImage, setEditImage] = useState({ url: "", title: "", description: "" })
   const [searchQuery, setSearchQuery] = useState("")
-  const [addImageTab, setAddImageTab] = useState<"url" | "upload">("url")
-  const [editImageTab, setEditImageTab] = useState<"url" | "upload">("url")
+  const [addImageTab, setAddImageTab] = useState<"url" | "upload" | "album">("url")
+  const [editImageTab, setEditImageTab] = useState<"url" | "upload" | "album">("url")
+  const [addAlbumPageFilter, setAddAlbumPageFilter] = useState<string>("all")
+  const [editAlbumPageFilter, setEditAlbumPageFilter] = useState<string>("all")
+  const [addAlbumQuery, setAddAlbumQuery] = useState("")
+  const [editAlbumQuery, setEditAlbumQuery] = useState("")
   const [addUploadPreview, setAddUploadPreview] = useState<string | null>(null)
   const [editUploadPreview, setEditUploadPreview] = useState<string | null>(null)
   const [addUploading, setAddUploading] = useState(false)
@@ -103,6 +114,55 @@ export function PlanoVM() {
   const editFileRef = useRef<HTMLInputElement>(null)
 
   const currentPage = pages.find(p => p.id === activePage)
+
+  const albumImages = useMemo<AlbumImageOption[]>(() => {
+    return pages.flatMap((page) =>
+      page.rows.flatMap((row) =>
+        row.images.map((image) => ({
+          ...image,
+          pageId: page.id,
+          pageName: page.name,
+          rowId: row.id,
+          rowTitle: row.title,
+        }))
+      )
+    )
+  }, [pages])
+
+  const albumPageNames = useMemo(
+    () => Array.from(new Set(albumImages.map((image) => image.pageName))),
+    [albumImages]
+  )
+
+  const addFilteredAlbumImages = useMemo(() => {
+    const q = addAlbumQuery.trim().toLowerCase()
+    return albumImages.filter((image) => {
+      const pageMatch = addAlbumPageFilter === "all" || image.pageName === addAlbumPageFilter
+      if (!pageMatch) return false
+      if (!q) return true
+      return (
+        image.title.toLowerCase().includes(q) ||
+        image.description.toLowerCase().includes(q) ||
+        image.rowTitle.toLowerCase().includes(q) ||
+        image.pageName.toLowerCase().includes(q)
+      )
+    })
+  }, [addAlbumPageFilter, addAlbumQuery, albumImages])
+
+  const editFilteredAlbumImages = useMemo(() => {
+    const q = editAlbumQuery.trim().toLowerCase()
+    return albumImages.filter((image) => {
+      const pageMatch = editAlbumPageFilter === "all" || image.pageName === editAlbumPageFilter
+      if (!pageMatch) return false
+      if (!q) return true
+      return (
+        image.title.toLowerCase().includes(q) ||
+        image.description.toLowerCase().includes(q) ||
+        image.rowTitle.toLowerCase().includes(q) ||
+        image.pageName.toLowerCase().includes(q)
+      )
+    })
+  }, [editAlbumPageFilter, editAlbumQuery, albumImages])
 
   const getPagePreviewImage = (page: PlanoPage): string | null => {
     for (const row of page.rows) {
@@ -932,7 +992,13 @@ export function PlanoVM() {
 
       {/* Add Image Dialog */}
       <Dialog open={addImageDialog.open} onOpenChange={(open) => {
-        if (!open) { setAddImageTab("url"); setAddUploadPreview(null); setNewImage({ url: "", title: "", description: "" }) }
+        if (!open) {
+          setAddImageTab("url")
+          setAddUploadPreview(null)
+          setAddAlbumPageFilter("all")
+          setAddAlbumQuery("")
+          setNewImage({ url: "", title: "", description: "" })
+        }
         setAddImageDialog({ open })
       }}>
         <DialogContent className="max-w-md">
@@ -943,18 +1009,22 @@ export function PlanoVM() {
 
           {/* Tabs */}
           <div className="flex border-b border-border mb-2">
-            {(["url", "upload"] as const).map(tab => (
+            {([
+              { key: "url", label: "Paste URL", icon: <Link className="size-3.5" /> },
+              { key: "upload", label: "Upload File", icon: <Upload className="size-3.5" /> },
+              { key: "album", label: "From Album", icon: <ImageIcon className="size-3.5" /> },
+            ] as const).map(tab => (
               <button
-                key={tab}
-                onClick={() => setAddImageTab(tab)}
+                key={tab.key}
+                onClick={() => setAddImageTab(tab.key)}
                 className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
-                  addImageTab === tab
+                  addImageTab === tab.key
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab === "url" ? <Link className="size-3.5" /> : <Upload className="size-3.5" />}
-                {tab === "url" ? "Paste URL" : "Upload File"}
+                {tab.icon}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -972,7 +1042,7 @@ export function PlanoVM() {
                   <img src={newImage.url} alt="preview" className="w-full h-40 object-cover rounded-lg border border-border mt-1" onError={(e) => (e.currentTarget.style.display = "none")} />
                 )}
               </div>
-            ) : (
+            ) : addImageTab === "upload" ? (
               <div className="space-y-3">
                 <input ref={addFileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
                   const file = e.target.files?.[0]
@@ -1024,6 +1094,71 @@ export function PlanoVM() {
                   <p className="text-xs text-green-600 dark:text-green-400 font-medium text-center">✓ Uploaded successfully</p>
                 )}
               </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
+                  <Input
+                    placeholder="Search image, row, or page..."
+                    value={addAlbumQuery}
+                    onChange={(e) => setAddAlbumQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setAddAlbumPageFilter("all")}
+                    className={`h-7 px-3 rounded-lg text-xs font-medium transition-all ${
+                      addAlbumPageFilter === "all"
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {albumPageNames.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => setAddAlbumPageFilter(name)}
+                      className={`h-7 px-3 rounded-lg text-xs font-medium transition-all ${
+                        addAlbumPageFilter === name
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+
+                {addFilteredAlbumImages.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">No album images found.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+                    {addFilteredAlbumImages.map((image) => {
+                      const isSelected = newImage.url === image.url
+                      return (
+                        <button
+                          key={`${image.pageId}-${image.rowId}-${image.id}`}
+                          type="button"
+                          onClick={() => setNewImage({ url: image.url, title: image.title, description: image.description })}
+                          className={`relative rounded-lg overflow-hidden border text-left transition-colors ${
+                            isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+                          }`}
+                          title={`${image.pageName} • ${image.rowTitle}`}
+                        >
+                          <img src={image.url} alt={image.title} className="w-full h-20 object-cover" />
+                          <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] px-1.5 py-1 truncate">
+                            {image.title || "Untitled"}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             <div className="space-y-2">
@@ -1056,7 +1191,13 @@ export function PlanoVM() {
 
       {/* Edit Image Dialog */}
       <Dialog open={editImageDialog.open} onOpenChange={(open) => {
-        if (!open) { setEditImageTab("url"); setEditUploadPreview(null); setEditImage({ url: "", title: "", description: "" }) }
+        if (!open) {
+          setEditImageTab("url")
+          setEditUploadPreview(null)
+          setEditAlbumPageFilter("all")
+          setEditAlbumQuery("")
+          setEditImage({ url: "", title: "", description: "" })
+        }
         setEditImageDialog({ open })
       }}>
         <DialogContent className="max-w-md">
@@ -1067,18 +1208,22 @@ export function PlanoVM() {
 
           {/* Tabs */}
           <div className="flex border-b border-border mb-2">
-            {(["url", "upload"] as const).map(tab => (
+            {([
+              { key: "url", label: "Paste URL", icon: <Link className="size-3.5" /> },
+              { key: "upload", label: "Upload File", icon: <Upload className="size-3.5" /> },
+              { key: "album", label: "From Album", icon: <ImageIcon className="size-3.5" /> },
+            ] as const).map(tab => (
               <button
-                key={tab}
-                onClick={() => setEditImageTab(tab)}
+                key={tab.key}
+                onClick={() => setEditImageTab(tab.key)}
                 className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
-                  editImageTab === tab
+                  editImageTab === tab.key
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab === "url" ? <Link className="size-3.5" /> : <Upload className="size-3.5" />}
-                {tab === "url" ? "Paste URL" : "Upload File"}
+                {tab.icon}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -1096,7 +1241,7 @@ export function PlanoVM() {
                   <img src={editImage.url} alt="preview" className="w-full h-40 object-cover rounded-lg border border-border mt-1" onError={(e) => (e.currentTarget.style.display = "none")} />
                 )}
               </div>
-            ) : (
+            ) : editImageTab === "upload" ? (
               <div className="space-y-3">
                 <input ref={editFileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
                   const file = e.target.files?.[0]
@@ -1146,6 +1291,71 @@ export function PlanoVM() {
                 )}
                 {editImage.url && editImageTab === "upload" && (
                   <p className="text-xs text-green-600 dark:text-green-400 font-medium text-center">✓ Uploaded successfully</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
+                  <Input
+                    placeholder="Search image, row, or page..."
+                    value={editAlbumQuery}
+                    onChange={(e) => setEditAlbumQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditAlbumPageFilter("all")}
+                    className={`h-7 px-3 rounded-lg text-xs font-medium transition-all ${
+                      editAlbumPageFilter === "all"
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {albumPageNames.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => setEditAlbumPageFilter(name)}
+                      className={`h-7 px-3 rounded-lg text-xs font-medium transition-all ${
+                        editAlbumPageFilter === name
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+
+                {editFilteredAlbumImages.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">No album images found.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+                    {editFilteredAlbumImages.map((image) => {
+                      const isSelected = editImage.url === image.url
+                      return (
+                        <button
+                          key={`${image.pageId}-${image.rowId}-${image.id}`}
+                          type="button"
+                          onClick={() => setEditImage({ url: image.url, title: image.title, description: image.description })}
+                          className={`relative rounded-lg overflow-hidden border text-left transition-colors ${
+                            isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+                          }`}
+                          title={`${image.pageName} • ${image.rowTitle}`}
+                        >
+                          <img src={image.url} alt={image.title} className="w-full h-20 object-cover" />
+                          <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] px-1.5 py-1 truncate">
+                            {image.title || "Untitled"}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 )}
               </div>
             )}

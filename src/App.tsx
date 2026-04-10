@@ -473,7 +473,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{pinnedDetailRoute?.name ?? "Route Detail"}</DialogTitle>
-            <DialogDescription>View pinned route details without leaving Home page.</DialogDescription>
+            <DialogDescription>Simple route location view.</DialogDescription>
           </DialogHeader>
 
           {pinnedDetailLoading ? (
