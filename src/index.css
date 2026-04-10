@@ -279,13 +279,6 @@ html {
   --sp-md:  clamp(0.75rem, 1.8vw, 1rem);
   --sp-lg:  clamp(1rem,    2.5vw, 1.5rem);
   --sp-xl:  clamp(1.5rem,  3.5vw, 2rem);
-
-  /* Motion tokens */
-  --motion-fast: 150ms;
-  --motion-base: 220ms;
-  --motion-slow: 320ms;
-  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
@@ -296,26 +289,6 @@ body {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   font-family: var(--app-font, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-}
-
-/* Consistent app interactions */
-#root :where(button, a, [role="button"]) {
-  transition:
-    color var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    opacity var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard),
-    transform var(--motion-fast) var(--ease-standard),
-    filter var(--motion-fast) var(--ease-standard);
-}
-
-#root :where(input, select, textarea) {
-  transition:
-    color var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard);
 }
 
 #root {
@@ -744,26 +717,22 @@ body {
 @keyframes pageEnter {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.996);
-    filter: blur(2px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
 @keyframes pageExit {
   from {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: translateY(-4px) scale(0.998);
-    filter: blur(1px);
+    transform: translateY(-6px);
   }
 }
 
@@ -782,14 +751,14 @@ body {
 }
 
 .page-fade-in {
-  animation: pageEnter var(--motion-slow) var(--ease-emphasized) both;
-  will-change: opacity, transform, filter;
+  animation: pageEnter 0.32s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  will-change: opacity, transform;
 }
 
 .page-fade-out {
-  animation: pageExit 180ms ease-out both;
+  animation: pageExit 0.2s cubic-bezier(0.4, 0, 1, 1) both;
   pointer-events: none;
-  will-change: opacity, transform, filter;
+  will-change: opacity, transform;
 }
 
 .animate-in {
@@ -801,7 +770,7 @@ body {
 }
 
 .slide-in-from-bottom-4 {
-  animation: slideInFromBottom var(--motion-slow) var(--ease-emphasized) both;
+  animation: slideInFromBottom 0.32s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
 
 /* ── Scrollbar styling (Webkit) ───────────────────────────── */
@@ -833,19 +802,6 @@ body {
 .overflow-y-auto,
 .overflow-auto {
   scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  .overflow-y-auto,
-  .overflow-auto {
-    scroll-behavior: auto;
-  }
 }
 
 /* ── Animated Modal ── */
