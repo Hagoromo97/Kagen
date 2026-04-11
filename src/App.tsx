@@ -361,6 +361,9 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       point.delivery.toLowerCase().includes(pinnedDetailQuery)
     )
   })
+  const sortedFilteredPinnedDeliveryPoints = [...filteredPinnedDeliveryPoints].sort((a, b) =>
+    a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" })
+  )
 
   const openPinnedRouteDetail = async (routeId: string) => {
     setPinnedDetailOpen(true)
@@ -526,20 +529,20 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                       </div>
                     </div>
                   ) : (
-                    <table className="border-collapse text-[12px] min-w-max w-full text-left">
+                    <table className="border-collapse text-[12px] min-w-max w-full text-center">
                       <thead className="sticky top-0 z-10 backdrop-blur-sm bg-background/95">
                         <tr>
-                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground w-[84px]">Code</th>
-                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground">Location</th>
-                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground w-[100px]">Delivery</th>
+                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground text-center w-[84px]">Code</th>
+                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground text-center">Location</th>
+                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground text-center w-[100px]">Delivery</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredPinnedDeliveryPoints.map((point, index) => (
+                        {sortedFilteredPinnedDeliveryPoints.map((point, index) => (
                           <tr key={`${pinnedDetailRoute.id}-${point.code}-${index}`} className="border-b border-border/60 last:border-b-0 hover:bg-muted/30">
-                            <td className="px-3 py-2.5 text-[10px] font-mono text-muted-foreground align-middle">{point.code}</td>
-                            <td className="px-3 py-2.5 text-[10px] font-medium text-foreground align-middle">{point.name}</td>
-                            <td className="px-3 py-2.5 text-xs text-muted-foreground align-middle">{point.delivery}</td>
+                            <td className="px-3 py-2.5 text-[10px] font-mono text-muted-foreground text-center align-middle">{point.code}</td>
+                            <td className="px-3 py-2.5 text-[10px] font-medium text-foreground text-center align-middle">{point.name}</td>
+                            <td className="px-3 py-2.5 text-xs text-muted-foreground text-center align-middle">{point.delivery}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -919,7 +922,6 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 function AppContent() {
   const [currentPage, setCurrentPage] = useState("home")
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [roosterViewMode, setRoosterViewMode] = useState<"month" | "week">("week")
   const { open, openMobile, isMobile, toggleSidebar, setOpen, setOpenMobile } = useSidebar()
   const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
 
@@ -954,7 +956,7 @@ function AppContent() {
           </div>
         )
       case "rooster":
-        return <Rooster viewMode={roosterViewMode} />
+        return <Rooster />
       case "settings":
       case "settings-profile":
         return <Settings section="profile" />
@@ -1071,16 +1073,6 @@ function AppContent() {
               })()}
             </BreadcrumbList>
           </Breadcrumb>
-
-          {/* Rooster view toggle — cycles Month ↔ Week */}
-          {currentPage === "rooster" && (
-            <button
-              onClick={() => setRoosterViewMode(v => v === "month" ? "week" : "month")}
-              className="h-7 px-3 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-muted transition-colors shrink-0"
-            >
-              {roosterViewMode === "month" ? "Month" : "Week"}
-            </button>
-          )}
 
         </header>
         <Suspense fallback={null}>

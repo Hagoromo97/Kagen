@@ -9,6 +9,7 @@ import {
   Clock,
   Loader2,
   Settings2,
+  Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -300,6 +301,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   // Manage modal
   const [manageOpen, setManageOpen] = useState(false)
   const [manageTab, setManageTab] = useState<"staff" | "shift">("staff")
+  const [historyQuery, setHistoryQuery] = useState("")
 
   // ── Load from DB on mount ──────────────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -337,6 +339,48 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   // Shift type selector state (dialog UI only)
   const [shiftType, setShiftType] = useState<ShiftTypeId>("route")
   const [offSubType, setOffSubType] = useState<OffSubTypeId>("off")
+
+  const resourceById = useMemo(() => {
+    const map = new Map<string, Resource>()
+    resources.forEach((resource) => map.set(resource.id, resource))
+    return map
+  }, [resources])
+
+  const routeByName = useMemo(() => {
+    const map = new Map<string, RouteRef>()
+    routes.forEach((route) => map.set(route.name, route))
+    return map
+  }, [routes])
+
+  const historyResults = useMemo(() => {
+    const q = historyQuery.trim().toLowerCase()
+    if (!q) return []
+
+    return [...shifts]
+      .sort((a, b) => {
+        if (a.date !== b.date) return b.date.localeCompare(a.date)
+        return b.startHour - a.startHour
+      })
+      .filter((shift) => {
+        const resource = resourceById.get(shift.resourceId)
+        const route = routeByName.get(shift.title)
+        const haystack = [
+          shift.title,
+          shift.date,
+          String(shift.startHour),
+          String(shift.endHour),
+          resource?.name ?? "",
+          resource?.role ?? "",
+          route?.code ?? "",
+          route?.shift ?? "",
+        ]
+          .join(" ")
+          .toLowerCase()
+
+        return haystack.includes(q)
+      })
+      .slice(0, 30)
+  }, [historyQuery, shifts, resourceById, routeByName])
 
   // Shift form state
   const [shiftForm, setShiftForm] = useState({
@@ -540,13 +584,72 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
 
         <h2 className="text-sm font-bold flex-1 truncate">{headerLabel}</h2>
 
-        {isEditMode && (
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
-            onClick={() => { setManageOpen(true); setManageTab("staff") }}
-            className="flex items-center gap-1 h-7 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-semibold transition-colors shrink-0"
+            type="button"
+            onClick={() => setViewMode((value) => (value === "month" ? "week" : "month"))}
+            className="h-7 px-3 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-muted transition-colors shrink-0"
           >
-            <Settings2 className="size-3" />Manage
+            {viewMode === "month" ? "Month" : "Week"}
           </button>
+
+          {isEditMode && (
+            <button
+              onClick={() => { setManageOpen(true); setManageTab("staff") }}
+              className="flex items-center gap-1 h-7 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-semibold transition-colors shrink-0"
+            >
+              <Settings2 className="size-3" />Manage
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 py-2 border-b border-border/70 bg-background/70">
+        <div className="flex items-center gap-2">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+            <Input
+              value={historyQuery}
+              onChange={(event) => setHistoryQuery(event.target.value)}
+              placeholder="Search history: staff, route, code, date (YYYY-MM-DD)"
+              className="h-8 pl-8 text-[11px]"
+            />
+          </div>
+
+        </div>
+
+        {historyQuery.trim() && (
+          <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-border bg-card/80">
+            {historyResults.length === 0 ? (
+              <p className="px-3 py-2.5 text-[11px] text-muted-foreground">No history match found.</p>
+            ) : (
+              historyResults.map((shift) => {
+                const resource = resourceById.get(shift.resourceId)
+                const route = routeByName.get(shift.title)
+                return (
+                  <button
+                    key={shift.id}
+                    type="button"
+                    className="flex w-full items-center justify-between gap-2 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
+                    onClick={() => setCurrentDate(new Date(`${shift.date}T12:00:00`))}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-semibold text-foreground">{shift.title}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {resource?.name ?? "Unknown staff"}
+                        {route?.code ? ` · ${route.code}` : ""}
+                        {route?.shift ? ` · ${route.shift}` : ""}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[10px] font-semibold text-foreground">{shift.date}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatHour(shift.startHour)} - {formatHour(shift.endHour)}</p>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
         )}
       </div>
 
