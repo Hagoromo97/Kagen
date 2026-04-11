@@ -440,6 +440,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
   // ── Per-card sliding panel state { info, edit } ───────────────────
   const [cardPanels, setCardPanels] = useState<Record<string, { info: boolean; edit: boolean }>>({})
+  const [hoveredRouteId, setHoveredRouteId] = useState<string | null>(null)
   // ── Per-card changelog cache ───────────────────────────────────────
   const [cardChangelogs, setCardChangelogs] = useState<Record<string, { loading: boolean; entries: RouteChangelog[] }>>({})
   // ── Per-card edit form state ───────────────────────────────────────
@@ -542,6 +543,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       return next
     })
   }, [routes])
+
+  const clearPinnedRoutes = useCallback(() => {
+    setPinnedIds(new Set())
+    localStorage.setItem("fcalendar_pinned_routes", JSON.stringify([]))
+    window.dispatchEvent(new Event("fcalendar_pins_changed"))
+  }, [])
 
   // Fetch routes from database
   const fetchRoutes = useCallback(async (preserveCurrentId?: string) => {
@@ -2043,6 +2050,17 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             )}
           </div>
 
+          {pinnedIds.size > 0 && (
+            <button
+              type="button"
+              onClick={clearPinnedRoutes}
+              className="h-12 shrink-0 rounded-xl border border-border/70 bg-card/75 px-3 text-[11px] font-semibold text-muted-foreground shadow-sm backdrop-blur-md transition-colors hover:bg-muted/80 hover:text-foreground"
+              title="Unpin all routes from Home"
+            >
+              Unpin All
+            </button>
+          )}
+
           {/* Single Filter Button */}
           <button
             onClick={() => setFilterModalOpen(true)}
@@ -2073,13 +2091,32 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         {displayedRoutes.map((route, routeIndex) => {
           const markerColor = route.color || routeColorPalette[routeIndex % routeColorPalette.length]
           const cardPanel = getCardPanel(route.id)
+          const isPinnedCard = pinnedIds.has(route.id)
+          const isCardHovered = hoveredRouteId === route.id
+          const isPanelOpen = cardPanel.info || cardPanel.edit
+          const isCardEmphasized = isPinnedCard || isPanelOpen
+          const cardBorderColor = isCardEmphasized
+            ? `${markerColor}${isDark ? 'c7' : 'b5'}`
+            : isCardHovered
+            ? `${markerColor}${isDark ? 'a8' : '94'}`
+            : `${markerColor}${isDark ? '88' : '74'}`
+          const cardBorderWidth = isCardEmphasized ? 2 : isCardHovered ? 1.75 : 1.5
+          const cardShadow = isCardEmphasized
+            ? `0 10px 26px ${markerColor}${isDark ? '2a' : '24'}, 0 0 0 1px ${markerColor}${isDark ? '56' : '48'}`
+            : isCardHovered
+            ? `0 7px 20px ${markerColor}${isDark ? '20' : '1b'}, 0 0 0 1px ${markerColor}${isDark ? '42' : '36'}`
+            : `0 2px 10px ${markerColor}12, 0 0 0 1px ${markerColor}${isDark ? '26' : '1a'}`
           const autoLabels = getAutoDeliveryLabelsFromRoute(route)
           const savedCustomLabels = toCustomLabels(route.labels)
           const ep = editPanelState[route.id] ?? { name: route.name, code: route.code, shift: route.shift, color: route.color || markerColor, labels: savedCustomLabels }
           return (
           <div key={route.id} style={{ display: 'flex', justifyContent: 'center', minWidth: 0 }}>
             {/* ── Route Card ── */}
-            <div style={{ width: '100%', maxWidth: cardW, height: cardH, borderRadius: 22, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', border: `1.5px solid ${markerColor}55`, boxShadow: `0 2px 10px ${markerColor}0e, 0 0 0 1px ${markerColor}10` }}>
+            <div
+              onMouseEnter={() => setHoveredRouteId(route.id)}
+              onMouseLeave={() => setHoveredRouteId(prev => (prev === route.id ? null : prev))}
+              style={{ width: '100%', maxWidth: cardW, height: cardH, borderRadius: 22, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', border: `${cardBorderWidth}px solid ${cardBorderColor}`, boxShadow: cardShadow, transition: 'border-color 180ms ease, box-shadow 180ms ease, border-width 180ms ease' }}
+            >
               {/* Background image – subtle */}
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${isDark ? bgDark : bgLight})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18, zIndex: 0, pointerEvents: 'none' }} />
               {/* Sliding wrapper */}
@@ -2104,10 +2141,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: `${(1.2 * Math.min(1, cardW / 340)).toFixed(2)}rem` }}>
                         <button
                           onClick={e => { e.stopPropagation(); togglePin(route) }}
-                          title={pinnedIds.has(route.id) ? "Unpin from Home" : "Pin to Home"}
+                          title={isPinnedCard ? "Unpin from Home" : "Pin to Home"}
                           style={{
-                            background: pinnedIds.has(route.id) ? `${markerColor}18` : 'hsl(var(--muted)/0.5)',
-                            border: `1px solid ${pinnedIds.has(route.id) ? markerColor + '55' : 'hsl(var(--border)/0.6)'}`,
+                            background: isPinnedCard ? `${markerColor}18` : 'hsl(var(--muted)/0.5)',
+                            border: `1px solid ${isPinnedCard ? markerColor + '55' : 'hsl(var(--border)/0.6)'}`,
                             borderRadius: 10,
                             padding: `${rowPadV} ${rowPadH}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2115,13 +2152,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             transition: 'all 0.18s', gap: '0.3rem',
                           }}
                         >
-                          <span style={{ fontSize: '0.9rem' }}>{pinnedIds.has(route.id) ? '📌' : '📍'}</span>
+                          <span style={{ fontSize: '0.9rem' }}>{isPinnedCard ? '📌' : '📍'}</span>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem' }}>
-                            <span style={{ fontSize: `${(0.73 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 700, color: pinnedIds.has(route.id) ? markerColor : 'hsl(var(--muted-foreground))', letterSpacing: '0.03em', lineHeight: 1 }}>
-                              {pinnedIds.has(route.id) ? 'Pinned' : 'Pin'}
+                            <span style={{ fontSize: `${(0.73 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 700, color: isPinnedCard ? markerColor : 'hsl(var(--muted-foreground))', letterSpacing: '0.03em', lineHeight: 1 }}>
+                              {isPinnedCard ? 'Pinned' : 'Pin'}
                             </span>
                             <span style={{ fontSize: `${(0.57 * Math.min(1, cardW / 340)).toFixed(2)}rem`, color: 'hsl(var(--muted-foreground))', opacity: 0.75, lineHeight: 1, whiteSpace: 'nowrap' }}>
-                              {pinnedIds.has(route.id) ? 'Tap to unpin' : 'Show on Home'}
+                              {isPinnedCard ? 'Tap to unpin' : 'Show on Home'}
                             </span>
                           </div>
                         </button>

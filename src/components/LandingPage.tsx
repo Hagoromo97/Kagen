@@ -118,15 +118,15 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           {/* CTA Button */}
           <button
             onClick={handleEnter}
-            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm border active:scale-[0.96] transition-all duration-200 ${
+            className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-medium text-sm border active:scale-[0.96] transition-all duration-200 ${
               isDark
                 ? "bg-transparent text-[#A0A0A0] border-[#A0A0A0] hover:bg-[#A0A0A0]/10"
                 : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 shadow-sm"
             } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "200ms" : "0ms" }}
           >
-            Get Started
-            <ArrowRight className="size-4" />
+            <span className="relative z-10">Get Started</span>
+            <ArrowRight className="landing-cta-arrow relative z-10 size-4" />
           </button>
 
           {/* Features Grid */}

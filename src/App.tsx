@@ -14,7 +14,7 @@ const Rooster = lazy(() => import("@/components/Rooster").then(m => ({ default: 
 import { EditModeProvider } from "@/contexts/EditModeContext"
 import { DeviceProvider } from "@/contexts/DeviceContext"
 import { Toaster } from "sonner"
-import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore, Search } from "lucide-react"
+import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,13 +30,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 const DAYS = [
   { en: "Monday",    my: "Isnin"  },
@@ -85,7 +78,7 @@ const QUICK_ACCESS_OPTIONS: QuickAccessOption[] = [
   { id: "settings-profile", icon: Settings2,     label: "Settings",   description: "Profile settings",     iconClass: "text-indigo-500" },
 ]
 
-const DEFAULT_QUICK_ACCESS: QuickAccessId[] = ["route-list", "deliveries", "rooster", "plano-vm"]
+const DEFAULT_QUICK_ACCESS: QuickAccessId[] = []
 
 function isQuickAccessId(value: unknown): value is QuickAccessId {
   return QUICK_ACCESS_OPTIONS.some(opt => opt.id === value)
@@ -175,28 +168,11 @@ function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
 }
 
 function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
-  type PinnedRouteDetail = {
-    id: string
-    name: string
-    code: string
-    shift: string
-    deliveryPoints?: Array<{
-      code: string
-      name: string
-      delivery: string
-    }>
-  }
-
   const { isEditMode } = useEditMode()
   const [tableExpanded, setTableExpanded] = useState(false)
   const [legendOpen, setLegendOpen] = useState(false)
   const [confirmingLink, setConfirmingLink] = useState<string | null>(null)
   const [isRymnetPopoverOpen, setIsRymnetPopoverOpen] = useState(false)
-  const [pinnedDetailOpen, setPinnedDetailOpen] = useState(false)
-  const [pinnedDetailLoading, setPinnedDetailLoading] = useState(false)
-  const [pinnedDetailError, setPinnedDetailError] = useState<string | null>(null)
-  const [pinnedDetailRoute, setPinnedDetailRoute] = useState<PinnedRouteDetail | null>(null)
-  const [pinnedDetailSearchQuery, setPinnedDetailSearchQuery] = useState("")
   const [showQuickPicker, setShowQuickPicker] = useState(false)
   const [quickAccess, setQuickAccess] = useState<QuickAccessId[]>(() => {
     try {
@@ -213,12 +189,12 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     try {
       const stored = JSON.parse(localStorage.getItem(LS_HOME_ARCHIVE) || "{}")
       return {
-        colorGuide: Boolean(stored?.colorGuide),
-        colorExpired: Boolean(stored?.colorExpired),
-        toolEquipment: Boolean(stored?.toolEquipment),
+        colorGuide: stored?.colorGuide ?? true,
+        colorExpired: stored?.colorExpired ?? true,
+        toolEquipment: stored?.toolEquipment ?? true,
       }
     } catch {
-      return { colorGuide: false, colorExpired: false, toolEquipment: false }
+      return { colorGuide: true, colorExpired: true, toolEquipment: true }
     }
   })
   const todayIndex = (new Date().getDay() + 6) % 7
@@ -352,44 +328,13 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   })
   const pinnedAM = pinnedRoutesOrdered.filter(r => r.shift === "AM").length
   const pinnedPM = pinnedRoutesOrdered.filter(r => r.shift === "PM").length
-  const pinnedDetailQuery = pinnedDetailSearchQuery.trim().toLowerCase()
-  const filteredPinnedDeliveryPoints = (pinnedDetailRoute?.deliveryPoints ?? []).filter((point) => {
-    if (!pinnedDetailQuery) return true
-    return (
-      point.code.toLowerCase().includes(pinnedDetailQuery) ||
-      point.name.toLowerCase().includes(pinnedDetailQuery) ||
-      point.delivery.toLowerCase().includes(pinnedDetailQuery)
-    )
-  })
-  const sortedFilteredPinnedDeliveryPoints = [...filteredPinnedDeliveryPoints].sort((a, b) =>
-    a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" })
-  )
-
-  const openPinnedRouteDetail = async (routeId: string) => {
-    setPinnedDetailOpen(true)
-    setPinnedDetailLoading(true)
-    setPinnedDetailError(null)
-    setPinnedDetailSearchQuery("")
-
+  const openPinnedRouteDetail = (routeId: string) => {
     try {
-      const response = await fetch("/api/routes")
-      const data = await response.json()
-      const routes = Array.isArray(data?.data) ? data.data : []
-      const foundRoute = routes.find((route: PinnedRouteDetail) => route.id === routeId)
-
-      if (!foundRoute) {
-        setPinnedDetailRoute(null)
-        setPinnedDetailError("Route not found.")
-        return
-      }
-
-      setPinnedDetailRoute(foundRoute)
+      sessionStorage.setItem("fcalendar_open_route", routeId)
     } catch {
-      setPinnedDetailRoute(null)
-      setPinnedDetailError("Failed to load route details.")
-    } finally {
-      setPinnedDetailLoading(false)
+      // ignore session storage failures and navigate anyway
     }
+    onNavigate("route-list")
   }
 
   return (
@@ -463,98 +408,6 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
         </div>
       )}
 
-      <Dialog
-        open={pinnedDetailOpen}
-        onOpenChange={(open) => {
-          setPinnedDetailOpen(open)
-          if (!open) {
-            setPinnedDetailError(null)
-            setPinnedDetailSearchQuery("")
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{pinnedDetailRoute?.name ?? "Route Detail"}</DialogTitle>
-            <DialogDescription>Simple route location view.</DialogDescription>
-          </DialogHeader>
-
-          {pinnedDetailLoading ? (
-            <p className="text-sm text-muted-foreground">Loading route details...</p>
-          ) : pinnedDetailError ? (
-            <p className="text-sm text-destructive">{pinnedDetailError}</p>
-          ) : pinnedDetailRoute ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="rounded-md border border-border bg-card px-2 py-0.5 font-mono text-muted-foreground">{pinnedDetailRoute.code}</span>
-                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full text-white tracking-wide ${
-                  pinnedDetailRoute.shift === "AM"
-                    ? "bg-blue-500"
-                    : pinnedDetailRoute.shift === "PM"
-                    ? "bg-orange-600"
-                    : "bg-muted text-muted-foreground"
-                }`}>{pinnedDetailRoute.shift || "-"}</span>
-                <span className="text-muted-foreground">{pinnedDetailRoute.deliveryPoints?.length ?? 0} points</span>
-              </div>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
-                <input
-                  value={pinnedDetailSearchQuery}
-                  onChange={(event) => setPinnedDetailSearchQuery(event.target.value)}
-                  placeholder="Search by code, name, delivery..."
-                  className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-8 text-[11px] outline-none ring-offset-background placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-ring"
-                />
-                {pinnedDetailSearchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setPinnedDetailSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
-                    aria-label="Clear search"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </div>
-
-              <div className="max-h-72 overflow-y-auto rounded-lg border border-border">
-                {(pinnedDetailRoute.deliveryPoints?.length ?? 0) === 0 ? (
-                  <p className="p-3 text-sm text-muted-foreground">No delivery points in this route.</p>
-                ) : (
-                  filteredPinnedDeliveryPoints.length === 0 ? (
-                    <div className="flex items-center justify-center p-6 text-center text-muted-foreground">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">No matching delivery point</p>
-                        <p className="text-xs">Try a different keyword.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <table className="border-collapse text-[12px] min-w-max w-full text-center">
-                      <thead className="sticky top-0 z-10 backdrop-blur-sm bg-background/95">
-                        <tr>
-                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground text-center w-[84px]">Code</th>
-                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground text-center">Location</th>
-                          <th className="px-3 h-9 text-[10px] font-bold uppercase tracking-wider border-b border-border/70 text-muted-foreground text-center w-[100px]">Delivery</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedFilteredPinnedDeliveryPoints.map((point, index) => (
-                          <tr key={`${pinnedDetailRoute.id}-${point.code}-${index}`} className="border-b border-border/60 last:border-b-0 hover:bg-muted/30">
-                            <td className="px-3 py-2.5 text-[10px] font-mono text-muted-foreground text-center align-middle">{point.code}</td>
-                            <td className="px-3 py-2.5 text-[10px] font-medium text-foreground text-center align-middle">{point.name}</td>
-                            <td className="px-3 py-2.5 text-xs text-muted-foreground text-center align-middle">{point.delivery}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )
-                )}
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
-
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div>
         <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
@@ -582,8 +435,15 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           )}
         </div>
 
-        {isEditMode && quickAccess.length === 0 && (
-          <p className="mt-3 text-xs text-muted-foreground px-0.5">No cards yet. Tap `+` to add Quick Access.</p>
+        {quickAccess.length === 0 && (
+          <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/20 px-4 py-4 text-center">
+            <p className="text-sm font-semibold text-foreground">Quick Access is empty</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {isEditMode
+                ? "Tap Add Card to place your navigation shortcuts on Home."
+                : "Turn on Edit Mode to add navigation shortcuts here for faster access."}
+            </p>
+          </div>
         )}
       </div>
 
