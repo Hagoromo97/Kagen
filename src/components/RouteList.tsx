@@ -55,7 +55,10 @@ async function appendChangelog(routeId: string, description: string): Promise<vo
 
 const formatRowCode = (code: string) => `[ ${code} ]`
 
-const formatRouteLabel = (routeName: string) => `Route ${routeName}`
+const formatRouteLabel = (routeName: string) => {
+  const normalized = routeName.trim()
+  return /^route\b/i.test(normalized) ? normalized : `Route ${normalized}`
+}
 
 const sortByCode = <T extends { code: string }>(items: T[]): T[] => (
   [...items].sort((left, right) => left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: "base" }))
@@ -472,10 +475,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     return () => window.removeEventListener('fcalendar_route_colors_changed', handler)
   }, [])
 
-  // Fetch changelog when an info panel opens
+  // Fetch changelog whenever an info panel opens so data stays fresh.
   useEffect(() => {
     for (const [id, panel] of Object.entries(cardPanels)) {
-      if (panel.info && !cardChangelogs[id]) {
+      if (panel.info) {
         setCardChangelogs(prev => ({ ...prev, [id]: { loading: true, entries: [] } }))
         fetch(`/api/route-notes?routeId=${encodeURIComponent(id)}`)
           .then(r => r.json())
@@ -1811,6 +1814,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
       orderedChanges.forEach(desc => { appendChangelog(route.id, desc) })
     })
+    // Refresh local snapshots so next save compares against latest persisted state.
+    routesSnapshotRef.current = JSON.parse(JSON.stringify(routes))
+    headerSnapshotRef.current = JSON.parse(JSON.stringify(headerItems))
+
+    // Invalidate card changelog cache so each panel reflects latest server entries.
+    setCardChangelogs({})
+
     // Clear pending-edit markers once successfully persisted
     setPendingCellEdits(new Set())
     // Re-fetch from server so UI mirrors exactly what was persisted
@@ -2628,7 +2638,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               </div>
                             </div>
                           ) : (
-                          <table className="border-collapse text-[12px] whitespace-nowrap min-w-max w-full text-center">
+                          <table className="border-collapse text-[11px] whitespace-nowrap min-w-max w-full text-center">
                             <thead className="sticky top-0 z-10 backdrop-blur-sm" style={{ background: 'hsl(var(--background)/0.92)' }}>
                               <tr>
                                 {isEditMode && (
@@ -2642,10 +2652,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                   </th>
                                 )}
                                 {visibleDataColumns.map(col => (
-                                  <th key={col.key} className="px-4 h-10 text-center text-[10px] font-bold uppercase tracking-wider bg-background/95 border-b border-border/70" style={{ color: 'hsl(var(--foreground)/0.72)' }}>{col.label}</th>
+                                  <th key={col.key} className="px-4 h-10 text-center text-[9px] font-bold uppercase tracking-wider bg-background/95 border-b border-border/70" style={{ color: 'hsl(var(--foreground)/0.72)' }}>{col.label}</th>
                                 ))}
                                 {isActionColumnVisible && (
-                                  <th className="px-4 h-10 text-center text-[10px] font-bold uppercase tracking-wider bg-background/95 border-b border-border/70" style={{ color: 'hsl(var(--foreground)/0.72)' }}>Action</th>
+                                  <th className="px-4 h-10 text-center text-[9px] font-bold uppercase tracking-wider bg-background/95 border-b border-border/70" style={{ color: 'hsl(var(--foreground)/0.72)' }}>Action</th>
                                 )}
                           </tr>
                         </thead>
@@ -2686,7 +2696,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 {effectiveColumns.filter(c => c.visible).map(col => {
                                   if (col.key === 'no') return (
                                     <td key="no" className="px-4 h-10 text-center">
-                                      <span className="text-[11px] font-semibold tabular-nums" style={{ color: markerColor }}>
+                                      <span className="text-[10px] font-semibold tabular-nums" style={{ color: markerColor }}>
                                         {index + 1}
                                       </span>
                                     </td>
@@ -2706,8 +2716,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         }}
                                       >
                                         <PopoverTrigger asChild>
-                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[11px] font-semibold" onClick={() => startEdit(point.code, 'code', point.code)}>
-                                            <span className={`text-[11px] font-semibold ${pendingCellEdits.has(`${point.code}-code`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.code}</span>
+                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[10px] font-semibold" onClick={() => startEdit(point.code, 'code', point.code)}>
+                                            <span className={`text-[10px] font-semibold ${pendingCellEdits.has(`${point.code}-code`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.code}</span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         </PopoverTrigger>
@@ -2735,7 +2745,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                           </div>
                                         </PopoverContent>
                                       </Popover>
-                                      ) : (<span className="text-[11px] font-semibold">{point.code}</span>)
+                                      ) : (<span className="text-[10px] font-semibold">{point.code}</span>)
                                       })()}
                                     </td>
                                   )
@@ -2754,8 +2764,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         }}
                                       >
                                         <PopoverTrigger asChild>
-                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[11px] font-semibold" onClick={() => startEdit(point.code, 'name', point.name)}>
-                                            <span className={`text-[11px] font-semibold ${pendingCellEdits.has(`${point.code}-name`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.name}</span>
+                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[10px] font-semibold" onClick={() => startEdit(point.code, 'name', point.name)}>
+                                            <span className={`text-[10px] font-semibold ${pendingCellEdits.has(`${point.code}-name`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.name}</span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         </PopoverTrigger>
@@ -2772,7 +2782,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                           </div>
                                         </PopoverContent>
                                       </Popover>
-                                      ) : (<span className="text-[11px] font-semibold">{point.name}</span>)
+                                      ) : (<span className="text-[10px] font-semibold">{point.name}</span>)
                                       })()}
                                     </td>
                                   )
@@ -2785,13 +2795,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                             className="group inline-flex items-center gap-1.5 hover:opacity-70 transition-opacity mx-auto"
                                             onClick={() => openDeliveryTypeModal(point)}
                                           >
-                                            <span className={`text-[11px] font-semibold ${isPending ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                                            <span className={`text-[10px] font-semibold ${isPending ? 'text-amber-600 dark:text-amber-400' : ''}`}>
                                               {getDeliveryLabel(point.delivery)}
                                             </span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         ) : (
-                                          <span className="text-[11px] font-semibold">{getDeliveryLabel(point.delivery)}</span>
+                                          <span className="text-[10px] font-semibold">{getDeliveryLabel(point.delivery)}</span>
                                         )}
                                       </td>
                                     )
@@ -2805,12 +2815,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         >
                                           <TooltipTrigger
                                             type="button"
-                                            className="text-[11px] font-semibold cursor-help tabular-nums"
+                                            className="text-[10px] font-semibold cursor-help tabular-nums"
                                             onClick={() => setOpenKmTooltip(prev => prev === point.code ? null : point.code)}
                                           >
                                             {hasCoords && distInfo ? formatKm(distInfo.display) : ''}
                                           </TooltipTrigger>
-                                          <TooltipContent side="top" className="text-xs max-w-[220px] text-center z-[9999]">
+                                          <TooltipContent side="top" className="max-w-[220px] text-center text-[11px] z-[9999]">
                                             {segmentLabel}
                                           </TooltipContent>
                                         </Tooltip>
@@ -2852,7 +2862,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 <div className="w-6 h-6 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
                                   <Plus className="size-3.5 text-primary" />
                                 </div>
-                                <span className="text-[12px] font-medium text-muted-foreground group-hover:text-primary transition-colors">
+                                <span className="text-[11px] font-medium text-muted-foreground group-hover:text-primary transition-colors">
                                   Add New Delivery Point
                                 </span>
                               </div>
@@ -2868,7 +2878,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
                     {dialogView === 'table' && (
                       <div className="border-t border-border bg-background/95 px-4 py-2.5 min-h-[52px] flex flex-wrap items-center justify-between gap-2 shrink-0 backdrop-blur-sm">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                           {!isEditMode && (
                             <span className="font-medium text-muted-foreground">
                               Location : {tableRows.length}
@@ -2891,7 +2901,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                              className="h-7 text-[11px] text-red-500 hover:text-red-600 hover:bg-red-500/10"
                               onClick={() => setSelectedRows([])}
                             >
                               Clear selection
@@ -2901,7 +2911,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 gap-1.5 text-xs text-green-600 hover:text-green-600 hover:bg-green-500/10"
+                              className="h-7 gap-1.5 text-[11px] text-green-600 hover:text-green-600 hover:bg-green-500/10"
                               onClick={handleDoneClick}
                             >
                               <Check className="size-3 mr-1" />Action
@@ -2910,7 +2920,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                           {isEditMode && hasUnsavedChanges && (
                             <Button
                               size="sm"
-                              className="h-7 gap-1.5 text-xs"
+                              className="h-7 gap-1.5 text-[11px]"
                               onClick={saveChanges}
                               disabled={isSaving}
                             >
