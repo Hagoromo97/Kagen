@@ -152,6 +152,64 @@ function getCachedMarkerIcon(style: "pin" | "dot" | "ring", color: string, activ
   return created
 }
 
+// Badge html shown on grouped markers (count > 1)
+const stackBadge = (count: number) =>
+  `<div style="position:absolute;top:-5px;right:-7px;background:#1d4ed8;color:#fff;border-radius:999px;font-size:8px;font-weight:700;padding:1px 3.5px;line-height:1.4;border:1.5px solid #fff;min-width:14px;text-align:center;pointer-events:none">${count}</div>`
+
+function createGroupedIcon(
+  style: "pin" | "dot" | "ring",
+  color: string,
+  count: number,
+  active = false
+): L.Icon | L.DivIcon {
+  if (count <= 1) return getCachedMarkerIcon(style, color, active)
+
+  const badge = stackBadge(count)
+
+  if (style === "dot") {
+    const size = active ? 10 : 8
+    return L.divIcon({
+      className: "",
+      iconAnchor: [size / 2, size / 2],
+      popupAnchor: [0, -(size + 4)],
+      html: `<div style="position:relative;display:inline-block"><div style="width:${size}px;height:${size}px;border-radius:999px;background:${color};border:2px solid #fff;box-shadow:0 0 0 1px ${color}88,0 2px 6px #00000030"></div>${badge}</div>`,
+    })
+  }
+
+  if (style === "ring") {
+    const outer = active ? 14 : 10
+    const inner = active ? 6 : 4
+    return L.divIcon({
+      className: "",
+      iconAnchor: [outer / 2, outer / 2],
+      popupAnchor: [0, -(outer + 4)],
+      html: `<div style="position:relative;display:inline-block"><div style="width:${outer}px;height:${outer}px;border-radius:999px;border:2px solid ${color};background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px #00000020"><div style="width:${inner}px;height:${inner}px;border-radius:999px;background:${color}"></div></div>${badge}</div>`,
+    })
+  }
+
+  // pin
+  const w = active ? 16 : 12
+  const h = active ? 27 : 20
+  const svgPin = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41" width="${w}" height="${h}"><path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z" fill="${color}" stroke="white" stroke-width="1.5"/><circle cx="12.5" cy="12.5" r="4.5" fill="white" opacity="0.9"/></svg>`
+  return L.divIcon({
+    className: "",
+    iconAnchor: [w / 2, h],
+    popupAnchor: [0, -(h + 4)],
+    html: `<div style="position:relative;display:inline-block">${svgPin}${badge}</div>`,
+  })
+}
+
+const groupedIconCache = new Map<string, L.Icon | L.DivIcon>()
+
+function getCachedGroupedIcon(style: "pin" | "dot" | "ring", color: string, count: number, active = false): L.Icon | L.DivIcon {
+  const key = `${style}|${color}|${count}|${active ? 1 : 0}`
+  const cached = groupedIconCache.get(key)
+  if (cached) return cached
+  const created = createGroupedIcon(style, color, count, active)
+  groupedIconCache.set(key, created)
+  return created
+}
+
 /** Fits map bounds whenever validPoints changes */
 function BoundsController({ points, startPoint, includeStartInBounds = true, refitToken }: { points: DeliveryPoint[]; startPoint?: { lat: number; lng: number }; includeStartInBounds?: boolean; refitToken?: number }) {
   const map = useMap()
@@ -192,67 +250,78 @@ function ResizeController({ resizeToken }: { resizeToken?: number }) {
   return null
 }
 
-interface MarkerItemProps {
-  point: DeliveryPoint
+interface GroupedMarkerItemProps {
+  points: DeliveryPoint[]
   markerStyle: "pin" | "dot" | "ring"
   color: string
   isActive: boolean
-  onToggleActive: (code: string) => void
+  groupKey: string
+  onToggleActive: (groupKey: string) => void
 }
 
-const MarkerItem = memo(function MarkerItem({ point, markerStyle, color, isActive, onToggleActive }: MarkerItemProps) {
+const GroupedMarkerItem = memo(function GroupedMarkerItem({ points, markerStyle, color, isActive, groupKey, onToggleActive }: GroupedMarkerItemProps) {
   const markerRef = useRef<L.Marker | null>(null)
+  const first = points[0]
 
   useEffect(() => {
     if (!markerRef.current) return
-
     if (isActive) {
       markerRef.current.openPopup()
-      return
+    } else {
+      markerRef.current.closePopup()
     }
-
-    markerRef.current.closePopup()
   }, [isActive])
 
   return (
     <Marker
       ref={markerRef}
-      position={[point.latitude, point.longitude]}
-      icon={getCachedMarkerIcon(markerStyle, color, isActive)}
+      position={[first.latitude, first.longitude]}
+      icon={getCachedGroupedIcon(markerStyle, color, points.length, isActive)}
       eventHandlers={{
-        click: () => onToggleActive(point.code),
-        popupopen: () => onToggleActive(point.code),
+        click: () => onToggleActive(groupKey),
+        popupopen: () => onToggleActive(groupKey),
         popupclose: () => onToggleActive(""),
       }}
     >
       <Popup autoPan={false}>
         <div style={{ fontFamily: "system-ui, sans-serif", minWidth: 160, padding: "2px 0" }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#111", lineHeight: 1.35 }}>
-            {`${point.code} - ${point.name}`}
-          </p>
+          {points.map((p, i) => (
+            <div
+              key={`${p.routeId ?? ""}-${p.code}`}
+              style={i > 0 ? { marginTop: 6, paddingTop: 6, borderTop: "1px solid #e5e7eb" } : undefined}
+            >
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 12, color: "#111", lineHeight: 1.35 }}>
+                {p.code} — {p.name}
+              </p>
+              {p.routeLabel && (
+                <p style={{ margin: "2px 0 0", fontSize: 10, color: "#6b7280" }}>{p.routeLabel}</p>
+              )}
+            </div>
+          ))}
         </div>
       </Popup>
     </Marker>
   )
 }, (prev, next) => (
-  prev.point === next.point
+  prev.points === next.points
   && prev.markerStyle === next.markerStyle
   && prev.color === next.color
   && prev.isActive === next.isActive
+  && prev.groupKey === next.groupKey
   && prev.onToggleActive === next.onToggleActive
 ))
 
 export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline = false, markerStyle = "pin", mapStyle = "google-streets", startPoint, includeStartInBounds = true, refitToken = 0, resizeToken = 0 }: DeliveryMapProps) {
-  const [activeCode, setActiveCode] = useState<string | null>(null)
+  const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null)
   const [renderedMarkerCount, setRenderedMarkerCount] = useState(INITIAL_MARKER_RENDER)
   const tiles = TILE_CONFIG[mapStyle]
 
-  const toggleActive = useCallback((code: string) => {
-    if (code === "") {
-      setActiveCode(null)
+  const toggleActive = useCallback((key: string) => {
+    if (key === "") {
+      setActiveGroupKey(null)
       return
     }
-    setActiveCode((prev) => (prev === code ? null : code))
+    setActiveGroupKey((prev) => (prev === key ? null : key))
   }, [])
 
   const validPoints = useMemo(
@@ -294,6 +363,18 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
     () => deferredPoints.slice(0, Math.min(renderedMarkerCount, deferredPoints.length)),
     [deferredPoints, renderedMarkerCount]
   )
+
+  // Group co-located points (same lat/lng) into a single marker
+  const groupedMarkers = useMemo(() => {
+    const map = new Map<string, { points: DeliveryPoint[]; color: string }>()
+    renderedPoints.forEach((p) => {
+      const key = `${p.latitude.toFixed(6)},${p.longitude.toFixed(6)}`
+      const color = p.markerColor ?? DELIVERY_COLORS[p.delivery] ?? "#6b7280"
+      if (!map.has(key)) map.set(key, { points: [], color })
+      map.get(key)!.points.push(p)
+    })
+    return Array.from(map.entries()).map(([key, { points, color }]) => ({ key, points, color }))
+  }, [renderedPoints])
 
   const center = useMemo((): [number, number] => {
     if (startPoint) return [startPoint.lat, startPoint.lng]
@@ -368,20 +449,17 @@ export function DeliveryMap({ deliveryPoints, scrollZoom = false, showPolyline =
           pathOptions={{ color: "#2563eb", weight: 3, opacity: 0.75 }}
         />
       ))}
-      {renderedPoints.map(point => {
-        const color = point.markerColor ?? DELIVERY_COLORS[point.delivery] ?? "#6b7280"
-        const isActive = point.code === activeCode
-        return (
-          <MarkerItem
-            key={`${point.routeId ?? "single-route"}:${point.code}`}
-            point={point}
-            markerStyle={markerStyle}
-            color={color}
-            isActive={isActive}
-            onToggleActive={toggleActive}
-          />
-        )
-      })}
+      {groupedMarkers.map(({ key, points, color }) => (
+        <GroupedMarkerItem
+          key={key}
+          points={points}
+          markerStyle={markerStyle}
+          color={color}
+          isActive={activeGroupKey === key}
+          groupKey={key}
+          onToggleActive={toggleActive}
+        />
+      ))}
     </MapContainer>
   )
 }

@@ -627,7 +627,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
       r.deliveryPoints.forEach((p, pointIdx) => {
         const singleRouteMarkerColor = SINGLE_ROUTE_MARKER_COLORS[pointIdx % SINGLE_ROUTE_MARKER_COLORS.length]
-        const markerColor = isCombinedView ? routeMarkerColor : singleRouteMarkerColor
+        const markerColor = isCombinedView ? routeMarkerColor : (p.markerColor ?? singleRouteMarkerColor)
 
         result.push({
           ...p,
@@ -3358,6 +3358,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     onOpenChange={setInfoModalOpen}
                     point={selectedPoint}
                     isEditMode={isEditMode}
+                    allowMarkerColorEdit={combinedRouteIds.size === 1}
                     onSave={(updated) => {
                       setDeliveryPoints(prev => prev.map(p => p.code === updated.code ? updated : p))
                       setSelectedPoint(updated)

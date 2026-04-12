@@ -24,6 +24,7 @@ interface DeliveryPoint {
   latitude: number
   longitude: number
   descriptions: { key: string; value: string }[]
+  markerColor?: string
   qrCodeImageUrl?: string
   qrCodeDestinationUrl?: string
   avatarImageUrl?: string
@@ -35,12 +36,19 @@ interface RowInfoModalProps {
   onOpenChange: (open: boolean) => void
   point: DeliveryPoint
   isEditMode: boolean
+  allowMarkerColorEdit?: boolean
   onSave?: (updated: DeliveryPoint) => void
 }
 
-export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: RowInfoModalProps) {
+const DEFAULT_MARKER_COLOR = "#ef4444"
+
+const isHexColor = (value: string) => /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(value)
+
+export function RowInfoModal({ open, onOpenChange, point, isEditMode, allowMarkerColorEdit = false, onSave }: RowInfoModalProps) {
   const [drafts, setDrafts] = useState<{ key: string; value: string }[]>([])
   const [isEditing, setIsEditing] = useState(false)
+  const [markerColor, setMarkerColor] = useState<string | undefined>(undefined)
+  const [markerColorInput, setMarkerColorInput] = useState("")
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState("")
   const [qrCodeDestinationUrl, setQrCodeDestinationUrl] = useState("")
   const [showQRDialog, setShowQRDialog] = useState(false)
@@ -67,6 +75,8 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
   useEffect(() => {
     if (open) {
       setDrafts(point.descriptions ?? [])
+      setMarkerColor(point.markerColor)
+      setMarkerColorInput(point.markerColor ?? "")
       setQrCodeImageUrl(point.qrCodeImageUrl ?? "")
       setQrCodeDestinationUrl(point.qrCodeDestinationUrl ?? "")
       const imgs = point.avatarImages ?? (point.avatarImageUrl ? [point.avatarImageUrl] : [])
@@ -162,6 +172,18 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
 
   const hasCoords = point.latitude !== 0 && point.longitude !== 0
 
+  // Detect unsaved changes in the editing form
+  const hasChanges = (() => {
+    const filteredDrafts = drafts.filter(d => d.key.trim() !== "")
+    const originalDescs = (point.descriptions ?? []).filter(d => d.key.trim() !== "")
+    if (filteredDrafts.length !== originalDescs.length) return true
+    for (let i = 0; i < filteredDrafts.length; i++) {
+      if (filteredDrafts[i].key !== originalDescs[i]?.key || filteredDrafts[i].value !== originalDescs[i]?.value) return true
+    }
+    if ((markerColor ?? undefined) !== (point.markerColor ?? undefined)) return true
+    return false
+  })()
+
   const handleAdd = () => setDrafts(prev => [...prev, { key: "", value: "" }])
   const handleRemove = (i: number) => setDrafts(prev => prev.filter((_, idx) => idx !== i))
   const handleChange = (i: number, field: "key" | "value", val: string) =>
@@ -169,7 +191,15 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
 
   const handleSave = () => {
     try {
-      onSave?.({ ...point, descriptions: drafts.filter(d => d.key.trim() !== ""), qrCodeImageUrl, qrCodeDestinationUrl, avatarImageUrl, avatarImages })
+      onSave?.({
+        ...point,
+        descriptions: drafts.filter(d => d.key.trim() !== ""),
+        markerColor,
+        qrCodeImageUrl,
+        qrCodeDestinationUrl,
+        avatarImageUrl,
+        avatarImages,
+      })
       setIsEditing(false)
       toast.success("Changes saved", {
         description: `${point.name || point.code} updated successfully.`,
@@ -187,6 +217,8 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
 
   const handleCancel = () => {
     setDrafts(point.descriptions ?? [])
+    setMarkerColor(point.markerColor)
+    setMarkerColorInput(point.markerColor ?? "")
     setIsEditing(false)
   }
 
@@ -303,6 +335,50 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
 
             {isEditing ? (
               <div className="space-y-2">
+                {allowMarkerColorEdit && (
+                  <div className="rounded-md border border-border/70 bg-muted/40 p-2.5">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Marker Color</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={markerColor ?? DEFAULT_MARKER_COLOR}
+                        onChange={(e) => {
+                          setMarkerColor(e.target.value)
+                          setMarkerColorInput(e.target.value)
+                        }}
+                        className="h-8 w-10 cursor-pointer rounded border border-border bg-background p-1"
+                        aria-label="Marker color"
+                      />
+                      <Input
+                        placeholder="#ef4444"
+                        value={markerColorInput}
+                        onChange={(e) => {
+                          const next = e.target.value
+                          setMarkerColorInput(next)
+                          const normalized = next.trim()
+                          if (!normalized) {
+                            setMarkerColor(undefined)
+                            return
+                          }
+                          if (isHexColor(normalized)) setMarkerColor(normalized)
+                        }}
+                        className="h-8 flex-1 text-[11px] md:text-[11px]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 text-[10px]"
+                        onClick={() => {
+                          setMarkerColor(undefined)
+                          setMarkerColorInput("")
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {drafts.map((d, i) => (
                   <div key={i} className="flex gap-2 items-center">
                     <Input
@@ -341,10 +417,10 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
                       key={i}
                       className="flex items-center cursor-default"
                     >
-                      <span className="w-[80px] shrink-0 text-xs font-medium text-muted-foreground px-2.5 py-2 truncate">
+                      <span className="w-[80px] shrink-0 text-[11px] font-medium text-muted-foreground px-2.5 py-2 truncate">
                         {d.key}
                       </span>
-                      <span className="flex-1 text-xs font-medium text-foreground px-2.5 py-2">
+                      <span className="flex-1 text-[11px] font-medium text-foreground px-2.5 py-2">
                         {d.value}
                       </span>
                     </div>
@@ -915,30 +991,38 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, onSave }: 
         <DialogFooter className="shrink-0 border-t border-border bg-background px-4 py-3 sm:space-x-0">
           {isEditMode ? (
             isEditing ? (
-              <>
-                <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
-                <Button size="sm" onClick={handleSave}><Check className="size-3.5 mr-1" />Save</Button>
-              </>
+              <div className="flex w-full items-center justify-between">
+                <button
+                  onClick={handleCancel}
+                  className="text-xs font-medium text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  Cancel
+                </button>
+                {hasChanges && (
+                  <button
+                    onClick={handleSave}
+                    className="text-xs font-semibold text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  >
+                    Save
+                  </button>
+                )}
+              </div>
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto h-auto px-0 py-0 text-xs text-red-600 hover:bg-transparent hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              <button
+                className="ml-auto text-xs font-medium text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 onClick={() => onOpenChange(false)}
               >
                 Close
-              </Button>
+              </button>
             )
           ) : (
             <div className="flex w-full items-center justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto h-auto px-0 py-0 text-xs text-red-600 hover:bg-transparent hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              <button
+                className="text-xs font-medium text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 onClick={() => onOpenChange(false)}
               >
                 Close
-              </Button>
+              </button>
             </div>
           )}
         </DialogFooter>
