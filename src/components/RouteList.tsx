@@ -2043,7 +2043,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     }}
                   >
                     <p className="text-[11px] font-semibold text-foreground truncate">{route.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{route.code} · {route.shift}</p>
+                    <p className="text-[10px] text-muted-foreground">{route.code} . {route.shift}</p>
                   </button>
                 ))}
               </div>
@@ -2134,6 +2134,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       {/* Code + shift — tight under name */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <span style={{ fontSize: cardFontSm, fontWeight: 700, color: 'hsl(var(--muted-foreground))' }}>{route.code}</span>
+                        <span style={{ fontSize: cardFontSm, fontWeight: 700, color: 'hsl(var(--muted-foreground))' }}>.</span>
                         <span style={{ fontSize: cardFontSm, fontWeight: 800, color: route.shift === 'AM' ? '#16a34a' : route.shift === 'PM' ? '#c2410c' : 'hsl(var(--muted-foreground))' }}>{route.shift}</span>
                       </div>
                       <div style={{ height: 1, marginTop: '0.44rem', background: `linear-gradient(90deg, transparent, ${markerColor}55, transparent)` }} />
@@ -2181,11 +2182,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         const hasCoords = pt.latitude !== 0 || pt.longitude !== 0
                         const km = hasCoords ? haversineKm(kmStartPoint.lat, kmStartPoint.lng, pt.latitude, pt.longitude) : null
                         return (
-                          <div key={pt.code} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: cardFontSm, background: 'hsl(var(--muted)/0.5)', borderRadius: 10, padding: `${rowPadV} ${rowPadH}`, border: '1px solid hsl(var(--border)/0.6)' }}>
+                          <div key={pt.code} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: `calc(${cardFontSm} - 1px)`, background: 'hsl(var(--muted)/0.5)', borderRadius: 10, padding: `${rowPadV} ${rowPadH}`, border: '1px solid hsl(var(--border)/0.6)' }}>
                             <span style={{ width: iconSz, height: iconSz, borderRadius: 6, background: `linear-gradient(135deg, ${markerColor}dd, ${markerColor}88)`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: iconFs, fontWeight: 800, flexShrink: 0, boxShadow: `0 1px 3px ${markerColor}22` }}>{i + 1}</span>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, color: 'hsl(var(--foreground))', fontWeight: 600, minWidth: 0 }}>{pt.name}</span>
                             {km !== null && (
-                              <span style={{ fontSize: cardFontXs, fontWeight: 600, color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
+                              <span style={{ fontSize: `calc(${cardFontXs} - 1px)`, fontWeight: 600, color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
                                 {formatKm(km)}
                               </span>
                             )}
@@ -2243,7 +2244,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             return (
                               <Popover key={type} open={isOpen} onOpenChange={open => setBadgePopover(open ? popKey : null)}>
                                 <PopoverTrigger asChild>
-                                  <span onClick={() => setBadgePopover(isOpen ? null : popKey)} style={{ display: 'inline-flex', alignItems: 'center', fontSize: `calc(${badgeFs} + 1px)`, fontWeight: 700, color: badgeTextColor, background: badgeBackground, padding: '2px 9px', borderRadius: '6px', border: `1px solid ${badgeBorder}`, flexShrink: 0, letterSpacing: '0.03em', textShadow: badgeTextShadow, cursor: 'pointer', opacity: isOpen ? 0.75 : 1, transition: 'opacity 0.15s' }}>
+                                  <span onClick={() => setBadgePopover(isOpen ? null : popKey)} style={{ display: 'inline-flex', alignItems: 'center', fontSize: badgeFs, fontWeight: 700, color: badgeTextColor, background: badgeBackground, padding: '2px 9px', borderRadius: '6px', border: `1px solid ${badgeBorder}`, flexShrink: 0, letterSpacing: '0.03em', textShadow: badgeTextShadow, cursor: 'pointer', opacity: isOpen ? 0.75 : 1, transition: 'opacity 0.15s' }}>
                                     {getDeliveryLabel(type)}&nbsp;<span style={{ opacity: isDark ? 0.45 : 0.55, fontWeight: 500 }}>&bull;</span>&nbsp;<span style={{ color: badgeCountColor, fontWeight: 700 }}>{pts.length}</span>
                                   </span>
                                 </PopoverTrigger>
@@ -2311,7 +2312,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             key={lbl}
                             style={{
                               display: 'inline-flex', alignItems: 'center',
-                              fontSize: `calc(${badgeFs} + 1px)`, fontWeight: 700,
+                              fontSize: badgeFs, fontWeight: 700,
                               color: badgeTextColor,
                               background: badgeBg,
                               padding: '2px 9px', borderRadius: '6px',
@@ -3050,7 +3051,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                           .filter(route => route.id !== currentRouteId)
                           .map(route => (
                             <option key={route.id} value={route.id}>
-                              {route.name} ({route.code} · {route.shift})
+                              {route.name} ({route.code} . {route.shift})
                             </option>
                           ))}
                       </select>

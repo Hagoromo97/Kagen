@@ -145,12 +145,12 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
                     : "border-[hsl(var(--border)/0.85)] bg-[hsl(var(--card)/0.75)] hover:bg-[hsl(var(--card))] shadow-sm hover:shadow-md"
                 }`}
               >
-                <div className="flex items-start gap-3 mb-3">
+                <div className="mb-2.5 flex items-center gap-2.5">
                   <div className={color}>
                     <Icon className="size-5" />
                   </div>
+                  <h3 className={`text-sm font-semibold text-left leading-none ${isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"}`}>{title}</h3>
                 </div>
-                <h3 className={`text-sm font-semibold text-left ${isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"}`}>{title}</h3>
                 <p className={`text-xs text-left mt-1.5 leading-relaxed ${isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"}`}>{description}</p>
               </div>
             ))}

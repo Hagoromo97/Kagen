@@ -77,7 +77,7 @@ const ALL_COLUMNS = [
   { key: "no",       label: "#",             description: "Row number" },
   { key: "route",    label: "Route",         description: "Route name" },
   { key: "code",     label: "Code",          description: "Location code" },
-  { key: "name",     label: "Location Name", description: "Delivery point name" },
+  { key: "name",     label: "Name",          description: "Delivery point name" },
   { key: "delivery", label: "Delivery",      description: "Delivery schedule" },
   { key: "km",       label: "KM",            description: "Distance from start point" },
   { key: "action",   label: "Action",        description: "Open row information" },
@@ -703,13 +703,13 @@ export function DeliveryTableDialog() {
       {/* ── Table — fills remaining height, scrolls inside ── */}
       {(!loading || flat.length > 0) && !error && (
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="border-collapse text-sm whitespace-nowrap min-w-max w-full">
+          <table className="border-collapse text-xs whitespace-nowrap min-w-max w-full">
             <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm text-xs uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
               <tr>
                 {visibleColumns.has("no")       && <th className="px-3 py-3 text-center w-10">#</th>}
                 {visibleColumns.has("route")    && <th className="px-3 py-3 text-center">Route</th>}
                 {visibleColumns.has("code")     && <th className="px-3 py-3 text-center">Code</th>}
-                {visibleColumns.has("name")     && <th className="px-3 py-3 text-center">Location Name</th>}
+                {visibleColumns.has("name")     && <th className="px-3 py-3 text-center">Name</th>}
                 {visibleColumns.has("delivery") && <th className="px-3 py-3 text-center">Delivery</th>}
                 {visibleColumns.has("km")       && <th className="px-3 py-3 text-center">KM</th>}
                 {visibleColumns.has("action")   && <th className="px-2 py-3 text-center w-12">Action</th>}
