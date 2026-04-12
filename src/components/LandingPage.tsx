@@ -65,13 +65,13 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       {/* Background */}
       {isDark ? (
         <>
-          <div className="absolute inset-0 bg-[#060a0f]" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.10),transparent_38%),radial-gradient(circle_at_80%_70%,rgba(20,184,166,0.08),transparent_42%)]" />
+          <div className="absolute inset-0 bg-[hsl(var(--background))]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_38%),radial-gradient(circle_at_80%_70%,hsl(var(--accent)/0.14),transparent_42%)]" />
         </>
       ) : (
         <>
-          <div className="absolute inset-0 bg-[#f0f5ff]" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.12),transparent_42%),radial-gradient(circle_at_78%_75%,rgba(20,184,166,0.08),transparent_40%)]" />
+          <div className="absolute inset-0 bg-[hsl(var(--background))]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.16),transparent_42%),radial-gradient(circle_at_78%_75%,hsl(var(--accent)/0.11),transparent_40%)]" />
         </>
       )}
 
@@ -82,8 +82,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 active:scale-[0.94] ${
             isDark
-              ? "border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-slate-100"
-              : "border-slate-300 bg-white/70 text-slate-600 hover:bg-white hover:text-slate-900 shadow-sm"
+              ? "border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.7)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary)/0.9)] hover:text-[hsl(var(--foreground))]"
+              : "border-[hsl(var(--border))] bg-[hsl(var(--card)/0.8)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--card))] hover:text-[hsl(var(--foreground))] shadow-sm"
           }`}
         >
           {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
@@ -98,7 +98,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           {/* Main Title */}
           <h1
             className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.4rem,7.2vw,2.2rem)] sm:text-2xl lg:text-3xl font-bold tracking-tight break-words [text-wrap:balance] transition-all duration-700 ${
-              isDark ? "text-white" : "text-slate-900"
+              isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"
             } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "100ms" : "0ms" }}
           >
@@ -108,7 +108,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           {/* Description */}
           <p
             className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed transition-all duration-700 ${
-              isDark ? "text-slate-300" : "text-slate-600"
+              isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"
             } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "150ms" : "0ms" }}
           >
@@ -120,8 +120,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
             onClick={handleEnter}
             className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-medium text-sm border active:scale-[0.96] transition-all duration-200 ${
               isDark
-                ? "bg-transparent text-[#A0A0A0] border-[#A0A0A0] hover:bg-[#A0A0A0]/10"
-                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 shadow-sm"
+                ? "bg-transparent text-slate-300 border-slate-500/80 hover:bg-slate-700/20 hover:border-slate-400"
+                : "bg-[hsl(var(--card)/0.9)] text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--card))] hover:border-[hsl(var(--ring)/0.7)] shadow-sm"
             } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "200ms" : "0ms" }}
           >
@@ -141,8 +141,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
                 key={title}
                 className={`group relative p-5 rounded-2xl border transition-all duration-300 transform hover:scale-105 cursor-default ${
                   isDark
-                    ? "border-slate-700/40 bg-slate-800/30 hover:bg-slate-800/50"
-                    : "border-slate-200/80 bg-white/70 hover:bg-white shadow-sm hover:shadow-md"
+                    ? "border-slate-600/70 bg-[hsl(var(--card)/0.45)] hover:bg-[hsl(var(--card)/0.7)]"
+                    : "border-[hsl(var(--border)/0.85)] bg-[hsl(var(--card)/0.75)] hover:bg-[hsl(var(--card))] shadow-sm hover:shadow-md"
                 }`}
               >
                 <div className="flex items-start gap-3 mb-3">
@@ -150,8 +150,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
                     <Icon className="size-5" />
                   </div>
                 </div>
-                <h3 className={`text-sm font-semibold text-left ${isDark ? "text-white" : "text-slate-800"}`}>{title}</h3>
-                <p className={`text-xs text-left mt-1.5 leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>{description}</p>
+                <h3 className={`text-sm font-semibold text-left ${isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"}`}>{title}</h3>
+                <p className={`text-xs text-left mt-1.5 leading-relaxed ${isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"}`}>{description}</p>
               </div>
             ))}
           </div>

@@ -42,7 +42,7 @@ const DATABASE_STORAGE_ITEMS: StorageLocationItem[] = [
 ]
 
 const LOCAL_STORAGE_ITEMS: StorageLocationItem[] = [
-  { section: "Theme & Display", store: "colorMode, app-font, app-zoom, text-size", purpose: "Stores user theme mode, font, zoom, and text size." },
+  { section: "Theme & Display", store: "colorMode, app-font, app-zoom, text-size, eye-comfort", purpose: "Stores user theme mode, font, zoom, text size, and eye comfort preference." },
   { section: "Home", store: "fcalendar_home_quick_access, fcalendar_home_archive", purpose: "Stores quick cards and archived panel states on Home." },
   { section: "Pinned Routes", store: "fcalendar_pinned_routes", purpose: "Stores pinned routes for quick display on Home." },
   { section: "Route List Map", store: "fcalendar_map_style", purpose: "Stores map mode selection (streets/satellite/OSM)." },
@@ -81,7 +81,7 @@ function SectionHeader({ icon, title, description }: { icon: ReactNode; title: s
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 export function Settings({ section = "profile" }: { section?: SectionId }) {
-  const { appFont, setAppFont } = useTheme()
+  const { appFont, setAppFont, eyeComfort, setEyeComfort } = useTheme()
   const { isEditMode } = useEditMode()
   const active = section
 
@@ -307,6 +307,25 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
           <div className="space-y-6">
             <SectionHeader icon={<Type className="size-5" />} title="Font Style" description="Choose a font for the entire app." />
             <div className="space-y-6">
+              <Field orientation="horizontal" className="justify-between rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className="shrink-0 rounded-md bg-muted p-1.5"><Eye className="size-4 text-muted-foreground" /></span>
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="eye-comfort-toggle" className="text-sm font-medium leading-tight block truncate">Eye Comfort Mode</FieldLabel>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                      Reduces glare and sharp contrast for long usage sessions.
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="eye-comfort-toggle"
+                  size="default"
+                  checked={eyeComfort}
+                  onCheckedChange={setEyeComfort}
+                  className="shrink-0 ml-4"
+                />
+              </Field>
+
               <div className="max-h-[46vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {FONT_OPTIONS.map(opt => {

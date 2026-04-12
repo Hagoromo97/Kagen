@@ -13,6 +13,10 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
     const colorMode = localStorage.getItem("colorMode") ?? "dark"
     document.documentElement.classList.toggle("dark", colorMode === "dark")
 
+    // Eye comfort mode
+    const eyeComfort = localStorage.getItem("eye-comfort") === "1"
+    document.documentElement.classList.toggle("eye-comfort", eyeComfort)
+
     // App zoom
     const zoom = localStorage.getItem("app-zoom") ?? "120"
     document.body.style.zoom = `${zoom}%`
