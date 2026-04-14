@@ -936,7 +936,7 @@ function AppContent() {
 
         </header>
         <Suspense fallback={null}>
-          <div className={`flex flex-col flex-1 min-h-0 overflow-y-auto ${isTransitioning ? "page-fade-out" : "page-fade-in"}`}>
+          <div className={`flex flex-col flex-1 min-h-0 ${currentPage === "deliveries" ? "overflow-hidden" : "overflow-y-auto"} ${isTransitioning ? "page-fade-out" : "page-fade-in"}`}>
             {renderContent()}
           </div>
         </Suspense>
