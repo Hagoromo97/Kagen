@@ -55,27 +55,38 @@ const LS_CUSTOM_ROUTE_CARDS = "fcalendar_custom_route_cards"
 const CARD_COLORS = ["#3B82F6", "#F97316", "#22C55E", "#A855F7", "#EC4899", "#EAB308", "#14B8A6"]
 const PREVIEW_ROWS = 4
 
+function toRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null
+}
+
+function toTrimmedString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : ""
+}
+
 function loadCards(): CustomRouteCard[] {
   try {
     const raw = localStorage.getItem(LS_CUSTOM_ROUTE_CARDS)
     if (!raw) return []
-    const parsed = JSON.parse(raw)
+    const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
 
     return parsed
-      .map((item) => {
-        if (!item || typeof item !== "object") return null
-        const name = typeof item.name === "string" ? item.name.trim() : ""
-        const code = typeof item.code === "string" ? item.code.trim() : ""
-        const shift = item.shift === "PM" ? "PM" : "AM"
-        const locations = Array.isArray(item.locations)
-          ? item.locations
-              .map((loc) => {
-                if (!loc || typeof loc !== "object") return null
-                const locCode = typeof loc.code === "string" ? loc.code.trim() : ""
-                const locName = typeof loc.name === "string" ? loc.name.trim() : ""
-                const delivery = typeof loc.delivery === "string" ? loc.delivery.trim() : ""
-                const sourceRouteName = typeof loc.sourceRouteName === "string" ? loc.sourceRouteName.trim() : ""
+      .map((item: unknown) => {
+        const itemRecord = toRecord(item)
+        if (!itemRecord) return null
+        const name = toTrimmedString(itemRecord.name)
+        const code = toTrimmedString(itemRecord.code)
+        const shift = itemRecord.shift === "PM" ? "PM" : "AM"
+
+        const rawLocations = Array.isArray(itemRecord.locations) ? itemRecord.locations : []
+        const locations = rawLocations
+              .map((loc: unknown) => {
+                const locRecord = toRecord(loc)
+                if (!locRecord) return null
+                const locCode = toTrimmedString(locRecord.code)
+                const locName = toTrimmedString(locRecord.name)
+                const delivery = toTrimmedString(locRecord.delivery)
+                const sourceRouteName = toTrimmedString(locRecord.sourceRouteName)
                 if (!locCode || !locName) return null
                 return {
                   code: locCode,
@@ -84,10 +95,11 @@ function loadCards(): CustomRouteCard[] {
                   sourceRouteName: sourceRouteName || "Unknown",
                 } as SelectedLocation
               })
-              .filter((loc): loc is SelectedLocation => Boolean(loc))
-          : []
+              .filter((loc: SelectedLocation | null): loc is SelectedLocation => Boolean(loc))
+
         if (!name || !code) return null
-        const id = typeof item.id === "string" && item.id.trim() ? item.id : `${Date.now()}-${Math.random()}`
+        const parsedId = toTrimmedString(itemRecord.id)
+        const id = parsedId || `${Date.now()}-${Math.random()}`
         return { id, name, code, shift, locations } as CustomRouteCard
       })
       .filter((item): item is CustomRouteCard => Boolean(item))
