@@ -104,7 +104,6 @@ function ColorPill({ color, size = "md" }: { color: string; size?: "sm" | "md" |
 function QuickActionCard({
   icon: Icon,
   label,
-  description,
   page,
   iconClass,
   onNavigate,
@@ -113,7 +112,6 @@ function QuickActionCard({
 }: {
   icon: React.ElementType
   label: string
-  description: string
   page: string
   iconClass?: string
   onNavigate: (page: string) => void
@@ -125,12 +123,11 @@ function QuickActionCard({
       <button
         type="button"
         onClick={() => onNavigate(page)}
-        className="group w-full flex flex-col items-start gap-2.5 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 active:scale-[0.97] transition-all duration-150"
+        className="group w-full rounded-2xl border border-border/80 bg-card/75 p-4 text-left shadow-sm hover:bg-card hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
       >
-        <Icon className={`size-5 shrink-0 ${iconClass ?? "text-muted-foreground"}`} />
-        <div className="min-w-0 pr-5">
-          <p className="text-sm font-semibold text-foreground tracking-tight leading-snug">{label}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
+        <div className="flex items-center gap-2.5 pr-5">
+          <Icon className={`size-5 shrink-0 ${iconClass ?? "text-primary"}`} />
+          <p className="text-sm font-semibold text-foreground tracking-tight leading-snug truncate">{label}</p>
         </div>
       </button>
 
@@ -157,13 +154,12 @@ function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="group flex min-h-[112px] flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-card/40 p-3 text-center hover:border-primary/60 hover:bg-primary/5 transition-colors"
+      className="group w-full rounded-2xl border border-dashed border-border/80 bg-card/40 p-4 text-left shadow-sm hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
     >
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Plus className="size-4" />
-      </span>
-      <p className="text-xs font-semibold text-foreground">Add Card</p>
-      <p className="text-[11px] text-muted-foreground">Maximum 4</p>
+      <div className="flex items-center gap-2.5">
+        <Plus className="size-5 shrink-0 text-primary" />
+        <p className="text-sm font-semibold text-foreground tracking-tight leading-snug truncate">Add Card</p>
+      </div>
     </button>
   )
 }
@@ -423,7 +419,6 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               key={card.id}
               icon={card.icon}
               label={card.label}
-              description={card.description}
               page={card.id}
               iconClass={card.iconClass}
               onNavigate={onNavigate}

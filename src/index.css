@@ -347,7 +347,7 @@ body {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-family: var(--app-font, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-family: var(--app-font, 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
 #root {
@@ -412,144 +412,158 @@ body {
 /* ── Light Mode ────────────────────────────────────────────── */
 :root {
     --radius: 0.75rem;
+    color-scheme: light;
 
     /* Surfaces */
-  --background:        hsl(216 11% 91%);
-  --foreground:        hsl(220 20% 18%);
-  --card:              hsl(216 14% 95%);
-  --card-foreground:   hsl(220 20% 18%);
-  --card-border:       hsl(216 11% 76%);
-  --popover:           hsl(216 14% 95%);
-  --popover-foreground: hsl(220 20% 18%);
+  --background:        hsl(214 18% 93%);
+  --foreground:        hsl(220 24% 18%);
+  --card:              hsl(214 16% 97%);
+  --card-foreground:   hsl(220 24% 18%);
+  --card-border:       hsl(214 14% 80%);
+  --popover:           hsl(214 16% 97%);
+  --popover-foreground: hsl(220 24% 18%);
 
-  /* Brand — steel blue on silver grey */
-  --primary:           hsl(214 74% 34%);
+  /* Brand — smart cyan-blue */
+  --primary:           hsl(199 66% 42%);
     --primary-foreground: hsl(0 0% 100%);
 
     /* Utility surfaces */
-  --secondary:         hsl(216 10% 85%);
-  --secondary-foreground: hsl(220 18% 22%);
-  --muted:             hsl(216 9% 83%);
-  --muted-foreground:  hsl(218 10% 42%);
-  --accent:            hsl(212 32% 84%);
-  --accent-foreground: hsl(212 52% 30%);
+  --secondary:         hsl(214 14% 88%);
+  --secondary-foreground: hsl(221 20% 22%);
+  --muted:             hsl(214 12% 86%);
+  --muted-foreground:  hsl(219 12% 40%);
+  --accent:            hsl(203 34% 86%);
+  --accent-foreground: hsl(191 54% 27%);
 
     /* Status */
-    --destructive:       hsl(0 84% 54%);
+    --destructive:       hsl(0 74% 54%);
 
     /* Chrome */
-    --border:  hsl(216 10% 73%);
-    --input:   hsl(216 10% 73%);
-    --ring:    hsl(214 74% 34%);
+    --border:  hsl(214 14% 76%);
+    --input:   hsl(214 14% 76%);
+    --ring:    hsl(199 66% 42%);
 
     /* Charts */
-    --chart-1: hsl(214 72% 40%);
-    --chart-2: hsl(192 44% 42%);
-    --chart-3: hsl(35 70% 44%);
-    --chart-4: hsl(252 44% 52%);
-    --chart-5: hsl(8 64% 50%);
+    --chart-1: hsl(199 66% 44%);
+    --chart-2: hsl(171 48% 40%);
+    --chart-3: hsl(35 74% 50%);
+    --chart-4: hsl(261 52% 62%);
+    --chart-5: hsl(8 70% 56%);
 
     /* Elevation helpers */
     --button-outline: rgba(0, 0, 0, 0.08);
     --elevate-1:      rgba(0, 0, 0, 0.03);
     --elevate-2:      rgba(0, 0, 0, 0.06);
+    --shadow-soft: 0 10px 24px -16px rgba(15, 23, 42, 0.28);
+    --shadow-lift: 0 18px 34px -18px rgba(14, 29, 48, 0.34);
+
+    /* Background atmosphere */
+    --bg-glow-1: hsla(206, 50%, 74%, 0.2);
+    --bg-glow-2: hsla(220, 24%, 82%, 0.22);
 
     /* Sidebar */
-    --sidebar:                    hsl(216 11% 84%);
-    --sidebar-foreground:         hsl(220 18% 20%);
-    --sidebar-primary:            hsl(214 74% 34%);
+    --sidebar:                    hsl(214 14% 87%);
+    --sidebar-foreground:         hsl(221 20% 20%);
+    --sidebar-primary:            hsl(199 66% 42%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:             hsl(214 12% 79%);
-    --sidebar-accent-foreground:  hsl(220 18% 18%);
-    --sidebar-border:             hsl(216 10% 70%);
-    --sidebar-ring:               hsl(214 74% 34%);
+    --sidebar-accent:             hsl(210 20% 82%);
+    --sidebar-accent-foreground:  hsl(221 20% 18%);
+    --sidebar-border:             hsl(214 14% 74%);
+    --sidebar-ring:               hsl(199 66% 42%);
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────── */
 .dark {
+    color-scheme: dark;
     /* Surfaces */
-  --background:        hsl(223 60% 6%);
-  --foreground:        hsl(214 36% 92%);
-  --card:              hsl(223 50% 9%);
-  --card-foreground:   hsl(214 36% 92%);
-  --card-border:       hsl(221 34% 20%);
-  --popover:           hsl(223 50% 9%);
-  --popover-foreground: hsl(214 36% 92%);
+  --background:        hsl(226 30% 9%);
+  --foreground:        hsl(210 28% 92%);
+  --card:              hsl(225 24% 13%);
+  --card-foreground:   hsl(210 28% 92%);
+  --card-border:       hsl(223 16% 24%);
+  --popover:           hsl(225 24% 13%);
+  --popover-foreground: hsl(210 28% 92%);
 
-  /* Brand — electric blue in deep navy */
-  --primary:           hsl(211 92% 68%);
-  --primary-foreground: hsl(223 62% 9%);
+  /* Brand — luminous cyan for dark UI */
+  --primary:           hsl(191 78% 66%);
+  --primary-foreground: hsl(225 35% 14%);
 
     /* Utility surfaces */
-  --secondary:         hsl(221 37% 13%);
-  --secondary-foreground: hsl(214 30% 86%);
-  --muted:             hsl(221 36% 11%);
-  --muted-foreground:  hsl(216 18% 64%);
-  --accent:            hsl(215 48% 18%);
-  --accent-foreground: hsl(211 84% 78%);
+  --secondary:         hsl(224 15% 20%);
+  --secondary-foreground: hsl(210 24% 88%);
+  --muted:             hsl(224 14% 17%);
+  --muted-foreground:  hsl(215 16% 70%);
+  --accent:            hsl(191 30% 24%);
+  --accent-foreground: hsl(188 62% 84%);
 
     /* Status */
-    --destructive:       hsl(0 76% 62%);
+    --destructive:       hsl(0 68% 65%);
 
     /* Chrome */
-    --border:  hsl(220 34% 21%);
-    --input:   hsl(220 34% 16%);
-    --ring:    hsl(211 92% 68%);
+    --border:  hsl(223 14% 26%);
+    --input:   hsl(223 14% 20%);
+    --ring:    hsl(191 78% 66%);
 
     /* Charts */
-    --chart-1: hsl(211 92% 74%);
-    --chart-2: hsl(170 58% 64%);
-    --chart-3: hsl(40 84% 71%);
-    --chart-4: hsl(266 64% 73%);
-    --chart-5: hsl(12 76% 69%);
+    --chart-1: hsl(191 80% 70%);
+    --chart-2: hsl(165 58% 64%);
+    --chart-3: hsl(42 82% 70%);
+    --chart-4: hsl(266 58% 75%);
+    --chart-5: hsl(10 74% 69%);
 
     /* Elevation helpers */
     --button-outline: rgba(255, 255, 255, 0.08);
     --elevate-1:      rgba(255, 255, 255, 0.03);
     --elevate-2:      rgba(255, 255, 255, 0.06);
+    --shadow-soft: 0 10px 28px -16px rgba(2, 8, 23, 0.7);
+    --shadow-lift: 0 18px 40px -20px rgba(2, 8, 23, 0.86);
+
+    /* Background atmosphere */
+    --bg-glow-1: hsla(192, 90%, 62%, 0.16);
+    --bg-glow-2: hsla(260, 75%, 70%, 0.1);
 
     /* Sidebar */
-    --sidebar:                    hsl(223 52% 8%);
-    --sidebar-foreground:         hsl(214 34% 88%);
-    --sidebar-primary:            hsl(211 92% 68%);
-    --sidebar-primary-foreground: hsl(223 62% 9%);
-    --sidebar-accent:             hsl(221 38% 14%);
-    --sidebar-accent-foreground:  hsl(214 34% 88%);
-    --sidebar-border:             hsl(220 34% 19%);
-    --sidebar-ring:               hsl(211 92% 68%);
+    --sidebar:                    hsl(225 24% 12%);
+    --sidebar-foreground:         hsl(210 24% 88%);
+    --sidebar-primary:            hsl(191 78% 66%);
+    --sidebar-primary-foreground: hsl(225 35% 14%);
+    --sidebar-accent:             hsl(223 15% 20%);
+    --sidebar-accent-foreground:  hsl(210 26% 88%);
+    --sidebar-border:             hsl(223 14% 24%);
+    --sidebar-ring:               hsl(191 78% 66%);
 }
 
 /* ── Eye Comfort Mode ─────────────────────────────────────── */
 :root.eye-comfort {
   /* Light mode: reduce white glare and saturation */
-  --background:        hsl(216 11% 88%);
-  --foreground:        hsl(220 18% 22%);
-  --card:              hsl(216 12% 92%);
-  --card-foreground:   hsl(220 18% 22%);
-  --muted:             hsl(216 9% 81%);
-  --muted-foreground:  hsl(217 10% 40%);
-  --accent:            hsl(213 26% 80%);
-  --accent-foreground: hsl(212 40% 30%);
-  --border:            hsl(216 10% 68%);
-  --input:             hsl(216 10% 68%);
-  --primary:           hsl(213 58% 34%);
-  --ring:              hsl(213 58% 34%);
+  --background:        hsl(214 15% 90%);
+  --foreground:        hsl(220 20% 22%);
+  --card:              hsl(214 13% 94%);
+  --card-foreground:   hsl(220 20% 22%);
+  --muted:             hsl(214 11% 84%);
+  --muted-foreground:  hsl(218 10% 40%);
+  --accent:            hsl(206 24% 82%);
+  --accent-foreground: hsl(205 32% 30%);
+  --border:            hsl(214 12% 70%);
+  --input:             hsl(214 12% 70%);
+  --primary:           hsl(199 52% 40%);
+  --ring:              hsl(199 52% 40%);
 }
 
 :root.dark.eye-comfort {
   /* Dark mode: avoid overly bright text on deep backgrounds */
-  --background:        hsl(223 56% 7%);
-  --foreground:        hsl(214 24% 84%);
-  --card:              hsl(223 47% 10%);
-  --card-foreground:   hsl(214 24% 84%);
-  --muted:             hsl(221 34% 12%);
-  --muted-foreground:  hsl(216 14% 62%);
-  --accent:            hsl(215 40% 17%);
-  --accent-foreground: hsl(211 66% 74%);
-  --border:            hsl(220 30% 20%);
-  --input:             hsl(220 30% 15%);
-  --primary:           hsl(211 74% 62%);
-  --ring:              hsl(211 74% 62%);
+  --background:        hsl(226 24% 10%);
+  --foreground:        hsl(212 20% 84%);
+  --card:              hsl(225 18% 14%);
+  --card-foreground:   hsl(212 20% 84%);
+  --muted:             hsl(223 11% 18%);
+  --muted-foreground:  hsl(216 12% 62%);
+  --accent:            hsl(191 24% 22%);
+  --accent-foreground: hsl(188 38% 76%);
+  --border:            hsl(223 12% 24%);
+  --input:             hsl(223 12% 19%);
+  --primary:           hsl(191 62% 66%);
+  --ring:              hsl(191 62% 66%);
 }
 
 .eye-comfort body {
@@ -586,22 +600,33 @@ body {
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 8% -10%, var(--bg-glow-1), transparent 60%),
+      radial-gradient(900px 500px at 92% -12%, var(--bg-glow-2), transparent 58%);
+    background-attachment: fixed;
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    letter-spacing: 0.004em;
+    line-height: 1.6;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.22);
+    color: hsl(var(--foreground));
   }
 
   /* ── Heading hierarchy ───────────────────────────────────── */
   h1 {
     font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.025em;
+    font-weight: 750;
+    letter-spacing: -0.02em;
     line-height: 1.2;
   }
   h2 {
     font-size: 1.375rem;
-    font-weight: 650;
+    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.25;
   }
@@ -624,8 +649,8 @@ body {
 
   /* ── Labels ─────────────────────────────────────────────── */
   label {
-    font-weight: 500;
-    letter-spacing: 0.005em;
+    font-weight: 600;
+    letter-spacing: 0.004em;
   }
 
   /* ── Links ───────────────────────────────────────────────── */
@@ -653,6 +678,7 @@ body {
 @layer components {
   .glass-card {
     @apply backdrop-blur-xl bg-card/85 border border-card-border/60;
+    box-shadow: var(--shadow-soft);
     transition: background-color 0.28s cubic-bezier(0.25, 0.1, 0.25, 1),
                 border-color 0.22s cubic-bezier(0.25, 0.1, 0.25, 1),
                 box-shadow 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
@@ -672,7 +698,7 @@ body {
   }
   .hover-elevate:hover {
     background-color: var(--elevate-1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-lift);
     transform: translateY(-1px);
   }
   .active-elevate-2:active {

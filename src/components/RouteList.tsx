@@ -2498,58 +2498,66 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   }
                   const formatExact = (iso: string) => new Date(iso).toLocaleString('en-MY', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                   return (
-                  <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'hsl(var(--card))', backdropFilter: 'blur(16px)' }}>
+                  <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'hsl(var(--card))', backdropFilter: 'blur(16px)', borderRadius: 14, overflow: 'hidden' }}>
                     {/* Header */}
-                    <div style={{ padding: '1rem 1.25rem 0.75rem', background: 'hsl(var(--background))', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem', flexShrink: 0 }}>
-                      <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
-                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'hsl(var(--foreground))', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                          Changelog
-                          {cl && !cl.loading && cl.entries.length > 0 && (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 700, background: markerColor, color: '#fff', borderRadius: 999, padding: '1px 6px' }}>{cl.entries.length}</span>
-                          )}
+                    <div style={{ padding: '0.9rem 1.1rem 0.7rem', background: `linear-gradient(135deg, ${markerColor}22, ${markerColor}0a)`, borderBottom: `1.5px solid ${markerColor}30`, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${markerColor}, ${markerColor}bb)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 2px 8px ${markerColor}44` }}>
+                          <History style={{ color: '#fff', width: 13, height: 13 }} />
                         </div>
-                        <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{route.name}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'hsl(var(--foreground))' }}>Log</span>
+                            {cl && !cl.loading && cl.entries.length > 0 && (
+                              <span style={{ fontSize: '0.6rem', fontWeight: 800, background: markerColor, color: '#fff', borderRadius: 999, padding: '1px 6px', letterSpacing: '0.02em' }}>{cl.entries.length}</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.62rem', color: 'hsl(var(--muted-foreground))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{route.name}</div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Updated timestamp banner */}
-                    <div style={{ padding: '0.6rem 1.25rem', background: `${markerColor}20`, borderBottom: `1px solid ${markerColor}35`, display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: route.updatedAt ? markerColor : 'hsl(var(--muted-foreground))', flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'hsl(var(--muted-foreground))' }}>Updated</span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'hsl(var(--foreground))', flex: 1 }}>
+                    <div style={{ padding: '0.45rem 1.1rem', background: 'hsl(var(--muted)/0.4)', borderBottom: '1px solid hsl(var(--border)/0.6)', display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: route.updatedAt ? markerColor : 'hsl(var(--muted-foreground))', flexShrink: 0, boxShadow: route.updatedAt ? `0 0 5px ${markerColor}80` : 'none' }} />
+                      <span style={{ fontSize: '0.63rem', fontWeight: 500, color: 'hsl(var(--muted-foreground))' }}>Last updated</span>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: markerColor, flex: 1 }}>
                         {route.updatedAt ? formatRelative(route.updatedAt) : '—'}
                       </span>
                       {route.updatedAt && (
-                        <span style={{ fontSize: '0.62rem', color: 'hsl(var(--muted-foreground))', textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.58rem', color: 'hsl(var(--muted-foreground)/0.7)', textAlign: 'right' }}>
                           {formatExact(route.updatedAt)}
                         </span>
                       )}
                     </div>
 
-                    {/* Changelog entries */}
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {/* Log entries */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0.7rem 1rem', display: 'flex', flexDirection: 'column', gap: 0 }}>
                       {cl?.loading ? (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '0.5rem', color: 'hsl(var(--muted-foreground))' }}>
-                          <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
-                          <span style={{ fontSize: '0.78rem' }}>Loading…</span>
+                          <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} />
+                          <span style={{ fontSize: '0.72rem' }}>Loading…</span>
                         </div>
                       ) : !cl || cl.entries.length === 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '0.5rem', color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
-                          <History style={{ width: 28, height: 28, opacity: 0.2 }} />
-                          <span style={{ fontSize: '0.78rem' }}>No changes recorded yet</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '0.4rem', color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'hsl(var(--muted))', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}>
+                            <History style={{ width: 18, height: 18, opacity: 0.3 }} />
+                          </div>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600 }}>No log entries yet</span>
+                          <span style={{ fontSize: '0.62rem', opacity: 0.6, lineHeight: 1.4 }}>Changes will appear here</span>
                         </div>
                       ) : (
                         cl.entries.map((entry, i) => (
-                          <div key={entry.id} style={{ display: 'flex', gap: '0.65rem', paddingBottom: i < cl.entries.length - 1 ? '0.75rem' : 0, marginBottom: i < cl.entries.length - 1 ? '0.75rem' : 0, borderBottom: i < cl.entries.length - 1 ? '1px solid hsl(var(--border)/0.5)' : 'none' }}>
-                            {/* timeline dot */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 3 }}>
-                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: markerColor, flexShrink: 0 }} />
-                              {i < cl.entries.length - 1 && <div style={{ width: 1, flex: 1, background: `${markerColor}30`, marginTop: 3 }} />}
+                          <div key={entry.id} style={{ display: 'flex', gap: '0.6rem', paddingBottom: i < cl.entries.length - 1 ? '0.65rem' : 0, marginBottom: i < cl.entries.length - 1 ? '0.65rem' : 0 }}>
+                            {/* timeline */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 4 }}>
+                              <div style={{ width: 7, height: 7, borderRadius: '50%', background: i === 0 ? markerColor : 'hsl(var(--muted-foreground)/0.4)', flexShrink: 0, boxShadow: i === 0 ? `0 0 6px ${markerColor}70` : 'none', transition: 'all 0.2s' }} />
+                              {i < cl.entries.length - 1 && <div style={{ width: 1, flex: 1, background: `hsl(var(--border))`, marginTop: 3, opacity: 0.5 }} />}
                             </div>
-                            {/* content */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ margin: '0 0 0.2rem', fontSize: '0.75rem', fontWeight: 500, color: 'hsl(var(--foreground))', lineHeight: 1.4 }}>{entry.text}</p>
-                              <span style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>{formatRelative(entry.created_at)}</span>
+                            {/* content bubble */}
+                            <div style={{ flex: 1, minWidth: 0, background: i === 0 ? `${markerColor}12` : 'hsl(var(--muted)/0.35)', borderRadius: 8, padding: '0.35rem 0.55rem', border: i === 0 ? `1px solid ${markerColor}28` : '1px solid hsl(var(--border)/0.4)' }}>
+                              <p style={{ margin: '0 0 0.18rem', fontSize: '0.72rem', fontWeight: i === 0 ? 600 : 500, color: 'hsl(var(--foreground))', lineHeight: 1.45 }}>{entry.text}</p>
+                              <span style={{ fontSize: '0.6rem', color: 'hsl(var(--muted-foreground))', fontWeight: 500 }}>{formatRelative(entry.created_at)}</span>
                             </div>
                           </div>
                         ))
@@ -2557,12 +2565,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </div>
 
                     {/* Footer */}
-                    <div style={{ padding: '0.75rem 1.25rem 1.25rem', borderTop: '1px solid hsl(var(--border))', flexShrink: 0 }}>
+                    <div style={{ padding: '0.6rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0 }}>
                       <button
                         onClick={() => setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } }))}
-                        style={{ width: '100%', borderRadius: 10, fontSize: '0.8rem', fontWeight: 700, padding: '0.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: markerColor, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}44` }}
+                        style={{ width: '100%', borderRadius: 9, fontSize: '0.75rem', fontWeight: 700, padding: '0.45rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: `linear-gradient(135deg, ${markerColor}, ${markerColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}40`, letterSpacing: '0.01em' }}
                       >
-                        <ArrowDown style={{ width: 12, height: 12, transform: 'rotate(90deg)' }} /> Back to card
+                        <ArrowDown style={{ width: 11, height: 11, transform: 'rotate(90deg)' }} /> Back to card
                       </button>
                     </div>
                   </div>
@@ -4290,7 +4298,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 <div className="rounded-xl border border-border bg-background p-3">
                   <p className="text-xs text-muted-foreground">Set latitude and longitude for each location in this route.</p>
                   {!isEditMode && (
-                    <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">Coordinates can only be edited when Edit Mode is active.</p>
+                    <p className="mt-1.5 text-[11px] text-red-800 dark:text-red-400">Coordinates can only be edited when Edit Mode is active.</p>
                   )}
                 </div>
                 {/* Header row */}
