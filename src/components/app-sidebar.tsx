@@ -3,6 +3,7 @@
 import * as React from "react"
 import fmLogo from "../../icon/fmlogo.png"
 import {
+  Loader2,
   Moon,
   Package,
   Pencil,
@@ -126,6 +127,7 @@ export function AppSidebar({
   const [settingsOpen, setSettingsOpen] = React.useState(() => SETTINGS_PAGES.has(currentPage ?? ""))
   const [openNavItem, setOpenNavItem] = React.useState<string | null>(null)
   const [unsavedDialogOpen, setUnsavedDialogOpen] = React.useState(false)
+  const [isEditModeTransitioning, setIsEditModeTransitioning] = React.useState(false)
   const { isEditMode, setIsEditMode, hasUnsavedChanges, saveChanges, isSaving, discardChanges } = useEditMode()
   const { mode, toggleMode } = useTheme()
 
@@ -140,11 +142,20 @@ export function AppSidebar({
     if (open) setOpenNavItem(null)
   }
 
+  const applyEditModeChange = (nextValue: boolean) => {
+    setIsEditModeTransitioning(true)
+    window.setTimeout(() => {
+      setIsEditMode(nextValue)
+      setIsEditModeTransitioning(false)
+    }, 260)
+  }
+
   const handleEditModeToggle = () => {
+    if (isEditModeTransitioning) return
     if (isEditMode && hasUnsavedChanges) {
       setUnsavedDialogOpen(true)
     } else {
-      setIsEditMode(!isEditMode)
+      applyEditModeChange(!isEditMode)
     }
   }
 
@@ -274,12 +285,21 @@ export function AppSidebar({
             isEditMode ? "text-primary hover:bg-primary/10" : "hover:bg-sidebar-accent/50"
           }`}
           onClick={handleEditModeToggle}
+          aria-busy={isEditModeTransitioning}
         >
-          <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-primary" : ""}`} style={!isEditMode ? { color: "#6366F1" } : undefined} />
-          <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>Edit Mode</span>
-          <span onClick={e => e.stopPropagation()}>
-            <Switch size="sm" className="fcal-switch-sidebar" checked={isEditMode} onCheckedChange={handleEditModeToggle} />
+          {isEditModeTransitioning ? (
+            <Loader2 className="size-4 shrink-0 animate-spin text-primary" />
+          ) : (
+            <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-primary" : ""}`} style={!isEditMode ? { color: "#6366F1" } : undefined} />
+          )}
+          <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
+            {isEditModeTransitioning ? "Switching..." : "Edit Mode"}
           </span>
+          {!isEditModeTransitioning && (
+            <span onClick={e => e.stopPropagation()}>
+              <Switch size="sm" className="fcal-switch-sidebar" checked={isEditMode} onCheckedChange={handleEditModeToggle} />
+            </span>
+          )}
         </div>
         <Separator className="mx-1" />
         <NavUser user={data.user} onNavigate={onNavigate} />

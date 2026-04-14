@@ -339,7 +339,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 
   return (
     <div
-      className="flex flex-col gap-5 p-4 md:p-6 max-w-2xl mx-auto w-full"
+      className="flex flex-col gap-5 px-4 pb-4 pt-6 md:px-6 md:pb-6 md:pt-8 max-w-2xl mx-auto w-full"
       style={{ paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))" }}
     >
       {toolPopoverBackdrop}
