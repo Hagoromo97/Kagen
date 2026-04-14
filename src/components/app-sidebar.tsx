@@ -78,6 +78,11 @@ const data = {
           url: "#",
           page: "deliveries",
         },
+        {
+          title: "Custom",
+          url: "#",
+          page: "custom",
+        },
 
       ],
     },

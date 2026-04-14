@@ -11,6 +11,7 @@ const PlanoVM = lazy(() => import("@/components/PlanoVM").then(m => ({ default: 
 const DeliveryTableDialog = lazy(() => import("@/components/Location").then(m => ({ default: m.DeliveryTableDialog })))
 const Album = lazy(() => import("@/components/Album").then(m => ({ default: m.Album })))
 const Rooster = lazy(() => import("@/components/Rooster").then(m => ({ default: m.Rooster })))
+const CustomRoutePage = lazy(() => import("@/components/CustomRoutePage").then(m => ({ default: m.CustomRoutePage })))
 import { EditModeProvider } from "@/contexts/EditModeContext"
 import { DeviceProvider } from "@/contexts/DeviceContext"
 import { Toaster } from "sonner"
@@ -801,6 +802,8 @@ function AppContent() {
     switch (currentPage) {
       case "route-list":
         return <RouteList />
+      case "custom":
+        return <CustomRoutePage />
       case "deliveries":
         return (
           <div className="flex flex-col flex-1 min-h-0 gap-4 p-4 md:p-6">
@@ -844,6 +847,8 @@ function AppContent() {
     switch (currentPage) {
       case "route-list":
         return { parent: { label: "Vending Machine", icon: Package }, current: "Route List" }
+      case "custom":
+        return { parent: { label: "Vending Machine", icon: Package }, current: "Custom" }
       case "deliveries":
         return { parent: { label: "Vending Machine", icon: Package }, current: "Location" }
       case "rooster":

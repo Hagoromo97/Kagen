@@ -403,11 +403,18 @@ const loadRouteListHeaderItems = (): RouteListHeaderItem[] => {
 export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const isPlaygroundMode = variant === 'playground'
   const duplicateCheckScope: 'global' | 'current' = isPlaygroundMode ? 'current' : 'global'
-  const pageTitle = isPlaygroundMode ? 'Playground' : 'Route List'
+  const pageTitle = isPlaygroundMode ? 'Custom' : 'Route List'
   const addDialogTitle = isPlaygroundMode ? 'Add Existing Location' : 'Add New Delivery Point'
   const addDialogDescription = isPlaygroundMode
     ? 'Choose a location from existing Location records'
     : 'Enter details for the new delivery location'
+  const addRouteCardTitle = isPlaygroundMode ? 'Add Card Route' : 'Add New Route'
+  const addRouteCardDescription = isPlaygroundMode ? 'Click to create a card route' : 'Click to create a route'
+  const createRouteDialogTitle = isPlaygroundMode ? 'Create Card Route' : 'Create New Route'
+  const createRouteDialogDescription = isPlaygroundMode
+    ? 'Create a new card route, then add locations from existing Location records'
+    : 'Add a new delivery route with details'
+  const createRouteButtonLabel = isPlaygroundMode ? 'Create Card Route' : 'Create Route'
   const { isEditMode, hasUnsavedChanges, isSaving, setHasUnsavedChanges, registerSaveHandler, saveChanges, registerDiscardHandler } = useEditMode()
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"))
   useEffect(() => {
@@ -3435,16 +3442,16 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
               <Plus style={{ width: 28, height: 28, color: 'hsl(var(--muted-foreground))' }} />
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))' }}>Add New Route</div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 500, color: 'hsl(var(--muted-foreground))', marginTop: 4, opacity: 0.7 }}>Click to create a route</div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'hsl(var(--muted-foreground))' }}>{addRouteCardTitle}</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 500, color: 'hsl(var(--muted-foreground))', marginTop: 4, opacity: 0.7 }}>{addRouteCardDescription}</div>
             </div>
           </div></div>{/* end Add New Route wrapper */}
           <Dialog open={addRouteDialogOpen} onOpenChange={setAddRouteDialogOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Route</DialogTitle>
+                <DialogTitle>{createRouteDialogTitle}</DialogTitle>
                 <DialogDescription>
-                  Add a new delivery route with details
+                  {createRouteDialogDescription}
                 </DialogDescription>
               </DialogHeader>
               
@@ -3504,7 +3511,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     }
                   }}
                 >
-                  Create Route
+                  {createRouteButtonLabel}
                 </Button>
               </div>
             </DialogContent>

@@ -704,7 +704,7 @@ export function DeliveryTableDialog() {
       {(!loading || flat.length > 0) && !error && (
         <div className="flex-1 overflow-auto min-h-0">
           <table className="border-collapse text-xs whitespace-nowrap min-w-max w-full">
-            <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm text-xs uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
+            <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
               <tr>
                 {visibleColumns.has("no")       && <th className="px-3 py-3 text-center w-10">#</th>}
                 {visibleColumns.has("route")    && <th className="px-3 py-3 text-center">Route</th>}
