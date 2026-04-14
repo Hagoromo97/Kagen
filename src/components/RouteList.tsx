@@ -354,6 +354,7 @@ const SINGLE_ROUTE_MARKER_COLORS = [
 ]
 
 const LS_ROUTE_LIST_HEADER = 'fcalendar_route_list_header'
+const LS_PLAYGROUND_ROUTES = 'fcalendar_custom_route_cards'
 
 const DEFAULT_ROUTE_LIST_HEADER_ITEMS: RouteListHeaderItem[] = [
   {
@@ -400,6 +401,73 @@ const loadRouteListHeaderItems = (): RouteListHeaderItem[] => {
   }
 }
 
+const loadPlaygroundRoutes = (): Route[] => {
+  try {
+    const raw = localStorage.getItem(LS_PLAYGROUND_ROUTES)
+    if (!raw) return []
+
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+
+    return parsed
+      .map((item, index) => {
+        if (!item || typeof item !== 'object') return null
+        const record = item as Record<string, unknown>
+        const id = typeof record.id === 'string' && record.id.trim() !== ''
+          ? record.id
+          : `playground-route-${index + 1}`
+        const name = typeof record.name === 'string' ? record.name.trim() : ''
+        const code = typeof record.code === 'string' ? record.code.trim() : ''
+        const shift = record.shift === 'PM' ? 'PM' : 'AM'
+        const color = typeof record.color === 'string' && record.color.trim() !== '' ? record.color : undefined
+        const labels = Array.isArray(record.labels)
+          ? record.labels.filter((label): label is string => typeof label === 'string' && label.trim() !== '')
+          : undefined
+        const deliveryPoints = Array.isArray(record.deliveryPoints)
+          ? record.deliveryPoints
+              .map((point) => {
+                if (!point || typeof point !== 'object') return null
+                const pointRecord = point as Record<string, unknown>
+                const pointCode = typeof pointRecord.code === 'string' ? pointRecord.code.trim() : ''
+                const pointName = typeof pointRecord.name === 'string' ? pointRecord.name.trim() : ''
+                if (!pointCode || !pointName) return null
+                const rawDescriptions = Array.isArray(pointRecord.descriptions) ? pointRecord.descriptions : []
+                return {
+                  code: pointCode,
+                  name: pointName,
+                  delivery: typeof pointRecord.delivery === 'string' && pointRecord.delivery.trim() !== '' ? pointRecord.delivery : 'Daily',
+                  latitude: Number(pointRecord.latitude) || 0,
+                  longitude: Number(pointRecord.longitude) || 0,
+                  descriptions: rawDescriptions
+                    .map((description) => {
+                      if (!description || typeof description !== 'object') return null
+                      const descriptionRecord = description as Record<string, unknown>
+                      const key = typeof descriptionRecord.key === 'string' ? descriptionRecord.key : ''
+                      const value = typeof descriptionRecord.value === 'string' ? descriptionRecord.value : ''
+                      return { key, value }
+                    })
+                    .filter((description): description is { key: string; value: string } => Boolean(description)),
+                  markerColor: typeof pointRecord.markerColor === 'string' ? pointRecord.markerColor : undefined,
+                  qrCodeImageUrl: typeof pointRecord.qrCodeImageUrl === 'string' ? pointRecord.qrCodeImageUrl : undefined,
+                  qrCodeDestinationUrl: typeof pointRecord.qrCodeDestinationUrl === 'string' ? pointRecord.qrCodeDestinationUrl : undefined,
+                  avatarImageUrl: typeof pointRecord.avatarImageUrl === 'string' ? pointRecord.avatarImageUrl : undefined,
+                  avatarImages: Array.isArray(pointRecord.avatarImages)
+                    ? pointRecord.avatarImages.filter((url): url is string => typeof url === 'string' && url.trim() !== '')
+                    : undefined,
+                } as DeliveryPoint
+              })
+              .filter((point): point is DeliveryPoint => Boolean(point))
+          : []
+
+        if (!name || !code) return null
+        return { id, name, code, shift, color, deliveryPoints, labels } as Route
+      })
+      .filter((route): route is Route => Boolean(route))
+  } catch {
+    return []
+  }
+}
+
 export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const isPlaygroundMode = variant === 'playground'
   const duplicateCheckScope: 'global' | 'current' = isPlaygroundMode ? 'current' : 'global'
@@ -423,6 +491,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     return () => obs.disconnect()
   }, [])
   const [routes, setRoutes] = useState<Route[]>(DEFAULT_ROUTES)
+  const [playgroundSourceRoutes, setPlaygroundSourceRoutes] = useState<Route[]>([])
   const routesSnapshotRef = useRef<Route[]>([])
   const [routeColorPalette, setRouteColorPalette] = useState<string[]>(getRouteColorPalette)
   const [isLoading, setIsLoading] = useState(true)
@@ -559,6 +628,17 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
   // Fetch routes from database
   const fetchRoutes = useCallback(async (preserveCurrentId?: string) => {
+    if (isPlaygroundMode) {
+      const storedRoutes = loadPlaygroundRoutes()
+      setRoutes(storedRoutes)
+      const nextCurrentRouteId = storedRoutes.find((route) => route.id === preserveCurrentId)?.id
+        ?? storedRoutes[0]?.id
+        ?? ''
+      setCurrentRouteId(nextCurrentRouteId)
+      setIsLoading(false)
+      return
+    }
+
     try {
       const res = await fetch('/api/routes')
       const data = await res.json()
@@ -574,6 +654,26 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       setIsLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isPlaygroundMode) return
+
+    const fetchPlaygroundLocationSources = async () => {
+      try {
+        const res = await fetch('/api/routes')
+        const data = await res.json()
+        if (data.success && Array.isArray(data.data)) {
+          setPlaygroundSourceRoutes(data.data.map((route: Route) => ({ ...route, color: route.color ?? null })))
+        } else {
+          setPlaygroundSourceRoutes([])
+        }
+      } catch {
+        setPlaygroundSourceRoutes([])
+      }
+    }
+
+    fetchPlaygroundLocationSources()
+  }, [isPlaygroundMode])
 
   // Fetch routes from database on mount
   useEffect(() => {
@@ -746,7 +846,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
   const existingLocationOptions = useMemo<ExistingLocationOption[]>(() => {
     const byCode = new Map<string, ExistingLocationOption>()
-    routes.forEach(route => {
+    const sourceRoutes = isPlaygroundMode ? playgroundSourceRoutes : routes
+    sourceRoutes.forEach(route => {
       route.deliveryPoints.forEach(point => {
         if (!byCode.has(point.code)) {
           byCode.set(point.code, {
@@ -764,7 +865,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     return Array.from(byCode.values()).sort((a, b) =>
       a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
     )
-  }, [routes])
+  }, [isPlaygroundMode, playgroundSourceRoutes, routes])
 
   useEffect(() => {
     if (addPointDialogOpen) return
@@ -1653,6 +1754,20 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   }
 
   const doSave = useCallback(async () => {
+    if (isPlaygroundMode) {
+      localStorage.setItem(LS_PLAYGROUND_ROUTES, JSON.stringify(routes))
+      routesSnapshotRef.current = JSON.parse(JSON.stringify(routes))
+      headerSnapshotRef.current = JSON.parse(JSON.stringify(headerItems))
+      setPendingCellEdits(new Set())
+      setCardChangelogs({})
+      toast.success("Changes saved", {
+        description: `Custom route data saved to this device.`,
+        icon: <Save className="size-4 text-primary" />,
+        duration: 3000,
+      })
+      return
+    }
+
     // Snapshot before state for changelog
     const before = routesSnapshotRef.current
     const beforeHeaderItems = headerSnapshotRef.current
@@ -1844,7 +1959,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       icon: <Save className="size-4 text-primary" />,
       duration: 3000,
     })
-  }, [routes, headerItems, fetchRoutes, currentRouteId])
+  }, [routes, headerItems, fetchRoutes, currentRouteId, isPlaygroundMode])
 
   useEffect(() => {
     registerSaveHandler(doSave)
@@ -1889,7 +2004,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const handleDeleteRoute = () => {
     if (!routeToDelete) return
     
-    if (routes.length <= 1) {
+    if (!isPlaygroundMode && routes.length <= 1) {
       toast.error("Cannot delete the last route", {
         description: "At least one route must remain.",
         icon: <AlertCircle className="size-4" />,
@@ -3429,8 +3544,15 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           </div>
         )}
         
+        {isPlaygroundMode && filteredRoutes.length === 0 && !searchQuery && filterRegion === "all" && filterShift === "all" && (
+          <div className="mx-auto mt-6 max-w-md rounded-2xl border border-dashed border-border bg-card/40 px-6 py-8 text-center">
+            <h3 className="text-lg font-semibold text-foreground">No custom card route yet</h3>
+            <p className="mt-2 text-sm text-muted-foreground">New user perlu add sendiri. Cipta card route dahulu, kemudian tambah location dari rekod sedia ada.</p>
+          </div>
+        )}
+
         {/* Add New Route Card */}
-        {isEditMode && (
+        {(isEditMode || isPlaygroundMode) && (
         <>
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'clamp(1rem, 2vw, 1.75rem)' }}><div
             onClick={() => setAddRouteDialogOpen(true)}
