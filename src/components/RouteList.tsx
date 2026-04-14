@@ -575,6 +575,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [detailFullscreen, setDetailFullscreen] = useState(false)
   const [dialogView, setDialogView] = useState<'table' | 'map'>('table')
   const [detailSearchQuery, setDetailSearchQuery] = useState("")
+  // ── Playground: add-location-from-dialog state ─────────────────────
+  const [pgAddLocOpen, setPgAddLocOpen] = useState(false)
+  const [pgAddLocSearch, setPgAddLocSearch] = useState("")
+  const [pgAddLocSelected, setPgAddLocSelected] = useState<Set<string>>(new Set())
 
   // Responsive card dimensions — measure the actual container so CSS zoom is handled correctly
   const cardContainerRef = useRef<HTMLDivElement>(null)
@@ -866,6 +870,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
     )
   }, [isPlaygroundMode, playgroundSourceRoutes, routes])
+
+  // Playground: locations available to add to current route (not yet in current route)
+  const pgAddLocAvailable = useMemo(() => {
+    if (!isPlaygroundMode) return []
+    const usedCodes = new Set(deliveryPoints.map(p => p.code))
+    return existingLocationOptions.filter(opt => !usedCodes.has(opt.code))
+  }, [isPlaygroundMode, existingLocationOptions, deliveryPoints])
 
   useEffect(() => {
     if (addPointDialogOpen) return
@@ -2768,8 +2779,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       </div>
                     ) : (
                         <div className="h-full flex flex-col">
-                          <div className="shrink-0 border-b border-border/70 bg-background/95 px-3 py-2">
-                            <div className="relative">
+                          <div className="shrink-0 border-b border-border/70 bg-background/95 px-3 py-2 flex items-center gap-2">
+                            <div className="relative flex-1">
                               <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
                               <Input
                                 value={detailSearchQuery}
@@ -2788,6 +2799,16 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 </button>
                               )}
                             </div>
+                            {isPlaygroundMode && (
+                              <button
+                                type="button"
+                                onClick={() => { setPgAddLocSearch(""); setPgAddLocSelected(new Set()); setPgAddLocOpen(true) }}
+                                className="shrink-0 h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-border bg-background text-[11px] font-medium text-foreground hover:bg-muted/60 transition-colors"
+                              >
+                                <Plus className="size-3.5" />
+                                Add Location
+                              </button>
+                            )}
                           </div>
 
                           {tableRows.length === 0 ? (
@@ -2992,16 +3013,36 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 })}
                                 {isActionColumnVisible && (
                                   <td className="px-3 h-9 text-center">
-                                    <button
-                                      className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95 ${
-                                        isActive
-                                          ? 'text-emerald-600 hover:bg-emerald-500/10'
-                                          : 'text-rose-500 hover:bg-rose-500/10'
-                                      }`}
-                                      onClick={() => { setSelectedPoint(point); setInfoModalOpen(true) }}
-                                    >
-                                      <Info className="size-3.5" />
-                                    </button>
+                                    <div className="inline-flex items-center gap-1 justify-center">
+                                      <button
+                                        className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 hover:scale-110 active:scale-95 ${
+                                          isActive
+                                            ? 'text-emerald-600 hover:bg-emerald-500/10'
+                                            : 'text-rose-500 hover:bg-rose-500/10'
+                                        }`}
+                                        onClick={() => { setSelectedPoint(point); setInfoModalOpen(true) }}
+                                      >
+                                        <Info className="size-3.5" />
+                                      </button>
+                                      {isPlaygroundMode && (
+                                        <button
+                                          className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
+                                          title="Remove location"
+                                          onClick={() => {
+                                            const updatedRoutes = routes.map(r =>
+                                              r.id === route.id
+                                                ? { ...r, deliveryPoints: r.deliveryPoints.filter(p => p.code !== point.code) }
+                                                : r
+                                            )
+                                            setRoutes(updatedRoutes)
+                                            localStorage.setItem(LS_PLAYGROUND_ROUTES, JSON.stringify(updatedRoutes))
+                                            toast.success(`Removed ${point.name || point.code}`, { duration: 2000 })
+                                          }}
+                                        >
+                                          <X className="size-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </td>
                                 )}
                               </tr>
@@ -3547,7 +3588,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         {isPlaygroundMode && filteredRoutes.length === 0 && !searchQuery && filterRegion === "all" && filterShift === "all" && (
           <div className="mx-auto mt-6 max-w-md rounded-2xl border border-dashed border-border bg-card/40 px-6 py-8 text-center">
             <h3 className="text-lg font-semibold text-foreground">No custom card route yet</h3>
-            <p className="mt-2 text-sm text-muted-foreground">New user perlu add sendiri. Cipta card route dahulu, kemudian tambah location dari rekod sedia ada.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Create a card route first, then add locations from existing Location records.</p>
           </div>
         )}
 
@@ -3641,6 +3682,169 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </>
         )}
 
+      {/* Playground: Add Location dialog (multi-select from existing Location records) */}
+      {isPlaygroundMode && (
+        <Dialog open={pgAddLocOpen} onOpenChange={(open) => { setPgAddLocOpen(open); if (!open) { setPgAddLocSearch(""); setPgAddLocSelected(new Set()) } }}>
+          <DialogContent className="w-[92vw] max-w-lg overflow-hidden flex flex-col gap-0 p-0 rounded-2xl" style={{ maxHeight: '80vh' }}>
+            <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
+              <DialogTitle className="text-sm font-bold leading-tight">Add Location</DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
+                Select one or more locations from existing Location records.
+                {pgAddLocAvailable.length > 0 && (
+                  <span className="ml-1 text-muted-foreground">({pgAddLocAvailable.length} available)</span>
+                )}
+              </DialogDescription>
+            </div>
+
+            <div className="shrink-0 px-4 pt-3 pb-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                  value={pgAddLocSearch}
+                  onChange={(e) => setPgAddLocSearch(e.target.value)}
+                  placeholder="Search code or name..."
+                  className="h-8 pl-8 pr-8 text-[11px]"
+                  autoFocus
+                />
+                {pgAddLocSearch && (
+                  <button type="button" onClick={() => setPgAddLocSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground">
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+              {pgAddLocSelected.size > 0 && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[11px] text-primary font-medium">{pgAddLocSelected.size} selected</span>
+                  <button type="button" onClick={() => setPgAddLocSelected(new Set())} className="text-[11px] text-muted-foreground hover:text-foreground">
+                    Clear selection
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-2">
+              {pgAddLocAvailable.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">All locations already added, or no location records found.</div>
+              ) : (() => {
+                const filtered = pgAddLocAvailable.filter(loc => {
+                  const q = pgAddLocSearch.toLowerCase()
+                  return !q || loc.code.toLowerCase().includes(q) || loc.name.toLowerCase().includes(q) || loc.routeName.toLowerCase().includes(q)
+                })
+                if (filtered.length === 0) return (
+                  <div className="py-8 text-center text-sm text-muted-foreground">No matching locations.</div>
+                )
+                const allFilteredSelected = filtered.every(loc => pgAddLocSelected.has(loc.code))
+                return (
+                  <>
+                    <div className="sticky top-0 bg-background/95 backdrop-blur-sm py-1.5 flex items-center gap-2 border-b border-border/50 mb-1">
+                      <input
+                        type="checkbox"
+                        id="pg-select-all"
+                        checked={allFilteredSelected && filtered.length > 0}
+                        onChange={() => {
+                          if (allFilteredSelected) {
+                            setPgAddLocSelected(prev => {
+                              const next = new Set(prev)
+                              filtered.forEach(loc => next.delete(loc.code))
+                              return next
+                            })
+                          } else {
+                            setPgAddLocSelected(prev => {
+                              const next = new Set(prev)
+                              filtered.forEach(loc => next.add(loc.code))
+                              return next
+                            })
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                      />
+                      <label htmlFor="pg-select-all" className="text-[11px] font-medium text-muted-foreground cursor-pointer select-none">
+                        Select all ({filtered.length})
+                      </label>
+                    </div>
+                    {filtered.map(loc => (
+                      <label
+                        key={loc.code}
+                        className={`flex items-start gap-3 rounded-lg px-2 py-2.5 cursor-pointer transition-colors ${
+                          pgAddLocSelected.has(loc.code) ? 'bg-primary/8 border border-primary/20' : 'hover:bg-muted/50 border border-transparent'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={pgAddLocSelected.has(loc.code)}
+                          onChange={() => {
+                            setPgAddLocSelected(prev => {
+                              const next = new Set(prev)
+                              if (next.has(loc.code)) next.delete(loc.code)
+                              else next.add(loc.code)
+                              return next
+                            })
+                          }}
+                          className="mt-0.5 w-4 h-4 rounded border-border accent-primary cursor-pointer shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-[11px] font-bold tabular-nums">{loc.code}</span>
+                            <span className="text-[11px] font-medium truncate">{loc.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-muted-foreground truncate">{loc.routeName}</span>
+                            <span className="text-[10px] text-muted-foreground">· {loc.delivery}</span>
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </>
+                )
+              })()}
+            </div>
+
+            <div className="shrink-0 border-t border-border px-5 py-3 flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setPgAddLocOpen(false); setPgAddLocSearch(""); setPgAddLocSelected(new Set()) }}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={pgAddLocSelected.size === 0}
+                onClick={() => {
+                  const toAdd = existingLocationOptions.filter(opt => pgAddLocSelected.has(opt.code))
+                  const existingCodes = new Set(deliveryPoints.map(p => p.code))
+                  const newPoints: DeliveryPoint[] = toAdd
+                    .filter(loc => !existingCodes.has(loc.code))
+                    .map(loc => ({
+                      code: loc.code,
+                      name: loc.name,
+                      delivery: loc.delivery,
+                      latitude: loc.latitude,
+                      longitude: loc.longitude,
+                      descriptions: [],
+                    }))
+                  if (newPoints.length > 0) {
+                    const updatedRoutes = routes.map(r =>
+                      r.id === currentRouteId
+                        ? { ...r, deliveryPoints: [...r.deliveryPoints, ...newPoints] }
+                        : r
+                    )
+                    setRoutes(updatedRoutes)
+                    localStorage.setItem(LS_PLAYGROUND_ROUTES, JSON.stringify(updatedRoutes))
+                    toast.success(`${newPoints.length} location${newPoints.length !== 1 ? 's' : ''} added`, {
+                      description: `Added to Route ${currentRoute?.name}`,
+                      icon: <MapPin className="size-3.5 text-primary" />,
+                      duration: 3000,
+                    })
+                  }
+                  setPgAddLocOpen(false)
+                  setPgAddLocSearch("")
+                  setPgAddLocSelected(new Set())
+                }}
+              >
+                Add {pgAddLocSelected.size > 0 ? `(${pgAddLocSelected.size})` : ''}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <Dialog open={filterModalOpen} onOpenChange={setFilterModalOpen}>
         <DialogContent className="w-[92vw] max-w-sm overflow-hidden flex flex-col gap-0 p-0 rounded-2xl">
           <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
@@ -3658,7 +3862,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 space-y-4">
             <div className="rounded-xl border border-border bg-background p-3">
               <p className="text-xs text-muted-foreground">
-                Pilih penapis untuk sempitkan senarai route yang dipaparkan.
+                Select filters to narrow down the route list.
               </p>
             </div>
 
