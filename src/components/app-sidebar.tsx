@@ -231,7 +231,7 @@ export function AppSidebar({
           placeholder="Search..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="sidebar-search h-9 w-full rounded-lg border border-input/90 bg-background/90 pl-8 pr-7 text-[12px] md:text-[12px] shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
+          className="sidebar-search h-8 w-full rounded-md border border-input bg-background pl-8 pr-7 text-[11px] md:text-[11px] shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
         />
         {searchQuery && (
           <button
@@ -263,15 +263,15 @@ export function AppSidebar({
         {noResults && (
           <div className="flex flex-col items-center gap-1.5 py-6 px-3 text-center animate-in fade-in duration-200">
             <span className="text-xl">🔍</span>
-            <p className="text-sm font-medium text-muted-foreground">No results found</p>
-            <p className="text-xs text-muted-foreground/70">Try a different keyword</p>
+            <p className="text-xs font-medium text-muted-foreground">No results found</p>
+            <p className="text-[11px] text-muted-foreground/60">Try a different keyword</p>
           </div>
         )}
       </SidebarContent>
       <SidebarFooter>
         {/* Theme toggle */}
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent hover:border-sidebar-border/60 hover:bg-sidebar-accent/45 transition-colors cursor-pointer mx-1"
+          className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-sidebar-accent/50 transition-colors cursor-pointer mx-1"
           onClick={toggleMode}
         >
           {mode === "dark"
@@ -286,8 +286,8 @@ export function AppSidebar({
         </div>
         {/* Edit Mode toggle */}
         <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer mx-1 ${
-            isEditMode ? "text-primary border-primary/25 hover:bg-primary/10" : "border-transparent hover:border-sidebar-border/60 hover:bg-sidebar-accent/45"
+          className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors cursor-pointer mx-1 ${
+            isEditMode ? "text-primary hover:bg-primary/10" : "hover:bg-sidebar-accent/50"
           }`}
           onClick={handleEditModeToggle}
           aria-busy={isEditModeTransitioning}

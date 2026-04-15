@@ -80,7 +80,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <button
           onClick={toggleMode}
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium border transition-all duration-200 active:scale-[0.94] ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 active:scale-[0.94] ${
             isDark
               ? "border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.7)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary)/0.9)] hover:text-[hsl(var(--foreground))]"
               : "border-[hsl(var(--border))] bg-[hsl(var(--card)/0.8)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--card))] hover:text-[hsl(var(--foreground))] shadow-sm"
@@ -107,7 +107,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
           {/* Description */}
           <p
-            className={`text-[15px] sm:text-[17px] max-w-2xl mx-auto leading-relaxed transition-all duration-700 ${
+            className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed transition-all duration-700 ${
               isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"
             } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "150ms" : "0ms" }}
@@ -118,7 +118,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           {/* CTA Button */}
           <button
             onClick={handleEnter}
-            className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-semibold text-[13px] border active:scale-[0.96] transition-all duration-200 ${
+            className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-medium text-sm border active:scale-[0.96] transition-all duration-200 ${
               isDark
                 ? "bg-transparent text-slate-300 border-slate-500/80 hover:bg-slate-700/20 hover:border-slate-400"
                 : "bg-[hsl(var(--card)/0.9)] text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--card))] hover:border-[hsl(var(--ring)/0.7)] shadow-sm"
@@ -139,19 +139,19 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
             {FEATURES.map(({ icon: Icon, title, description, color }) => (
               <div
                 key={title}
-                className={`group relative p-5 rounded-2xl border backdrop-blur-[2px] transition-all duration-300 transform hover:scale-[1.02] cursor-default ${
+                className={`group relative p-5 rounded-2xl border transition-all duration-300 transform hover:scale-105 cursor-default ${
                   isDark
-                    ? "border-slate-600/60 bg-[hsl(var(--card)/0.5)] hover:bg-[hsl(var(--card)/0.72)]"
-                    : "border-[hsl(var(--border)/0.8)] bg-[hsl(var(--card)/0.78)] hover:bg-[hsl(var(--card))] shadow-sm hover:shadow-[0_10px_28px_-20px_hsl(var(--foreground)/0.45)]"
+                    ? "border-slate-600/70 bg-[hsl(var(--card)/0.45)] hover:bg-[hsl(var(--card)/0.7)]"
+                    : "border-[hsl(var(--border)/0.85)] bg-[hsl(var(--card)/0.75)] hover:bg-[hsl(var(--card))] shadow-sm hover:shadow-md"
                 }`}
               >
                 <div className="mb-2.5 flex items-center gap-2.5">
                   <div className={color}>
                     <Icon className="size-5" />
                   </div>
-                  <h3 className={`text-[15px] font-semibold text-left leading-none ${isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"}`}>{title}</h3>
+                  <h3 className={`text-sm font-semibold text-left leading-none ${isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"}`}>{title}</h3>
                 </div>
-                <p className={`text-[13px] text-left mt-1.5 leading-relaxed ${isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"}`}>{description}</p>
+                <p className={`text-xs text-left mt-1.5 leading-relaxed ${isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"}`}>{description}</p>
               </div>
             ))}
           </div>
