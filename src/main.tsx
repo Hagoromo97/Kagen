@@ -19,7 +19,11 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
 
     // App zoom
 <<<<<<< HEAD
+<<<<<<< HEAD
     const zoom = localStorage.getItem("app-zoom") ?? "95"
+=======
+    const zoom = localStorage.getItem("app-zoom") ?? "120"
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 =======
     const zoom = localStorage.getItem("app-zoom") ?? "120"
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)

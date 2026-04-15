@@ -324,6 +324,7 @@ html {
 
   /* Stable text scale helpers */
 <<<<<<< HEAD
+<<<<<<< HEAD
   --fs-2xs: 0.615rem;   /* ~8px  */
   --fs-xs:  0.769rem;   /* ~10px */
   --fs-sm:  0.923rem;   /* ~12px */
@@ -333,6 +334,8 @@ html {
   --fs-2xl: 1.538rem;   /* ~20px */
   --fs-3xl: 1.846rem;   /* ~24px */
 =======
+=======
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
   --fs-2xs: 0.625rem;   /* 10px */
   --fs-xs:  0.75rem;    /* 12px */
   --fs-sm:  0.875rem;   /* 14px */
@@ -341,6 +344,9 @@ html {
   --fs-xl:  1.25rem;    /* 20px */
   --fs-2xl: 1.5rem;     /* 24px */
   --fs-3xl: 1.875rem;   /* 30px */
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 
   /* Fluid spacing helpers */
@@ -427,6 +433,7 @@ body {
 
     /* Surfaces */
 <<<<<<< HEAD
+<<<<<<< HEAD
   --background:        hsl(210 28% 92%);
   --foreground:        hsl(219 24% 17%);
   --card:              hsl(0 0% 98%);
@@ -460,18 +467,37 @@ body {
     --primary-foreground: hsl(0 0% 100%);
 
     /* Utility surfaces */
+=======
+  --background:        hsl(214 18% 93%);
+  --foreground:        hsl(220 24% 18%);
+  --card:              hsl(214 16% 97%);
+  --card-foreground:   hsl(220 24% 18%);
+  --card-border:       hsl(214 14% 80%);
+  --popover:           hsl(214 16% 97%);
+  --popover-foreground: hsl(220 24% 18%);
+
+  /* Brand — smart cyan-blue */
+  --primary:           hsl(199 66% 42%);
+    --primary-foreground: hsl(0 0% 100%);
+
+    /* Utility surfaces */
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
   --secondary:         hsl(214 14% 88%);
   --secondary-foreground: hsl(221 20% 22%);
   --muted:             hsl(214 12% 86%);
   --muted-foreground:  hsl(219 12% 40%);
   --accent:            hsl(203 34% 86%);
   --accent-foreground: hsl(191 54% 27%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 
     /* Status */
     --destructive:       hsl(0 74% 50%);
 
     /* Chrome */
+<<<<<<< HEAD
 <<<<<<< HEAD
     --border:  hsl(210 16% 75%);
     --input:   hsl(210 16% 75%);
@@ -489,11 +515,21 @@ body {
     --ring:    hsl(199 66% 42%);
 
     /* Charts */
+=======
+    --border:  hsl(214 14% 76%);
+    --input:   hsl(214 14% 76%);
+    --ring:    hsl(199 66% 42%);
+
+    /* Charts */
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
     --chart-1: hsl(199 66% 44%);
     --chart-2: hsl(171 48% 40%);
     --chart-3: hsl(35 74% 50%);
     --chart-4: hsl(261 52% 62%);
     --chart-5: hsl(8 70% 56%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 
     /* Elevation helpers */
@@ -504,6 +540,7 @@ body {
     --shadow-lift: 0 18px 34px -18px rgba(14, 29, 48, 0.34);
 
     /* Background atmosphere */
+<<<<<<< HEAD
 <<<<<<< HEAD
     --bg-glow-1: hsla(199, 58%, 74%, 0.22);
     --bg-glow-2: hsla(225, 44%, 80%, 0.2);
@@ -526,10 +563,23 @@ body {
     --sidebar-foreground:         hsl(221 20% 20%);
     --sidebar-primary:            hsl(199 66% 42%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
+=======
+    --bg-glow-1: hsla(206, 50%, 74%, 0.2);
+    --bg-glow-2: hsla(220, 24%, 82%, 0.22);
+
+    /* Sidebar */
+    --sidebar:                    hsl(214 14% 87%);
+    --sidebar-foreground:         hsl(221 20% 20%);
+    --sidebar-primary:            hsl(199 66% 42%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
     --sidebar-accent:             hsl(210 20% 82%);
     --sidebar-accent-foreground:  hsl(221 20% 18%);
     --sidebar-border:             hsl(214 14% 74%);
     --sidebar-ring:               hsl(199 66% 42%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 }
 
@@ -537,6 +587,7 @@ body {
 .dark {
     color-scheme: dark;
     /* Surfaces */
+<<<<<<< HEAD
 <<<<<<< HEAD
   --background:        hsl(222 26% 10%);
   --foreground:        hsl(210 24% 90%);
@@ -571,18 +622,37 @@ body {
   --primary-foreground: hsl(225 35% 14%);
 
     /* Utility surfaces */
+=======
+  --background:        hsl(226 30% 9%);
+  --foreground:        hsl(210 28% 92%);
+  --card:              hsl(225 24% 13%);
+  --card-foreground:   hsl(210 28% 92%);
+  --card-border:       hsl(223 16% 24%);
+  --popover:           hsl(225 24% 13%);
+  --popover-foreground: hsl(210 28% 92%);
+
+  /* Brand — luminous cyan for dark UI */
+  --primary:           hsl(191 78% 66%);
+  --primary-foreground: hsl(225 35% 14%);
+
+    /* Utility surfaces */
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
   --secondary:         hsl(224 15% 20%);
   --secondary-foreground: hsl(210 24% 88%);
   --muted:             hsl(224 14% 17%);
   --muted-foreground:  hsl(215 16% 70%);
   --accent:            hsl(191 30% 24%);
   --accent-foreground: hsl(188 62% 84%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 
     /* Status */
     --destructive:       hsl(0 68% 62%);
 
     /* Chrome */
+<<<<<<< HEAD
 <<<<<<< HEAD
     --border:  hsl(221 13% 27%);
     --input:   hsl(222 14% 16%);
@@ -600,11 +670,21 @@ body {
     --ring:    hsl(191 78% 66%);
 
     /* Charts */
+=======
+    --border:  hsl(223 14% 26%);
+    --input:   hsl(223 14% 20%);
+    --ring:    hsl(191 78% 66%);
+
+    /* Charts */
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
     --chart-1: hsl(191 80% 70%);
     --chart-2: hsl(165 58% 64%);
     --chart-3: hsl(42 82% 70%);
     --chart-4: hsl(266 58% 75%);
     --chart-5: hsl(10 74% 69%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 
     /* Elevation helpers */
@@ -615,6 +695,7 @@ body {
     --shadow-lift: 0 18px 40px -20px rgba(2, 8, 23, 0.86);
 
     /* Background atmosphere */
+<<<<<<< HEAD
 <<<<<<< HEAD
     --bg-glow-1: hsla(193, 56%, 56%, 0.14);
     --bg-glow-2: hsla(223, 36%, 54%, 0.12);
@@ -633,6 +714,12 @@ body {
     --bg-glow-2: hsla(260, 75%, 70%, 0.1);
 
     /* Sidebar */
+=======
+    --bg-glow-1: hsla(192, 90%, 62%, 0.16);
+    --bg-glow-2: hsla(260, 75%, 70%, 0.1);
+
+    /* Sidebar */
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
     --sidebar:                    hsl(225 24% 12%);
     --sidebar-foreground:         hsl(210 24% 88%);
     --sidebar-primary:            hsl(191 78% 66%);
@@ -641,12 +728,16 @@ body {
     --sidebar-accent-foreground:  hsl(210 26% 88%);
     --sidebar-border:             hsl(223 14% 24%);
     --sidebar-ring:               hsl(191 78% 66%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 }
 
 /* ── Eye Comfort Mode ─────────────────────────────────────── */
 :root.eye-comfort {
   /* Light mode: reduce white glare and saturation */
+<<<<<<< HEAD
 <<<<<<< HEAD
   --background:        hsl(205 24% 90%);
   --foreground:        hsl(220 16% 22%);
@@ -661,6 +752,8 @@ body {
   --primary:           hsl(196 40% 40%);
   --ring:              hsl(196 40% 40%);
 =======
+=======
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
   --background:        hsl(214 15% 90%);
   --foreground:        hsl(220 20% 22%);
   --card:              hsl(214 13% 94%);
@@ -673,11 +766,15 @@ body {
   --input:             hsl(214 12% 70%);
   --primary:           hsl(199 52% 40%);
   --ring:              hsl(199 52% 40%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 }
 
 :root.dark.eye-comfort {
   /* Dark mode: avoid overly bright text on deep backgrounds */
+<<<<<<< HEAD
 <<<<<<< HEAD
   --background:        hsl(222 22% 12%);
   --foreground:        hsl(212 18% 84%);
@@ -692,6 +789,8 @@ body {
   --primary:           hsl(194 48% 62%);
   --ring:              hsl(194 48% 62%);
 =======
+=======
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
   --background:        hsl(226 24% 10%);
   --foreground:        hsl(212 20% 84%);
   --card:              hsl(225 18% 14%);
@@ -704,6 +803,9 @@ body {
   --input:             hsl(223 12% 19%);
   --primary:           hsl(191 62% 66%);
   --ring:              hsl(191 62% 66%);
+<<<<<<< HEAD
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+=======
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 }
 
@@ -761,7 +863,11 @@ body {
   /* ── Heading hierarchy ───────────────────────────────────── */
   h1 {
 <<<<<<< HEAD
+<<<<<<< HEAD
     font-size: 1.46rem;
+=======
+    font-size: 1.75rem;
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 =======
     font-size: 1.75rem;
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
@@ -771,7 +877,11 @@ body {
   }
   h2 {
 <<<<<<< HEAD
+<<<<<<< HEAD
     font-size: 1.23rem;
+=======
+    font-size: 1.375rem;
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 =======
     font-size: 1.375rem;
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
@@ -781,7 +891,11 @@ body {
   }
   h3 {
 <<<<<<< HEAD
+<<<<<<< HEAD
     font-size: 1.08rem;
+=======
+    font-size: 1.125rem;
+>>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 =======
     font-size: 1.125rem;
 >>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
