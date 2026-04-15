@@ -18,15 +18,10 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
     document.documentElement.classList.toggle("eye-comfort", eyeComfort)
 
     // App zoom
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const zoom = localStorage.getItem("app-zoom") ?? "95"
-=======
-    const zoom = localStorage.getItem("app-zoom") ?? "120"
->>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
-=======
-    const zoom = localStorage.getItem("app-zoom") ?? "120"
->>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+    const rawZoom = localStorage.getItem("app-zoom")
+    const allowedZooms = new Set(["80", "85", "90", "95", "100", "105", "110", "115", "120"])
+    const zoom = rawZoom !== null && allowedZooms.has(rawZoom) ? rawZoom : "120"
+    if (zoom !== rawZoom) localStorage.setItem("app-zoom", zoom)
     document.body.style.zoom = `${zoom}%`
 
     // Text size (root scale via CSS variable)

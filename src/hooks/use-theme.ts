@@ -5,18 +5,8 @@ const LS_EYE_COMFORT = "eye-comfort"
 
 /** meta theme-color backgrounds */
 const META_BG: Record<ColorMode, string> = {
-<<<<<<< HEAD
-<<<<<<< HEAD
-  light: "#e4ecf3",
-  dark:  "#161b2a",
-=======
   light: "#e9edf2",
   dark:  "#121826",
->>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
-=======
-  light: "#e9edf2",
-  dark:  "#121826",
->>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
 }
 
 export type AppFont =
@@ -63,6 +53,15 @@ function getStoredOrDefaultFont(): AppFont {
 export type AppZoom = "80" | "85" | "90" | "95" | "100" | "105" | "110" | "115" | "120"
 export type TextSize = "13" | "14" | "15" | "16" | "17" | "18" | "20"
 
+const APP_ZOOM_OPTIONS: AppZoom[] = ["80", "85", "90", "95", "100", "105", "110", "115", "120"]
+
+function getStoredOrDefaultZoom(): AppZoom {
+  const stored = localStorage.getItem("app-zoom")
+  if (stored !== null && APP_ZOOM_OPTIONS.includes(stored as AppZoom)) return stored as AppZoom
+  localStorage.setItem("app-zoom", "120")
+  return "120"
+}
+
 /** Inject a Google Fonts <link> once per googleId */
 const loadedFonts = new Set<string>()
 function loadGoogleFont(googleId: string) {
@@ -82,15 +81,7 @@ export function useTheme() {
     getStoredOrDefaultFont()
   )
   const [appZoom, setAppZoom] = useState<AppZoom>(() =>
-<<<<<<< HEAD
-<<<<<<< HEAD
-    (localStorage.getItem("app-zoom") as AppZoom) ?? "95"
-=======
-    (localStorage.getItem("app-zoom") as AppZoom) ?? "120"
->>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
-=======
-    (localStorage.getItem("app-zoom") as AppZoom) ?? "120"
->>>>>>> parent of 8ff3d31 (Polish typography balance and soften UI theme across landing and sidebar)
+    getStoredOrDefaultZoom()
   )
   const [textSize, setTextSize] = useState<TextSize>(() =>
     (localStorage.getItem("text-size") as TextSize) ?? "14"
