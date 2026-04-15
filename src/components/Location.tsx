@@ -734,15 +734,15 @@ export function DeliveryTableDialog() {
                     )}
                   >
                     {visibleColumns.has("no") && (
-                      <td className="px-3 py-3 text-center text-muted-foreground w-10 text-[11px] tabular-nums">{idx + 1}</td>
+                      <td className="px-3 py-2.5 text-center text-muted-foreground w-10 text-[11px] tabular-nums">{idx + 1}</td>
                     )}
                     {visibleColumns.has("route") && (
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3 py-2.5 text-center">
                         <span className="text-[11px] text-foreground">{pt.routeName}</span>
                       </td>
                     )}
                     {visibleColumns.has("code") && (
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3 py-2.5 text-center">
                         <span className={cn("text-[11px] font-medium", pt._dupCode && "text-amber-600 dark:text-amber-400 font-bold")}>
                           {pt.code}
                         </span>
@@ -750,7 +750,7 @@ export function DeliveryTableDialog() {
                       </td>
                     )}
                     {visibleColumns.has("name") && (
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3 py-2.5 text-center">
                         <span className={cn("text-[11px]", pt._dupName && "text-rose-600 dark:text-rose-400 font-semibold")}>
                           {pt.name}
                         </span>
@@ -758,17 +758,17 @@ export function DeliveryTableDialog() {
                       </td>
                     )}
                     {visibleColumns.has("delivery") && (
-                      <td className="px-3 py-3 text-center text-[11px]">
+                      <td className="px-3 py-2.5 text-center text-[11px]">
                         {effectiveDelivery(pt)}
                       </td>
                     )}
                     {visibleColumns.has("km") && (
-                      <td className="px-3 py-3 text-center text-[11px] tabular-nums text-muted-foreground">
+                      <td className="px-3 py-2.5 text-center text-[11px] tabular-nums text-muted-foreground">
                         {pointDistances.get(pointKey(pt)) ?? ""}
                       </td>
                     )}
                     {visibleColumns.has("action") && (
-                      <td className="px-2 py-3 text-center">
+                      <td className="px-2 py-2.5 text-center">
                         <button
                           type="button"
                           className="inline-flex size-6 items-center justify-center p-0 text-muted-foreground transition-colors hover:text-foreground"

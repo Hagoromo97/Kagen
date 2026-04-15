@@ -22,7 +22,7 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
     document.body.style.zoom = `${zoom}%`
 
     // Text size (root scale via CSS variable)
-    const textSize = localStorage.getItem("text-size") ?? "13"
+    const textSize = localStorage.getItem("text-size") ?? "14"
     document.documentElement.style.setProperty("--text-size-base", `${textSize}px`)
 
     // Font family

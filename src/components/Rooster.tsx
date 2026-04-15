@@ -428,7 +428,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   // Column dates for current view
   const monthDates = useMemo(() => getMonthDates(currentDate), [currentDate])
   const colDates: Date[] = viewMode === "month" ? monthDates : weekDates
-  const staffColWidth = 156
+  const staffColWidth = 148
   const dayColWidth = viewMode === "month" ? 92 : 112
 
   // ── Shift CRUD ────────────────────────────────────────────────────────────
