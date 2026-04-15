@@ -5,8 +5,8 @@ const LS_EYE_COMFORT = "eye-comfort"
 
 /** meta theme-color backgrounds */
 const META_BG: Record<ColorMode, string> = {
-  light: "#eef2f4",
-  dark:  "#1a2130",
+  light: "#d8dde1",
+  dark:  "#090c14",
 }
 
 export type AppFont =
@@ -40,7 +40,7 @@ export const FONT_OPTIONS: { id: AppFont; label: string; family: string; googleI
   { id: "caveat",            label: "Caveat",            family: "'Caveat', cursive",               googleId: "Caveat:wght@400;500;600;700" },
 ]
 
-export const DEFAULT_APP_FONT: AppFont = "nunito"
+export const DEFAULT_APP_FONT: AppFont = "quicksand"
 
 function getStoredOrDefaultFont(): AppFont {
   const stored = localStorage.getItem("app-font")
@@ -72,10 +72,10 @@ export function useTheme() {
     getStoredOrDefaultFont()
   )
   const [appZoom, setAppZoom] = useState<AppZoom>(() =>
-    (localStorage.getItem("app-zoom") as AppZoom) ?? "110"
+    (localStorage.getItem("app-zoom") as AppZoom) ?? "95"
   )
   const [textSize, setTextSize] = useState<TextSize>(() =>
-    (localStorage.getItem("text-size") as TextSize) ?? "16"
+    (localStorage.getItem("text-size") as TextSize) ?? "13"
   )
   const [eyeComfort, setEyeComfort] = useState<boolean>(() =>
     localStorage.getItem(LS_EYE_COMFORT) === "1"

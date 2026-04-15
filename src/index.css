@@ -318,19 +318,19 @@ html {
    *   --text-size-base -> user's selected text size (default 16px)
    *   --app-font-scale -> compatibility multiplier (kept at 1)
    */
-  --text-size-base: 16px;   /* fallback; overridden by useTheme */
+  --text-size-base: 13px;   /* fallback; overridden by useTheme */
   --app-font-scale: 1;
   font-size: calc(var(--text-size-base) * var(--app-font-scale));
 
   /* Stable text scale helpers */
-  --fs-2xs: 0.6875rem;  /* 11px */
-  --fs-xs:  0.8125rem;  /* 13px */
-  --fs-sm:  0.9375rem;  /* 15px */
-  --fs-md:  1rem;       /* 16px */
-  --fs-lg:  1.09375rem; /* 17.5px */
-  --fs-xl:  1.21875rem; /* 19.5px */
-  --fs-2xl: 1.4375rem;  /* 23px */
-  --fs-3xl: 1.8125rem;  /* 29px */
+  --fs-2xs: 0.615rem;   /* ~8px  */
+  --fs-xs:  0.769rem;   /* ~10px */
+  --fs-sm:  0.923rem;   /* ~12px */
+  --fs-md:  1rem;       /* 13px  */
+  --fs-lg:  1.077rem;   /* ~14px */
+  --fs-xl:  1.231rem;   /* ~16px */
+  --fs-2xl: 1.538rem;   /* ~20px */
+  --fs-3xl: 1.846rem;   /* ~24px */
 
   /* Fluid spacing helpers */
   --sp-xs:  clamp(0.25rem, 0.8vw, 0.5rem);
@@ -347,7 +347,7 @@ body {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-family: var(--app-font, 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-family: var(--app-font, 'Quicksand', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
 #root {
@@ -415,33 +415,33 @@ body {
     color-scheme: light;
 
     /* Surfaces */
-  --background:        hsl(210 22% 95%);
-  --foreground:        hsl(220 22% 22%);
-  --card:              hsl(210 19% 98%);
-  --card-foreground:   hsl(220 22% 22%);
-  --card-border:       hsl(210 15% 84%);
-  --popover:           hsl(210 19% 98%);
-  --popover-foreground: hsl(220 22% 22%);
+  --background:        hsl(213 16% 84%);
+  --foreground:        hsl(220 22% 15%);
+  --card:              hsl(210 15% 90%);
+  --card-foreground:   hsl(220 22% 15%);
+  --card-border:       hsl(210 13% 72%);
+  --popover:           hsl(210 15% 90%);
+  --popover-foreground: hsl(220 22% 15%);
 
   /* Brand — smart cyan-blue */
-  --primary:           hsl(197 42% 45%);
+  --primary:           hsl(197 44% 40%);
     --primary-foreground: hsl(0 0% 100%);
 
     /* Utility surfaces */
-  --secondary:         hsl(210 16% 90%);
-  --secondary-foreground: hsl(221 18% 27%);
-  --muted:             hsl(210 15% 88%);
-  --muted-foreground:  hsl(219 10% 44%);
-  --accent:            hsl(196 28% 88%);
-  --accent-foreground: hsl(194 35% 32%);
+  --secondary:         hsl(210 13% 78%);
+  --secondary-foreground: hsl(221 18% 22%);
+  --muted:             hsl(210 12% 75%);
+  --muted-foreground:  hsl(219 10% 38%);
+  --accent:            hsl(196 22% 80%);
+  --accent-foreground: hsl(194 36% 26%);
 
     /* Status */
-    --destructive:       hsl(0 74% 54%);
+    --destructive:       hsl(0 74% 50%);
 
     /* Chrome */
-    --border:  hsl(210 14% 80%);
-    --input:   hsl(210 14% 80%);
-    --ring:    hsl(197 42% 45%);
+    --border:  hsl(210 12% 66%);
+    --input:   hsl(210 12% 66%);
+    --ring:    hsl(197 44% 40%);
 
     /* Charts */
     --chart-1: hsl(197 48% 48%);
@@ -458,51 +458,51 @@ body {
     --shadow-lift: 0 18px 34px -18px rgba(14, 29, 48, 0.34);
 
     /* Background atmosphere */
-    --bg-glow-1: hsla(199, 42%, 78%, 0.18);
-    --bg-glow-2: hsla(216, 24%, 84%, 0.2);
+    --bg-glow-1: hsla(199, 36%, 70%, 0.22);
+    --bg-glow-2: hsla(216, 20%, 72%, 0.24);
 
     /* Sidebar */
-    --sidebar:                    hsl(210 16% 90%);
-    --sidebar-foreground:         hsl(221 18% 24%);
-    --sidebar-primary:            hsl(197 42% 45%);
+    --sidebar:                    hsl(212 15% 80%);
+    --sidebar-foreground:         hsl(221 18% 18%);
+    --sidebar-primary:            hsl(197 44% 40%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:             hsl(208 20% 85%);
-    --sidebar-accent-foreground:  hsl(221 18% 24%);
-    --sidebar-border:             hsl(210 14% 78%);
-    --sidebar-ring:               hsl(197 42% 45%);
+    --sidebar-accent:             hsl(210 14% 74%);
+    --sidebar-accent-foreground:  hsl(221 18% 18%);
+    --sidebar-border:             hsl(210 13% 63%);
+    --sidebar-ring:               hsl(197 44% 40%);
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────── */
 .dark {
     color-scheme: dark;
     /* Surfaces */
-  --background:        hsl(223 25% 13%);
-  --foreground:        hsl(210 24% 89%);
-  --card:              hsl(223 20% 17%);
-  --card-foreground:   hsl(210 24% 89%);
-  --card-border:       hsl(222 14% 28%);
-  --popover:           hsl(223 20% 17%);
-  --popover-foreground: hsl(210 24% 89%);
+  --background:        hsl(224 30% 7%);
+  --foreground:        hsl(210 22% 88%);
+  --card:              hsl(223 26% 11%);
+  --card-foreground:   hsl(210 22% 88%);
+  --card-border:       hsl(222 16% 20%);
+  --popover:           hsl(223 26% 11%);
+  --popover-foreground: hsl(210 22% 88%);
 
   /* Brand — luminous cyan for dark UI */
-  --primary:           hsl(191 56% 66%);
-  --primary-foreground: hsl(224 30% 16%);
+  --primary:           hsl(191 58% 62%);
+  --primary-foreground: hsl(224 34% 10%);
 
     /* Utility surfaces */
-  --secondary:         hsl(222 14% 23%);
-  --secondary-foreground: hsl(210 22% 86%);
-  --muted:             hsl(222 12% 20%);
-  --muted-foreground:  hsl(214 12% 70%);
-  --accent:            hsl(191 24% 28%);
-  --accent-foreground: hsl(189 42% 82%);
+  --secondary:         hsl(222 18% 16%);
+  --secondary-foreground: hsl(210 20% 84%);
+  --muted:             hsl(222 16% 12%);
+  --muted-foreground:  hsl(214 12% 66%);
+  --accent:            hsl(191 22% 20%);
+  --accent-foreground: hsl(189 40% 80%);
 
     /* Status */
-    --destructive:       hsl(0 68% 65%);
+    --destructive:       hsl(0 68% 62%);
 
     /* Chrome */
-    --border:  hsl(222 12% 30%);
-    --input:   hsl(222 12% 22%);
-    --ring:    hsl(191 56% 66%);
+    --border:  hsl(222 14% 22%);
+    --input:   hsl(222 14% 14%);
+    --ring:    hsl(191 58% 62%);
 
     /* Charts */
     --chart-1: hsl(191 60% 68%);
@@ -519,51 +519,51 @@ body {
     --shadow-lift: 0 18px 40px -20px rgba(2, 8, 23, 0.86);
 
     /* Background atmosphere */
-    --bg-glow-1: hsla(193, 64%, 64%, 0.14);
-    --bg-glow-2: hsla(247, 38%, 70%, 0.09);
+    --bg-glow-1: hsla(193, 60%, 58%, 0.12);
+    --bg-glow-2: hsla(247, 40%, 62%, 0.08);
 
     /* Sidebar */
-    --sidebar:                    hsl(223 19% 16%);
-    --sidebar-foreground:         hsl(210 22% 86%);
-    --sidebar-primary:            hsl(191 56% 66%);
-    --sidebar-primary-foreground: hsl(224 30% 16%);
-    --sidebar-accent:             hsl(222 14% 24%);
-    --sidebar-accent-foreground:  hsl(210 22% 86%);
-    --sidebar-border:             hsl(222 12% 28%);
-    --sidebar-ring:               hsl(191 56% 66%);
+    --sidebar:                    hsl(223 26% 9%);
+    --sidebar-foreground:         hsl(210 20% 84%);
+    --sidebar-primary:            hsl(191 58% 62%);
+    --sidebar-primary-foreground: hsl(224 34% 10%);
+    --sidebar-accent:             hsl(222 18% 16%);
+    --sidebar-accent-foreground:  hsl(210 20% 84%);
+    --sidebar-border:             hsl(222 14% 20%);
+    --sidebar-ring:               hsl(191 58% 62%);
 }
 
 /* ── Eye Comfort Mode ─────────────────────────────────────── */
 :root.eye-comfort {
   /* Light mode: reduce white glare and saturation */
-  --background:        hsl(205 20% 93%);
-  --foreground:        hsl(220 18% 26%);
-  --card:              hsl(206 16% 96%);
-  --card-foreground:   hsl(220 18% 26%);
-  --muted:             hsl(206 12% 88%);
-  --muted-foreground:  hsl(218 10% 44%);
-  --accent:            hsl(196 20% 86%);
-  --accent-foreground: hsl(196 26% 34%);
-  --border:            hsl(206 12% 76%);
-  --input:             hsl(206 12% 76%);
-  --primary:           hsl(196 36% 44%);
-  --ring:              hsl(196 36% 44%);
+  --background:        hsl(206 14% 80%);
+  --foreground:        hsl(220 18% 18%);
+  --card:              hsl(207 13% 87%);
+  --card-foreground:   hsl(220 18% 18%);
+  --muted:             hsl(207 11% 72%);
+  --muted-foreground:  hsl(218 10% 36%);
+  --accent:            hsl(196 16% 76%);
+  --accent-foreground: hsl(196 26% 26%);
+  --border:            hsl(207 11% 60%);
+  --input:             hsl(207 11% 60%);
+  --primary:           hsl(196 38% 38%);
+  --ring:              hsl(196 38% 38%);
 }
 
 :root.dark.eye-comfort {
   /* Dark mode: avoid overly bright text on deep backgrounds */
-  --background:        hsl(223 22% 14%);
-  --foreground:        hsl(212 18% 84%);
-  --card:              hsl(223 16% 18%);
-  --card-foreground:   hsl(212 18% 84%);
-  --muted:             hsl(222 10% 22%);
-  --muted-foreground:  hsl(215 10% 66%);
-  --accent:            hsl(192 18% 28%);
-  --accent-foreground: hsl(189 30% 78%);
-  --border:            hsl(222 10% 30%);
-  --input:             hsl(222 10% 24%);
-  --primary:           hsl(191 48% 66%);
-  --ring:              hsl(191 48% 66%);
+  --background:        hsl(224 26% 8%);
+  --foreground:        hsl(212 16% 82%);
+  --card:              hsl(223 22% 12%);
+  --card-foreground:   hsl(212 16% 82%);
+  --muted:             hsl(222 14% 10%);
+  --muted-foreground:  hsl(215 10% 60%);
+  --accent:            hsl(192 18% 18%);
+  --accent-foreground: hsl(189 28% 72%);
+  --border:            hsl(222 14% 20%);
+  --input:             hsl(222 14% 12%);
+  --primary:           hsl(191 50% 60%);
+  --ring:              hsl(191 50% 60%);
 }
 
 .eye-comfort body {
@@ -619,19 +619,19 @@ body {
 
   /* ── Heading hierarchy ───────────────────────────────────── */
   h1 {
-    font-size: 1.68rem;
+    font-size: 1.46rem;
     font-weight: 750;
     letter-spacing: -0.02em;
     line-height: 1.23;
   }
   h2 {
-    font-size: 1.31rem;
+    font-size: 1.23rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.28;
   }
   h3 {
-    font-size: 1.09rem;
+    font-size: 1.08rem;
     font-weight: 600;
     letter-spacing: -0.015em;
     line-height: 1.34;

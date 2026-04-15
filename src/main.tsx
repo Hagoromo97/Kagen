@@ -18,12 +18,12 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
     document.documentElement.classList.toggle("eye-comfort", eyeComfort)
 
     // App zoom
-    const zoom = localStorage.getItem("app-zoom") ?? "110"
+    const zoom = localStorage.getItem("app-zoom") ?? "95"
     document.body.style.zoom = `${zoom}%`
 
     // Text size (root scale via CSS variable)
-    const textSize = localStorage.getItem("text-size")
-    if (textSize) document.documentElement.style.setProperty("--text-size-base", `${textSize}px`)
+    const textSize = localStorage.getItem("text-size") ?? "13"
+    document.documentElement.style.setProperty("--text-size-base", `${textSize}px`)
 
     // Font family
     const storedFont = localStorage.getItem("app-font")
@@ -38,6 +38,14 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
         link.rel  = "stylesheet"
         link.href = `https://fonts.googleapis.com/css2?family=${fontOpt.googleId}&display=swap`
         document.head.appendChild(link)
+      }
+      // also preload Quicksand if not already loaded
+      const quicksandId = "Quicksand:wght@400;500;600;700"
+      if (fontOpt.googleId !== quicksandId) {
+        const preload = document.createElement("link")
+        preload.rel  = "stylesheet"
+        preload.href = `https://fonts.googleapis.com/css2?family=${quicksandId}&display=swap`
+        document.head.appendChild(preload)
       }
       document.documentElement.style.setProperty("--app-font", fontOpt.family)
       document.body.style.fontFamily = fontOpt.family
