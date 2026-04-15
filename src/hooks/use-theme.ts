@@ -5,8 +5,8 @@ const LS_EYE_COMFORT = "eye-comfort"
 
 /** meta theme-color backgrounds */
 const META_BG: Record<ColorMode, string> = {
-  light: "#e9edf2",
-  dark:  "#121826",
+  light: "#eef2f4",
+  dark:  "#1a2130",
 }
 
 export type AppFont =
@@ -72,7 +72,7 @@ export function useTheme() {
     getStoredOrDefaultFont()
   )
   const [appZoom, setAppZoom] = useState<AppZoom>(() =>
-    (localStorage.getItem("app-zoom") as AppZoom) ?? "120"
+    (localStorage.getItem("app-zoom") as AppZoom) ?? "110"
   )
   const [textSize, setTextSize] = useState<TextSize>(() =>
     (localStorage.getItem("text-size") as TextSize) ?? "16"

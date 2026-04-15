@@ -323,14 +323,14 @@ html {
   font-size: calc(var(--text-size-base) * var(--app-font-scale));
 
   /* Stable text scale helpers */
-  --fs-2xs: 0.625rem;   /* 10px */
-  --fs-xs:  0.75rem;    /* 12px */
-  --fs-sm:  0.875rem;   /* 14px */
+  --fs-2xs: 0.6875rem;  /* 11px */
+  --fs-xs:  0.8125rem;  /* 13px */
+  --fs-sm:  0.9375rem;  /* 15px */
   --fs-md:  1rem;       /* 16px */
-  --fs-lg:  1.125rem;   /* 18px */
-  --fs-xl:  1.25rem;    /* 20px */
-  --fs-2xl: 1.5rem;     /* 24px */
-  --fs-3xl: 1.875rem;   /* 30px */
+  --fs-lg:  1.09375rem; /* 17.5px */
+  --fs-xl:  1.21875rem; /* 19.5px */
+  --fs-2xl: 1.4375rem;  /* 23px */
+  --fs-3xl: 1.8125rem;  /* 29px */
 
   /* Fluid spacing helpers */
   --sp-xs:  clamp(0.25rem, 0.8vw, 0.5rem);
@@ -415,40 +415,40 @@ body {
     color-scheme: light;
 
     /* Surfaces */
-  --background:        hsl(214 18% 93%);
-  --foreground:        hsl(220 24% 18%);
-  --card:              hsl(214 16% 97%);
-  --card-foreground:   hsl(220 24% 18%);
-  --card-border:       hsl(214 14% 80%);
-  --popover:           hsl(214 16% 97%);
-  --popover-foreground: hsl(220 24% 18%);
+  --background:        hsl(210 22% 95%);
+  --foreground:        hsl(220 22% 22%);
+  --card:              hsl(210 19% 98%);
+  --card-foreground:   hsl(220 22% 22%);
+  --card-border:       hsl(210 15% 84%);
+  --popover:           hsl(210 19% 98%);
+  --popover-foreground: hsl(220 22% 22%);
 
   /* Brand — smart cyan-blue */
-  --primary:           hsl(199 66% 42%);
+  --primary:           hsl(197 42% 45%);
     --primary-foreground: hsl(0 0% 100%);
 
     /* Utility surfaces */
-  --secondary:         hsl(214 14% 88%);
-  --secondary-foreground: hsl(221 20% 22%);
-  --muted:             hsl(214 12% 86%);
-  --muted-foreground:  hsl(219 12% 40%);
-  --accent:            hsl(203 34% 86%);
-  --accent-foreground: hsl(191 54% 27%);
+  --secondary:         hsl(210 16% 90%);
+  --secondary-foreground: hsl(221 18% 27%);
+  --muted:             hsl(210 15% 88%);
+  --muted-foreground:  hsl(219 10% 44%);
+  --accent:            hsl(196 28% 88%);
+  --accent-foreground: hsl(194 35% 32%);
 
     /* Status */
     --destructive:       hsl(0 74% 54%);
 
     /* Chrome */
-    --border:  hsl(214 14% 76%);
-    --input:   hsl(214 14% 76%);
-    --ring:    hsl(199 66% 42%);
+    --border:  hsl(210 14% 80%);
+    --input:   hsl(210 14% 80%);
+    --ring:    hsl(197 42% 45%);
 
     /* Charts */
-    --chart-1: hsl(199 66% 44%);
-    --chart-2: hsl(171 48% 40%);
-    --chart-3: hsl(35 74% 50%);
-    --chart-4: hsl(261 52% 62%);
-    --chart-5: hsl(8 70% 56%);
+    --chart-1: hsl(197 48% 48%);
+    --chart-2: hsl(167 36% 44%);
+    --chart-3: hsl(34 62% 56%);
+    --chart-4: hsl(262 38% 66%);
+    --chart-5: hsl(10 58% 60%);
 
     /* Elevation helpers */
     --button-outline: rgba(0, 0, 0, 0.08);
@@ -458,58 +458,58 @@ body {
     --shadow-lift: 0 18px 34px -18px rgba(14, 29, 48, 0.34);
 
     /* Background atmosphere */
-    --bg-glow-1: hsla(206, 50%, 74%, 0.2);
-    --bg-glow-2: hsla(220, 24%, 82%, 0.22);
+    --bg-glow-1: hsla(199, 42%, 78%, 0.18);
+    --bg-glow-2: hsla(216, 24%, 84%, 0.2);
 
     /* Sidebar */
-    --sidebar:                    hsl(214 14% 87%);
-    --sidebar-foreground:         hsl(221 20% 20%);
-    --sidebar-primary:            hsl(199 66% 42%);
+    --sidebar:                    hsl(210 16% 90%);
+    --sidebar-foreground:         hsl(221 18% 24%);
+    --sidebar-primary:            hsl(197 42% 45%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent:             hsl(210 20% 82%);
-    --sidebar-accent-foreground:  hsl(221 20% 18%);
-    --sidebar-border:             hsl(214 14% 74%);
-    --sidebar-ring:               hsl(199 66% 42%);
+    --sidebar-accent:             hsl(208 20% 85%);
+    --sidebar-accent-foreground:  hsl(221 18% 24%);
+    --sidebar-border:             hsl(210 14% 78%);
+    --sidebar-ring:               hsl(197 42% 45%);
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────── */
 .dark {
     color-scheme: dark;
     /* Surfaces */
-  --background:        hsl(226 30% 9%);
-  --foreground:        hsl(210 28% 92%);
-  --card:              hsl(225 24% 13%);
-  --card-foreground:   hsl(210 28% 92%);
-  --card-border:       hsl(223 16% 24%);
-  --popover:           hsl(225 24% 13%);
-  --popover-foreground: hsl(210 28% 92%);
+  --background:        hsl(223 25% 13%);
+  --foreground:        hsl(210 24% 89%);
+  --card:              hsl(223 20% 17%);
+  --card-foreground:   hsl(210 24% 89%);
+  --card-border:       hsl(222 14% 28%);
+  --popover:           hsl(223 20% 17%);
+  --popover-foreground: hsl(210 24% 89%);
 
   /* Brand — luminous cyan for dark UI */
-  --primary:           hsl(191 78% 66%);
-  --primary-foreground: hsl(225 35% 14%);
+  --primary:           hsl(191 56% 66%);
+  --primary-foreground: hsl(224 30% 16%);
 
     /* Utility surfaces */
-  --secondary:         hsl(224 15% 20%);
-  --secondary-foreground: hsl(210 24% 88%);
-  --muted:             hsl(224 14% 17%);
-  --muted-foreground:  hsl(215 16% 70%);
-  --accent:            hsl(191 30% 24%);
-  --accent-foreground: hsl(188 62% 84%);
+  --secondary:         hsl(222 14% 23%);
+  --secondary-foreground: hsl(210 22% 86%);
+  --muted:             hsl(222 12% 20%);
+  --muted-foreground:  hsl(214 12% 70%);
+  --accent:            hsl(191 24% 28%);
+  --accent-foreground: hsl(189 42% 82%);
 
     /* Status */
     --destructive:       hsl(0 68% 65%);
 
     /* Chrome */
-    --border:  hsl(223 14% 26%);
-    --input:   hsl(223 14% 20%);
-    --ring:    hsl(191 78% 66%);
+    --border:  hsl(222 12% 30%);
+    --input:   hsl(222 12% 22%);
+    --ring:    hsl(191 56% 66%);
 
     /* Charts */
-    --chart-1: hsl(191 80% 70%);
-    --chart-2: hsl(165 58% 64%);
-    --chart-3: hsl(42 82% 70%);
-    --chart-4: hsl(266 58% 75%);
-    --chart-5: hsl(10 74% 69%);
+    --chart-1: hsl(191 60% 68%);
+    --chart-2: hsl(166 46% 63%);
+    --chart-3: hsl(41 70% 70%);
+    --chart-4: hsl(266 42% 75%);
+    --chart-5: hsl(10 62% 70%);
 
     /* Elevation helpers */
     --button-outline: rgba(255, 255, 255, 0.08);
@@ -519,55 +519,55 @@ body {
     --shadow-lift: 0 18px 40px -20px rgba(2, 8, 23, 0.86);
 
     /* Background atmosphere */
-    --bg-glow-1: hsla(192, 90%, 62%, 0.16);
-    --bg-glow-2: hsla(260, 75%, 70%, 0.1);
+    --bg-glow-1: hsla(193, 64%, 64%, 0.14);
+    --bg-glow-2: hsla(247, 38%, 70%, 0.09);
 
     /* Sidebar */
-    --sidebar:                    hsl(225 24% 12%);
-    --sidebar-foreground:         hsl(210 24% 88%);
-    --sidebar-primary:            hsl(191 78% 66%);
-    --sidebar-primary-foreground: hsl(225 35% 14%);
-    --sidebar-accent:             hsl(223 15% 20%);
-    --sidebar-accent-foreground:  hsl(210 26% 88%);
-    --sidebar-border:             hsl(223 14% 24%);
-    --sidebar-ring:               hsl(191 78% 66%);
+    --sidebar:                    hsl(223 19% 16%);
+    --sidebar-foreground:         hsl(210 22% 86%);
+    --sidebar-primary:            hsl(191 56% 66%);
+    --sidebar-primary-foreground: hsl(224 30% 16%);
+    --sidebar-accent:             hsl(222 14% 24%);
+    --sidebar-accent-foreground:  hsl(210 22% 86%);
+    --sidebar-border:             hsl(222 12% 28%);
+    --sidebar-ring:               hsl(191 56% 66%);
 }
 
 /* ── Eye Comfort Mode ─────────────────────────────────────── */
 :root.eye-comfort {
   /* Light mode: reduce white glare and saturation */
-  --background:        hsl(214 15% 90%);
-  --foreground:        hsl(220 20% 22%);
-  --card:              hsl(214 13% 94%);
-  --card-foreground:   hsl(220 20% 22%);
-  --muted:             hsl(214 11% 84%);
-  --muted-foreground:  hsl(218 10% 40%);
-  --accent:            hsl(206 24% 82%);
-  --accent-foreground: hsl(205 32% 30%);
-  --border:            hsl(214 12% 70%);
-  --input:             hsl(214 12% 70%);
-  --primary:           hsl(199 52% 40%);
-  --ring:              hsl(199 52% 40%);
+  --background:        hsl(205 20% 93%);
+  --foreground:        hsl(220 18% 26%);
+  --card:              hsl(206 16% 96%);
+  --card-foreground:   hsl(220 18% 26%);
+  --muted:             hsl(206 12% 88%);
+  --muted-foreground:  hsl(218 10% 44%);
+  --accent:            hsl(196 20% 86%);
+  --accent-foreground: hsl(196 26% 34%);
+  --border:            hsl(206 12% 76%);
+  --input:             hsl(206 12% 76%);
+  --primary:           hsl(196 36% 44%);
+  --ring:              hsl(196 36% 44%);
 }
 
 :root.dark.eye-comfort {
   /* Dark mode: avoid overly bright text on deep backgrounds */
-  --background:        hsl(226 24% 10%);
-  --foreground:        hsl(212 20% 84%);
-  --card:              hsl(225 18% 14%);
-  --card-foreground:   hsl(212 20% 84%);
-  --muted:             hsl(223 11% 18%);
-  --muted-foreground:  hsl(216 12% 62%);
-  --accent:            hsl(191 24% 22%);
-  --accent-foreground: hsl(188 38% 76%);
-  --border:            hsl(223 12% 24%);
-  --input:             hsl(223 12% 19%);
-  --primary:           hsl(191 62% 66%);
-  --ring:              hsl(191 62% 66%);
+  --background:        hsl(223 22% 14%);
+  --foreground:        hsl(212 18% 84%);
+  --card:              hsl(223 16% 18%);
+  --card-foreground:   hsl(212 18% 84%);
+  --muted:             hsl(222 10% 22%);
+  --muted-foreground:  hsl(215 10% 66%);
+  --accent:            hsl(192 18% 28%);
+  --accent-foreground: hsl(189 30% 78%);
+  --border:            hsl(222 10% 30%);
+  --input:             hsl(222 10% 24%);
+  --primary:           hsl(191 48% 66%);
+  --ring:              hsl(191 48% 66%);
 }
 
 .eye-comfort body {
-  line-height: 1.7;
+  line-height: 1.68;
 }
 
 .eye-comfort .loading-text,
@@ -608,8 +608,8 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    letter-spacing: 0.004em;
-    line-height: 1.6;
+    letter-spacing: 0.003em;
+    line-height: 1.62;
   }
 
   ::selection {
@@ -619,22 +619,22 @@ body {
 
   /* ── Heading hierarchy ───────────────────────────────────── */
   h1 {
-    font-size: 1.75rem;
+    font-size: 1.68rem;
     font-weight: 750;
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    line-height: 1.23;
   }
   h2 {
-    font-size: 1.375rem;
+    font-size: 1.31rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    line-height: 1.25;
+    line-height: 1.28;
   }
   h3 {
-    font-size: 1.125rem;
+    font-size: 1.09rem;
     font-weight: 600;
     letter-spacing: -0.015em;
-    line-height: 1.3;
+    line-height: 1.34;
   }
   h4, h5, h6 {
     font-weight: 600;
@@ -644,7 +644,7 @@ body {
 
   /* ── Body text ────────────────────────────────────────────── */
   p {
-    line-height: 1.65;
+    line-height: 1.62;
   }
 
   /* ── Labels ─────────────────────────────────────────────── */
@@ -668,11 +668,11 @@ body {
 
   /* Keep fixed-pixel Tailwind JIT classes aligned to root text scale. */
   .text-\[10px\] { font-size: var(--fs-2xs) !important; }
-  .text-\[11px\] { font-size: var(--fs-xs)  !important; }
-  .text-\[12px\] { font-size: var(--fs-sm)  !important; }
-  .text-\[13px\] { font-size: 0.8125rem     !important; }
+  .text-\[11px\] { font-size: var(--fs-2xs) !important; }
+  .text-\[12px\] { font-size: var(--fs-xs)  !important; }
+  .text-\[13px\] { font-size: var(--fs-xs)  !important; }
   .text-\[14px\] { font-size: var(--fs-sm)  !important; }
-  .text-\[15px\] { font-size: 0.9375rem     !important; }
+  .text-\[15px\] { font-size: var(--fs-sm)  !important; }
 }
 
 @layer components {
