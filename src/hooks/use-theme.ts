@@ -6,8 +6,8 @@ const LS_APP_LANGUAGE = "app-language"
 
 /** meta theme-color backgrounds */
 const META_BG: Record<ColorMode, string> = {
-  light: "#e9edf2",
-  dark:  "#121826",
+  light: "#eef1f5",
+  dark:  "#10131a",
 }
 
 export type AppFont =

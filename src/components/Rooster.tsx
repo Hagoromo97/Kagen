@@ -10,6 +10,7 @@ import {
   Loader2,
   Settings2,
   Search,
+  CalendarDays,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -428,7 +429,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   // Column dates for current view
   const monthDates = useMemo(() => getMonthDates(currentDate), [currentDate])
   const colDates: Date[] = viewMode === "month" ? monthDates : weekDates
-  const staffColWidth = 148
+  const staffColWidth = 120
   const dayColWidth = viewMode === "month" ? 92 : 112
 
   // ── Shift CRUD ────────────────────────────────────────────────────────────
@@ -612,8 +613,22 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
               value={historyQuery}
               onChange={(event) => setHistoryQuery(event.target.value)}
               placeholder="Search history: staff, route, code, date (YYYY-MM-DD)"
-              className="h-8 pl-8 text-[11px]"
+              className="h-8 pl-8 pr-8 text-[11px]"
             />
+            <label
+              title="Pick a date"
+              className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground/60 hover:text-foreground transition-colors"
+            >
+              <CalendarDays className="size-3.5" />
+              <input
+                type="date"
+                className="sr-only"
+                onChange={(e) => {
+                  if (e.target.value) setHistoryQuery(e.target.value)
+                  e.target.value = ""
+                }}
+              />
+            </label>
           </div>
 
         </div>
@@ -683,8 +698,8 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
             </colgroup>
             <thead>
               <tr>
-                <th className="sticky top-0 left-0 z-30 bg-card border-b border-r border-border px-3 py-3 text-left" style={{ width: `${staffColWidth}px`, minWidth: `${staffColWidth}px` }}>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <th className="sticky top-0 left-0 z-30 bg-card border-b border-r border-border px-3 py-3 text-center" style={{ width: `${staffColWidth}px`, minWidth: `${staffColWidth}px` }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-1.5">
                     <Users className="size-3" />Staff
                   </span>
                 </th>
@@ -728,8 +743,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
 
                     {/* ── Staff cell ── */}
                     <td className="sticky left-0 z-10 bg-card border-b border-r border-border p-3 align-top">
-                      <div className="flex items-start">
-                        <div className="min-w-0 flex-1">
+                      <div className="flex flex-col items-center text-center">
                           <p className="text-[11px] font-bold text-foreground leading-tight whitespace-nowrap">{resource.name}</p>
                           {resource.role && (
                             <p className="text-[9px] text-muted-foreground leading-tight mt-0.5 whitespace-nowrap">{resource.role}</p>
@@ -740,7 +754,6 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                           >
                             {viewShiftCount} shift{viewShiftCount !== 1 ? "s" : ""}
                           </span>
-                        </div>
                       </div>
                       {isEditMode && (
                         <div className="flex items-center gap-0.5 mt-2">
