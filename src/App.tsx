@@ -587,7 +587,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           }`}
           style={homeRouteDialogFullscreen
             ? {}
-            : { width: '92vw', maxWidth: '56rem', height: 'calc(3 * 44px + 96px)', borderRadius: '0.75rem' }
+            : { width: '92vw', maxWidth: '56rem', height: 'calc(5 * 44px + 96px)', borderRadius: '0.75rem' }
           }
         >
           <DialogHeader className="border-b border-border bg-background px-5 py-3">
