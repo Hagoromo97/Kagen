@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { useTheme, FONT_OPTIONS, type AppFont } from "@/hooks/use-theme"
+import { useTheme, FONT_OPTIONS, type AppFont, type AppLanguage } from "@/hooks/use-theme"
 import { useEditMode } from "@/contexts/EditModeContext"
 import { LS_IMGBB_KEY } from "@/lib/imgbb"
 import { DEFAULT_ROUTE_COLORS } from "@/lib/route-colors"
@@ -81,9 +81,49 @@ function SectionHeader({ icon, title, description }: { icon: ReactNode; title: s
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 export function Settings({ section = "profile" }: { section?: SectionId }) {
-  const { appFont, setAppFont, eyeComfort, setEyeComfort } = useTheme()
+  const { appFont, setAppFont, eyeComfort, setEyeComfort, appLanguage, setAppLanguage } = useTheme()
   const { isEditMode } = useEditMode()
   const active = section
+
+  const LANGUAGE_OPTIONS: { id: AppLanguage; label: string }[] = [
+    { id: "en", label: "English" },
+    { id: "ms", label: "Bahasa Melayu" },
+  ]
+
+  const languageCopy = {
+    en: {
+      fontTitle: "Font Style",
+      fontDescription: "Choose a font and interface language for the app.",
+      languageLabel: "App Language",
+      languageDescription: "Switch interface language between English and Bahasa Melayu.",
+      eyeComfortLabel: "Eye Comfort Mode",
+      eyeComfortDescription: "Reduces glare and sharp contrast for long usage sessions.",
+      previewLabel: "Preview",
+      previewTextPrefix: "This is a text preview using",
+      previewTextSuffix: "The quick brown fox jumps over the lazy dog.",
+      active: "active",
+      reset: "Reset",
+      apply: "Apply",
+      profileDescription: "Your account information.",
+    },
+    ms: {
+      fontTitle: "Gaya Font",
+      fontDescription: "Pilih font dan bahasa antaramuka untuk aplikasi.",
+      languageLabel: "Bahasa Aplikasi",
+      languageDescription: "Tukar bahasa antaramuka antara English dan Bahasa Melayu.",
+      eyeComfortLabel: "Mod Keselesaan Mata",
+      eyeComfortDescription: "Mengurangkan silau dan kontras tajam untuk penggunaan lama.",
+      previewLabel: "Pratonton",
+      previewTextPrefix: "Ini ialah pratonton teks menggunakan",
+      previewTextSuffix: "The quick brown fox jumps over the lazy dog.",
+      active: "aktif",
+      reset: "Tetapkan Semula",
+      apply: "Guna",
+      profileDescription: "Maklumat akaun anda.",
+    },
+  } as const
+
+  const t = languageCopy[appLanguage]
 
   // Font picker local state — only committed on Apply
   const [selectedFont, setSelectedFont] = useState<AppFont>(appFont)
@@ -195,7 +235,7 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
       case "profile":
         return (
           <div className="space-y-6">
-            <SectionHeader icon={<User className="size-5" />} title="Profile" description="Maklumat akaun anda." />
+            <SectionHeader icon={<User className="size-5" />} title="Profile" description={t.profileDescription} />
             <div className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {([
@@ -305,15 +345,37 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
       case "appearance-font":
         return (
           <div className="space-y-6">
-            <SectionHeader icon={<Type className="size-5" />} title="Font Style" description="Choose a font for the entire app." />
+            <SectionHeader icon={<Type className="size-5" />} title={t.fontTitle} description={t.fontDescription} />
             <div className="space-y-6">
+              <Field orientation="horizontal" className="justify-between rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className="shrink-0 rounded-md bg-muted p-1.5"><Globe className="size-4 text-muted-foreground" /></span>
+                  <div className="min-w-0">
+                    <FieldLabel htmlFor="app-language-select" className="text-sm font-medium leading-tight block truncate">{t.languageLabel}</FieldLabel>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                      {t.languageDescription}
+                    </p>
+                  </div>
+                </div>
+                <select
+                  id="app-language-select"
+                  value={appLanguage}
+                  onChange={(event) => setAppLanguage(event.target.value as AppLanguage)}
+                  className="shrink-0 ml-4 h-9 rounded-md border border-border bg-background px-2.5 text-sm"
+                >
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>{option.label}</option>
+                  ))}
+                </select>
+              </Field>
+
               <Field orientation="horizontal" className="justify-between rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm">
                 <div className="flex items-start gap-3 min-w-0">
                   <span className="shrink-0 rounded-md bg-muted p-1.5"><Eye className="size-4 text-muted-foreground" /></span>
                   <div className="min-w-0">
-                    <FieldLabel htmlFor="eye-comfort-toggle" className="text-sm font-medium leading-tight block truncate">Eye Comfort Mode</FieldLabel>
+                    <FieldLabel htmlFor="eye-comfort-toggle" className="text-sm font-medium leading-tight block truncate">{t.eyeComfortLabel}</FieldLabel>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
-                      Reduces glare and sharp contrast for long usage sessions.
+                      {t.eyeComfortDescription}
                     </p>
                   </div>
                 </div>
@@ -339,25 +401,25 @@ export function Settings({ section = "profile" }: { section?: SectionId }) {
                       <span className="text-xs text-muted-foreground truncate">{opt.label}</span>
                       <span className="text-[10px] text-muted-foreground/60 truncate" style={{ fontFamily: opt.family }}>Lorem ipsum</span>
                       {isSelected && <span className="absolute top-2 right-2 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-2.5" /></span>}
-                      {isApplied && !isSelected && <span className="absolute bottom-2 right-2 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wide">active</span>}
+                      {isApplied && !isSelected && <span className="absolute bottom-2 right-2 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wide">{t.active}</span>}
                     </button>
                   )
                 })}
                 </div>
               </div>
               <div className="mt-2 p-4 rounded-lg bg-muted/40 border">
-                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Preview</p>
-                <p className="text-base" style={{ fontFamily: FONT_OPTIONS.find(f => f.id === selectedFont)?.family }}>
-                  This is a text preview using <strong>{FONT_OPTIONS.find(f => f.id === selectedFont)?.label}</strong>. The quick brown fox jumps over the lazy dog.
+                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-semibold">{t.previewLabel}</p>
+                <p className="text-[15px]" style={{ fontFamily: FONT_OPTIONS.find(f => f.id === selectedFont)?.family }}>
+                  {t.previewTextPrefix} <strong>{FONT_OPTIONS.find(f => f.id === selectedFont)?.label}</strong>. {t.previewTextSuffix}
                 </p>
               </div>
               {fontDirty && (
                 <div className="flex items-center justify-end gap-3">
                   <Button variant="outline" onClick={() => setSelectedFont("system")}>
-                    Reset
+                    {t.reset}
                   </Button>
                   <Button onClick={() => setAppFont(selectedFont)} className="bg-green-600 text-white hover:bg-green-700">
-                    Apply
+                    {t.apply}
                   </Button>
                 </div>
               )}

@@ -36,6 +36,29 @@ interface RouteChangelog {
   created_at: string
 }
 
+const normalizeChangelogEntries = (value: unknown): RouteChangelog[] => {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null
+      const record = item as Record<string, unknown>
+      const text = typeof record.text === 'string' ? record.text.trim() : ''
+      if (!text) return null
+
+      const createdAtRaw = typeof record.created_at === 'string' ? record.created_at : ''
+      const createdAtMs = Date.parse(createdAtRaw)
+      const created_at = Number.isFinite(createdAtMs) ? new Date(createdAtMs).toISOString() : new Date(0).toISOString()
+      const id = typeof record.id === 'string' && record.id.trim() !== ''
+        ? record.id
+        : `log-${index}-${created_at}`
+
+      return { id, text, created_at }
+    })
+    .filter((entry): entry is RouteChangelog => Boolean(entry))
+    .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at))
+}
+
 async function appendChangelog(routeId: string, description: string): Promise<void> {
   try {
     await fetch('/api/route-notes', {
@@ -533,6 +556,29 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     })
   }, [])
 
+  const loadCardChangelog = useCallback(async (routeId: string) => {
+    setCardChangelogs(prev => {
+      const previousEntries = prev[routeId]?.entries ?? []
+      return { ...prev, [routeId]: { loading: true, entries: previousEntries } }
+    })
+
+    try {
+      const response = await fetch(`/api/route-notes?routeId=${encodeURIComponent(routeId)}`)
+      const payload = await response.json()
+      const entries = payload?.success ? normalizeChangelogEntries(payload.changelog) : []
+
+      setCardChangelogs(prev => ({
+        ...prev,
+        [routeId]: { loading: false, entries },
+      }))
+    } catch {
+      setCardChangelogs(prev => ({
+        ...prev,
+        [routeId]: { loading: false, entries: prev[routeId]?.entries ?? [] },
+      }))
+    }
+  }, [])
+
   // Close edit panels when edit mode turns off
   useEffect(() => {
     if (!isEditMode) {
@@ -556,20 +602,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   useEffect(() => {
     for (const [id, panel] of Object.entries(cardPanels)) {
       if (panel.info) {
-        setCardChangelogs(prev => ({ ...prev, [id]: { loading: true, entries: [] } }))
-        fetch(`/api/route-notes?routeId=${encodeURIComponent(id)}`)
-          .then(r => r.json())
-          .then(data => {
-            setCardChangelogs(prev => ({
-              ...prev,
-              [id]: { loading: false, entries: data.success ? (data.changelog ?? []) : [] },
-            }))
-          })
-          .catch(() => setCardChangelogs(prev => ({ ...prev, [id]: { loading: false, entries: [] } })))
+        void loadCardChangelog(id)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardPanels])
+  }, [cardPanels, loadCardChangelog])
 
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [detailFullscreen, setDetailFullscreen] = useState(false)
@@ -1962,6 +1999,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
     // Invalidate card changelog cache so each panel reflects latest server entries.
     setCardChangelogs({})
+    for (const [id, panel] of Object.entries(cardPanels)) {
+      if (panel.info) void loadCardChangelog(id)
+    }
 
     // Clear pending-edit markers once successfully persisted
     setPendingCellEdits(new Set())
@@ -1972,7 +2012,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       icon: <Save className="size-4 text-primary" />,
       duration: 3000,
     })
-  }, [routes, headerItems, fetchRoutes, currentRouteId, isPlaygroundMode])
+  }, [routes, headerItems, fetchRoutes, currentRouteId, isPlaygroundMode, cardPanels, loadCardChangelog])
 
   useEffect(() => {
     registerSaveHandler(doSave)
@@ -2265,7 +2305,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     {/* Header content */}
                     <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       {/* Route name */}
-                      <h3 style={{ margin: 0, marginTop: '0.5rem', fontSize: cardFontLg, fontWeight: 800, color: 'hsl(var(--foreground))', lineHeight: 1.25, wordBreak: 'break-word', textAlign: 'center' }}>Route {route.name}</h3>
+                      <h3 style={{ margin: 0, marginTop: '0.5rem', fontSize: cardFontLg, fontWeight: 800, color: 'hsl(var(--foreground))', lineHeight: 1.25, wordBreak: 'break-word', textAlign: 'center' }}>{formatRouteLabel(route.name)}</h3>
                       {/* Code + shift — tight under name */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <span style={{ fontSize: cardFontSm, fontWeight: 700, color: 'hsl(var(--muted-foreground))' }}>{route.code}</span>
@@ -2514,7 +2554,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               <span style={{ fontSize: '0.6rem', fontWeight: 800, background: markerColor, color: '#fff', borderRadius: 999, padding: '1px 6px', letterSpacing: '0.02em' }}>{cl.entries.length}</span>
                             )}
                           </div>
-                          <div style={{ fontSize: '0.62rem', color: 'hsl(var(--muted-foreground))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{route.name}</div>
+                          <div style={{ fontSize: '0.62rem', color: 'hsl(var(--muted-foreground))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{formatRouteLabel(route.name)}</div>
                         </div>
                       </div>
                     </div>
@@ -2727,7 +2767,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               <Truck className="size-4" style={{ color: markerColor }} />
                             </div>
                           )}
-                        <h1 className="flex-1 min-w-0 text-base font-bold leading-tight truncate">Route {route.name}</h1>
+                        <h1 className="flex-1 min-w-0 text-base font-bold leading-tight truncate">{formatRouteLabel(route.name)}</h1>
                         {/* Settings */}
                         <button
                           onClick={() => {

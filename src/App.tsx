@@ -699,7 +699,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                         {homeRouteVisibleColumns.has('action') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">Action</th>}
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="text-[9px]">
                       {homeRouteTableRows.map((point, index) => (
                         <tr key={`${point.code}-${index}`} className="border-b border-border/50 odd:bg-muted/10 even:bg-background hover:bg-muted/25 transition-colors">
                           {homeRouteVisibleColumns.has('no') && <td className="h-9 px-3 text-center font-semibold text-primary">{index + 1}</td>}
