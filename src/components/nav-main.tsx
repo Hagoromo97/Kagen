@@ -91,7 +91,10 @@ export function NavMain({
                   className="font-medium transition-colors duration-150"
                   onClick={() => handleToggle(item.title, hasChildren, item.page)}
                 >
-                  <item.icon style={item.color ? { color: item.color } : undefined} />
+                  <item.icon
+                      className="size-[14px]"
+                      style={item.color ? { color: item.color } : { color: "hsl(var(--sidebar-primary))" }}
+                    />
                   <span>{item.title}</span>
                 </SidebarMenuButton>
                 {hasChildren ? (

@@ -69,7 +69,7 @@ export function NavProjects({
                 className="font-medium transition-colors duration-150"
                 onClick={() => { if (!isSearching) onSettingsOpenChange(!settingsOpen) }}
               >
-                <Settings2 className="text-primary" />
+                <Settings2 className="size-[14px]" style={{ color: "#F59E0B" }} />
                 <span>Settings</span>
               </SidebarMenuButton>
               <CollapsibleTrigger asChild>

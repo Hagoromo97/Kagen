@@ -100,6 +100,7 @@ interface HomeRouteDialogPoint {
 type HomeTableColumn = 'no' | 'code' | 'name' | 'delivery' | 'km' | 'action'
 type HomeTableSettingsTab = 'column' | 'sorting'
 type HomeTableSort = 'default' | 'code-asc' | 'code-desc' | 'name-asc' | 'name-desc' | 'delivery-asc' | 'delivery-desc'
+type HomeKmCalculateBy = 'hq' | 'previous'
 interface HomeSavedRowOrder {
   id: string
   label: string
@@ -370,12 +371,13 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     { key: 'code', label: 'Code', visible: true },
     { key: 'name', label: 'Name', visible: true },
     { key: 'delivery', label: 'Delivery', visible: true },
-    { key: 'km', label: 'KM', visible: true },
+    { key: 'km', label: 'KM', visible: false },
     { key: 'action', label: 'Action', visible: true },
   ])
   const [homeRouteTableSort, setHomeRouteTableSort] = useState<HomeTableSort>('default')
   const [homeRouteSavedRowOrders, setHomeRouteSavedRowOrders] = useState<HomeSavedRowOrder[]>([])
   const [homeRouteSavedSortId, setHomeRouteSavedSortId] = useState<string | null>(null)
+  const [homeRouteKmCalculateBy, setHomeRouteKmCalculateBy] = useState<HomeKmCalculateBy>('hq')
   const [homeRouteMapStyle, setHomeRouteMapStyle] = useState<'google-streets' | 'google-satellite' | 'osm'>('google-streets')
   const [homeRouteMarkerStyle, setHomeRouteMarkerStyle] = useState<'pin' | 'dot' | 'ring'>('pin')
   const [homeRouteShowPolyline, setHomeRouteShowPolyline] = useState(false)
@@ -526,6 +528,19 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     return 0
   })
 
+  const getHomeRouteKmValue = (point: HomeRouteDialogPoint, index: number): string => {
+    if (point.latitude === 0 && point.longitude === 0) return '-'
+
+    if (homeRouteKmCalculateBy === 'previous' && index > 0) {
+      const previousPoint = homeRouteTableRows[index - 1]
+      if (previousPoint && (previousPoint.latitude !== 0 || previousPoint.longitude !== 0)) {
+        return homeFormatKm(homeHaversineKm(previousPoint.latitude, previousPoint.longitude, point.latitude, point.longitude))
+      }
+    }
+
+    return homeFormatKm(homeHaversineKm(HOME_DEFAULT_MAP_CENTER.lat, HOME_DEFAULT_MAP_CENTER.lng, point.latitude, point.longitude))
+  }
+
   const moveHomeTableColumn = (index: number, dir: -1 | 1) => {
     setHomeRouteDraftColumns(prev => {
       const next = [...prev]
@@ -556,7 +571,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             </div>
             <button
               onClick={() => onNavigate("route-list")}
-              className="inline-flex items-center gap-1 px-0 py-0 text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+              className="inline-flex items-center gap-1 px-0 py-0 text-[10px] font-semibold text-primary/80 hover:text-primary transition-colors"
             >
               <List className="size-3" />Open List
             </button>
@@ -654,11 +669,6 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                     ? `Route ${homeRouteDialogRoute.name}`
                     : "Pinned Route"}
                 </DialogTitle>
-                {homeRouteDialogRoute && (
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {homeRouteDialogRoute.code} · {homeRouteDialogRoute.shift || "-"} · {homeRouteDialogPoints.length} locations
-                  </p>
-                )}
               </div>
 
               <button
@@ -750,9 +760,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                             if (col.key === 'delivery') return <td key="delivery" className="h-9 px-3 text-center font-medium">{homeDeliveryLabel(point.delivery)}</td>
                             if (col.key === 'km') return (
                               <td key="km" className="h-9 px-3 text-center font-medium">
-                                {point.latitude !== 0 || point.longitude !== 0
-                                  ? homeFormatKm(homeHaversineKm(HOME_DEFAULT_MAP_CENTER.lat, HOME_DEFAULT_MAP_CENTER.lng, point.latitude, point.longitude))
-                                  : "-"}
+                                {getHomeRouteKmValue(point, index)}
                               </td>
                             )
                             if (col.key === 'action') return (
@@ -927,6 +935,29 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                 {/* Sorting tab */}
                 {homeRouteTableSettingsTab === 'sorting' && (
                   <div className="space-y-2">
+                    <div className="rounded-xl border border-border bg-background p-2.5 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">KM Calculate By</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {([
+                          { key: 'hq' as const, label: 'HQ' },
+                          { key: 'previous' as const, label: 'Previous Row' },
+                        ]).map((item) => (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => setHomeRouteKmCalculateBy(item.key)}
+                            className={`h-8 rounded-md border text-[11px] font-medium transition-colors ${
+                              homeRouteKmCalculateBy === item.key
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border bg-background hover:bg-muted/50 text-foreground'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="rounded-xl border border-border bg-background p-2.5">
                       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sort by Column</p>
                     </div>
