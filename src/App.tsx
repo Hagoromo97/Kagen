@@ -680,7 +680,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                 </div>
               </div>
 
-              <div className="max-h-[60vh] overflow-auto">
+              <div className="flex-1 overflow-auto min-h-0">
                 {homeRouteDialogLoading ? (
                   <div className="px-4 py-8 text-center text-xs text-muted-foreground">Loading route table...</div>
                 ) : homeRouteDialogError ? (
