@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense, Component, type ErrorInfo, type Re
 import { createPortal } from "react-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt"
 import { LandingPage } from "@/components/LandingPage"
 import { DeliveryMap } from "@/components/DeliveryMap"
 import { useEditMode } from "@/contexts/EditModeContext"
@@ -1596,7 +1597,7 @@ function AppContent() {
 
         </header>
         <Suspense fallback={null}>
-          <div className={`flex flex-col flex-1 min-h-0 ${currentPage === "deliveries" ? "overflow-hidden" : "overflow-y-auto"} ${isTransitioning ? "page-fade-out" : "page-fade-in"}`}>
+          <div className={`flex flex-col flex-1 min-h-0 ${(currentPage === "deliveries" || currentPage === "route-list") ? "overflow-hidden" : "overflow-y-auto"} ${isTransitioning ? "page-fade-out" : "page-fade-in"}`}>
             {renderContent()}
           </div>
         </Suspense>
@@ -1654,6 +1655,7 @@ export function App() {
           </SidebarProvider>
         )}
         <PWAInstallPrompt />
+        <PWAUpdatePrompt />
         <Toaster
           position="top-right"
           toastOptions={{

@@ -214,7 +214,13 @@ async function handleRouteNotes(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ success: true });
   }
   if (req.method === 'DELETE') {
-    const { id } = req.query;
+    const { id, routeId, type } = req.query;
+    // Clear all changelog entries for a route
+    if (routeId && type === 'changelog') {
+      if (typeof routeId !== 'string') return res.status(400).json({ success: false, error: 'routeId diperlukan' });
+      await sql`DELETE FROM route_notes WHERE route_id=${routeId} AND type='changelog'`;
+      return res.status(200).json({ success: true });
+    }
     if (!id || typeof id !== 'string') return res.status(400).json({ success: false, error: 'id diperlukan' });
     await sql`DELETE FROM route_notes WHERE id=${id} AND type='note'`;
     return res.status(200).json({ success: true });

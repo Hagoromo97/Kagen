@@ -525,6 +525,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [editRouteDialogOpen, setEditRouteDialogOpen] = useState(false)
   const [deleteRouteConfirmOpen, setDeleteRouteConfirmOpen] = useState(false)
   const [editingRoute, setEditingRoute] = useState<Route | null>(null)
+  const [editRouteErrors, setEditRouteErrors] = useState<{ code?: string; name?: string }>({})
   const [routeToDelete, setRouteToDelete] = useState<Route | null>(null)
   const [newRoute, setNewRoute] = useState({ name: "", code: "", shift: "AM" })
   const [searchQuery, setSearchQuery] = useState("")
@@ -542,8 +543,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [hoveredRouteId, setHoveredRouteId] = useState<string | null>(null)
   // ── Per-card changelog cache ───────────────────────────────────────
   const [cardChangelogs, setCardChangelogs] = useState<Record<string, { loading: boolean; entries: RouteChangelog[] }>>({})
+  const [clearLogConfirm, setClearLogConfirm] = useState<string | null>(null) // routeId
   // ── Per-card edit form state ───────────────────────────────────────
   const [editPanelState, setEditPanelState] = useState<Record<string, { name: string; code: string; shift: string; color: string; labels: string[] }>>({})
+  const [editPanelErrors, setEditPanelErrors] = useState<Record<string, { name?: string; code?: string }>>({})
   const getCardPanel = (id: string) => cardPanels[id] ?? { info: false, edit: false }
   const openExclusiveCardPanel = useCallback((routeId: string, panel: 'info' | 'edit') => {
     setCardPanels(prev => {
@@ -588,6 +591,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         return updated
       })
       setEditPanelState({})
+      setEditPanelErrors({})
     }
   }, [isEditMode])
 
@@ -1778,16 +1782,29 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
   const handleSaveRoute = () => {
     if (!editingRoute) return
-    
-    if (!editingRoute.name || !editingRoute.code) {
-      toast.error("Name and Code are required", {
-        description: "Please fill in both fields before saving.",
-        icon: <AlertCircle className="size-4" />,
-        duration: 4000,
-      })
+
+    const errors: { code?: string; name?: string } = {}
+
+    if (!editingRoute.name.trim()) {
+      errors.name = "Route name is required"
+    } else {
+      const nameDup = routes.find(r => r.id !== editingRoute.id && r.name.trim().toLowerCase() === editingRoute.name.trim().toLowerCase() && r.shift === editingRoute.shift)
+      if (nameDup) errors.name = `Name already used by "${nameDup.code}" (${nameDup.shift})`
+    }
+
+    if (!editingRoute.code.trim()) {
+      errors.code = "Route code is required"
+    } else {
+      const codeDup = routes.find(r => r.id !== editingRoute.id && r.code.trim().toLowerCase() === editingRoute.code.trim().toLowerCase())
+      if (codeDup) errors.code = `Code already used by "${codeDup.name}"`
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditRouteErrors(errors)
       return
     }
 
+    setEditRouteErrors({})
     setHasUnsavedChanges(true)
     setRoutes(prev => prev.map(r => 
       r.id === editingRoute.id ? editingRoute : r
@@ -2034,6 +2051,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       // Clear card panels
       setCardPanels({})
       setEditPanelState({})
+      setEditPanelErrors({})
       // Clear all cell-editing state
       setPendingCellEdits(new Set())
       setEditingCell(null)
@@ -2121,7 +2139,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const previewRows = cardH >= 520 ? 5 : cardH >= 460 ? 4 : 3
 
   return (
-    <div className="relative font-light flex-1 overflow-y-auto">
+    <div className="relative font-light flex-1 min-h-0 h-full overflow-y-auto overscroll-contain">
       {/* Backdrop overlay when badge popover is open */}
       {badgePopover && (
         <button
@@ -2606,7 +2624,15 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </div>
 
                     {/* Footer */}
-                    <div style={{ padding: '0.6rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0 }}>
+                    <div style={{ padding: '0.6rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                      {cl && !cl.loading && cl.entries.length > 0 && (
+                        <button
+                          onClick={() => setClearLogConfirm(route.id)}
+                          style={{ width: '100%', borderRadius: 9, fontSize: '0.72rem', fontWeight: 700, padding: '0.4rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
+                        >
+                          <Trash2 style={{ width: 11, height: 11 }} /> Clear All
+                        </button>
+                      )}
                       <button
                         onClick={() => setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } }))}
                         style={{ width: '100%', borderRadius: 9, fontSize: '0.75rem', fontWeight: 700, padding: '0.45rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: `linear-gradient(135deg, ${markerColor}, ${markerColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}40`, letterSpacing: '0.01em' }}
@@ -2645,36 +2671,61 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
                   <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 0.9rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem' }}>
-                      <div style={{ background: 'hsl(var(--background)/0.7)', border: '1px solid hsl(var(--border)/0.75)', borderRadius: 10, padding: '0.55rem 0.6rem' }}>
-                        <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.35rem' }}>Route Name</label>
+                      <div style={{ background: 'hsl(var(--background)/0.7)', border: `1.5px solid ${editPanelErrors[route.id]?.name ? '#dc2626' : 'hsl(var(--border)/0.75)'}`, borderRadius: 10, padding: '0.55rem 0.6rem' }}>
+                        <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: editPanelErrors[route.id]?.name ? '#dc2626' : 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.35rem' }}>Route Name</label>
                         <input
                           value={ep.name}
-                          onChange={e => setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, name: e.target.value } }))}
+                          onChange={e => {
+                            const val = e.target.value
+                            const dup = routes.find(r => r.id !== route.id && r.name.trim().toLowerCase() === val.trim().toLowerCase() && r.shift === ep.shift)
+                            setEditPanelErrors(prev => ({ ...prev, [route.id]: { ...prev[route.id], name: dup ? `Name already used by "${dup.code}" (${dup.shift})` : !val.trim() ? 'Name is required' : undefined } }))
+                            setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, name: val } }))
+                          }}
                           placeholder="Route name..."
-                          style={{ width: '100%', padding: '0.5rem 0.68rem', borderRadius: 8, border: '1.5px solid hsl(var(--border))', fontSize: editInputFs, fontWeight: 600, color: 'hsl(var(--foreground))', background: 'hsl(var(--background))', outline: 'none', boxSizing: 'border-box' }}
-                          onFocus={e => e.target.style.borderColor = markerColor}
-                          onBlur={e => e.target.style.borderColor = 'hsl(var(--border))'}
+                          style={{ width: '100%', padding: '0.5rem 0.68rem', borderRadius: 8, border: `1.5px solid ${editPanelErrors[route.id]?.name ? '#dc2626' : 'hsl(var(--border))'}`, fontSize: editInputFs, fontWeight: 600, color: 'hsl(var(--foreground))', background: 'hsl(var(--background))', outline: 'none', boxSizing: 'border-box' }}
+                          onFocus={e => e.target.style.borderColor = editPanelErrors[route.id]?.name ? '#dc2626' : markerColor}
+                          onBlur={e => e.target.style.borderColor = editPanelErrors[route.id]?.name ? '#dc2626' : 'hsl(var(--border))'}
                         />
+                        {editPanelErrors[route.id]?.name && (
+                          <p style={{ margin: '0.3rem 0 0', fontSize: '0.68rem', color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                            ⚠ {editPanelErrors[route.id]?.name}
+                          </p>
+                        )}
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                        <div style={{ background: 'hsl(var(--background)/0.7)', border: '1px solid hsl(var(--border)/0.75)', borderRadius: 10, padding: '0.55rem 0.6rem' }}>
-                          <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.35rem' }}>Code</label>
+                        <div style={{ background: 'hsl(var(--background)/0.7)', border: `1.5px solid ${editPanelErrors[route.id]?.code ? '#dc2626' : 'hsl(var(--border)/0.75)'}`, borderRadius: 10, padding: '0.55rem 0.6rem' }}>
+                          <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: editPanelErrors[route.id]?.code ? '#dc2626' : 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.35rem' }}>Code</label>
                           <input
                             value={ep.code}
-                            onChange={e => setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, code: e.target.value } }))}
+                            onChange={e => {
+                              const val = e.target.value
+                              const dup = routes.find(r => r.id !== route.id && r.code.trim().toLowerCase() === val.trim().toLowerCase())
+                              setEditPanelErrors(prev => ({ ...prev, [route.id]: { ...prev[route.id], code: dup ? `Code used by "${dup.name}"` : !val.trim() ? 'Code is required' : undefined } }))
+                              setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, code: val } }))
+                            }}
                             placeholder="Route code"
-                            style={{ width: '100%', padding: '0.5rem 0.68rem', borderRadius: 8, border: '1.5px solid hsl(var(--border))', fontSize: editInputFs, fontWeight: 700, color: 'hsl(var(--foreground))', background: 'hsl(var(--background))', outline: 'none', boxSizing: 'border-box' }}
-                            onFocus={e => e.target.style.borderColor = markerColor}
-                            onBlur={e => e.target.style.borderColor = 'hsl(var(--border))'}
+                            style={{ width: '100%', padding: '0.5rem 0.68rem', borderRadius: 8, border: `1.5px solid ${editPanelErrors[route.id]?.code ? '#dc2626' : 'hsl(var(--border))'}`, fontSize: editInputFs, fontWeight: 700, color: 'hsl(var(--foreground))', background: 'hsl(var(--background))', outline: 'none', boxSizing: 'border-box' }}
+                            onFocus={e => e.target.style.borderColor = editPanelErrors[route.id]?.code ? '#dc2626' : markerColor}
+                            onBlur={e => e.target.style.borderColor = editPanelErrors[route.id]?.code ? '#dc2626' : 'hsl(var(--border))'}
                           />
+                          {editPanelErrors[route.id]?.code && (
+                            <p style={{ margin: '0.3rem 0 0', fontSize: '0.68rem', color: '#dc2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                              ⚠ {editPanelErrors[route.id]?.code}
+                            </p>
+                          )}
                         </div>
 
                         <div style={{ background: 'hsl(var(--background)/0.7)', border: '1px solid hsl(var(--border)/0.75)', borderRadius: 10, padding: '0.55rem 0.6rem' }}>
                           <label style={{ fontSize: editLabelFs, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.35rem' }}>Shift</label>
                           <select
                             value={ep.shift}
-                            onChange={(e) => setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, shift: e.target.value } }))}
+                            onChange={(e) => {
+                              const newShift = e.target.value
+                              const dup = routes.find(r => r.id !== route.id && r.name.trim().toLowerCase() === ep.name.trim().toLowerCase() && r.shift === newShift)
+                              setEditPanelErrors(prev => ({ ...prev, [route.id]: { ...prev[route.id], name: dup ? `Name already used by "${dup.code}" (${dup.shift})` : ep.name.trim() ? undefined : 'Name is required' } }))
+                              setEditPanelState(prev => ({ ...prev, [route.id]: { ...ep, shift: newShift } }))
+                            }}
                             style={{ width: '100%', padding: '0.5rem 0.68rem', borderRadius: 8, border: `1.5px solid ${markerColor}55`, fontSize: editInputFs, fontWeight: 700, color: 'hsl(var(--foreground))', background: 'hsl(var(--background))', outline: 'none', boxSizing: 'border-box', cursor: 'pointer' }}
                             onFocus={e => e.target.style.borderColor = markerColor}
                             onBlur={e => e.target.style.borderColor = `${markerColor}55`}
@@ -2712,23 +2763,26 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   </div>
 
                   <div style={{ padding: '0.75rem 1rem 1rem', display: 'flex', gap: '0.5rem', flexShrink: 0, borderTop: '1px solid hsl(var(--border))', background: 'hsl(var(--background)/0.66)' }}>
-                    <button onClick={() => { setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } })); setEditPanelState(prev => { const n = { ...prev }; delete n[route.id]; return n }) }} style={{ flex: 1, borderRadius: 8, fontSize: editActionFs, fontWeight: 700, padding: '0.45rem 0', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'transparent', color: '#dc2626', border: 'none', boxShadow: 'none', cursor: 'pointer' }}>
+                    <button onClick={() => { setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } })); setEditPanelState(prev => { const n = { ...prev }; delete n[route.id]; return n }); setEditPanelErrors(prev => { const n = { ...prev }; delete n[route.id]; return n }) }} style={{ flex: 1, borderRadius: 8, fontSize: editActionFs, fontWeight: 700, padding: '0.45rem 0', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'transparent', color: '#dc2626', border: 'none', boxShadow: 'none', cursor: 'pointer' }}>
                       <X style={{ width: 12, height: 12 }} /> Cancel
                     </button>
                     {(() => {
                       const hasEditChanges = ep.name !== route.name || ep.code !== route.code || ep.shift !== route.shift || ep.color !== (route.color || markerColor)
+                      const hasPanelErrors = !!(editPanelErrors[route.id]?.name || editPanelErrors[route.id]?.code)
                       return (
                         <button
-                          disabled={!hasEditChanges}
+                          disabled={!hasEditChanges || hasPanelErrors}
                           onClick={() => {
-                            if (!ep.name || !ep.code) { toast.error('Name and Code required'); return }
+                            if (!ep.name.trim() || !ep.code.trim()) { toast.error('Name and Code required'); return }
+                            if (hasPanelErrors) return
                             setHasUnsavedChanges(true)
                             setRoutes(prev => prev.map(r => r.id === route.id ? { ...r, name: ep.name, code: ep.code, shift: ep.shift, color: ep.color, labels: ep.labels } : r))
                             setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } }))
                             setEditPanelState(prev => { const n = { ...prev }; delete n[route.id]; return n })
+                            setEditPanelErrors(prev => { const n = { ...prev }; delete n[route.id]; return n })
                             toast.success('Route updated', { description: `"${ep.name}" · remember to save.`, icon: <CheckCircle2 className="size-4 text-primary" />, duration: 3000 })
                           }}
-                          style={{ flex: 1, borderRadius: 8, fontSize: editActionFs, fontWeight: 700, padding: '0.45rem 0', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'transparent', color: hasEditChanges ? '#16a34a' : 'hsl(var(--muted-foreground))', border: 'none', boxShadow: 'none', cursor: hasEditChanges ? 'pointer' : 'not-allowed', opacity: hasEditChanges ? 1 : 0.65, transition: 'all 0.15s' }}
+                          style={{ flex: 1, borderRadius: 8, fontSize: editActionFs, fontWeight: 700, padding: '0.45rem 0', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'transparent', color: hasEditChanges && !hasPanelErrors ? '#16a34a' : 'hsl(var(--muted-foreground))', border: 'none', boxShadow: 'none', cursor: hasEditChanges && !hasPanelErrors ? 'pointer' : 'not-allowed', opacity: hasEditChanges && !hasPanelErrors ? 1 : 0.65, transition: 'all 0.15s' }}
                         >
                           <Check style={{ width: 12, height: 12 }} /> Save
                         </button>
@@ -2912,7 +2966,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               }`}
                               >
                                 {isEditMode && (
-                                  <td className="px-4 h-12 text-center">
+                                  <td className="px-4 h-9 text-center">
                                     <input
                                       type="checkbox"
                                       checked={selectedRows.includes(point.code)}
@@ -2923,14 +2977,14 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 )}
                                 {effectiveColumns.filter(c => c.visible).map(col => {
                                   if (col.key === 'no') return (
-                                    <td key="no" className="px-4 h-10 text-center">
-                                      <span className="text-[10px] font-semibold tabular-nums" style={{ color: markerColor }}>
+                                    <td key="no" className="px-4 h-9 text-center">
+                                      <span className="text-[9px] font-semibold tabular-nums" style={{ color: markerColor }}>
                                         {index + 1}
                                       </span>
                                     </td>
                                   )
                                   if (col.key === 'code') return (
-                                    <td key="code" className="px-4 h-10 text-center">
+                                    <td key="code" className="px-4 h-9 text-center">
                                       {(() => {
                                         const isChanged = editingCell?.rowCode === point.code && editingCell.field === 'code' && normalizePointCode(editValue) !== point.code
                                         const canSave = isChanged && !editError
@@ -2944,8 +2998,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         }}
                                       >
                                         <PopoverTrigger asChild>
-                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[10px] font-semibold" onClick={() => startEdit(point.code, 'code', point.code)}>
-                                            <span className={`text-[10px] font-semibold ${pendingCellEdits.has(`${point.code}-code`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.code}</span>
+                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[9px] font-semibold" onClick={() => startEdit(point.code, 'code', point.code)}>
+                                            <span className={`text-[9px] font-semibold ${pendingCellEdits.has(`${point.code}-code`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.code}</span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         </PopoverTrigger>
@@ -2973,7 +3027,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                           </div>
                                         </PopoverContent>
                                       </Popover>
-                                      ) : (<span className="text-[10px] font-semibold">{point.code}</span>)
+                                      ) : (<span className="text-[9px] font-semibold">{point.code}</span>)
                                       })()}
                                     </td>
                                   )
@@ -2992,8 +3046,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         }}
                                       >
                                         <PopoverTrigger asChild>
-                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[10px] font-semibold" onClick={() => startEdit(point.code, 'name', point.name)}>
-                                            <span className={`text-[10px] font-semibold ${pendingCellEdits.has(`${point.code}-name`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.name}</span>
+                                          <button className="hover:bg-accent px-3 py-1 rounded flex items-center justify-center gap-1.5 group mx-auto text-[9px] font-semibold" onClick={() => startEdit(point.code, 'name', point.name)}>
+                                            <span className={`text-[9px] font-semibold ${pendingCellEdits.has(`${point.code}-name`) ? 'text-amber-600 dark:text-amber-400' : ''}`}>{point.name}</span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         </PopoverTrigger>
@@ -3010,7 +3064,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                           </div>
                                         </PopoverContent>
                                       </Popover>
-                                      ) : (<span className="text-[10px] font-semibold">{point.name}</span>)
+                                      ) : (<span className="text-[9px] font-semibold">{point.name}</span>)
                                       })()}
                                     </td>
                                   )
@@ -3023,13 +3077,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                             className="group inline-flex items-center gap-1.5 hover:opacity-70 transition-opacity mx-auto"
                                             onClick={() => openDeliveryTypeModal(point)}
                                           >
-                                            <span className={`text-[10px] font-semibold ${isPending ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                                            <span className={`text-[9px] font-semibold ${isPending ? 'text-amber-600 dark:text-amber-400' : ''}`}>
                                               {getDeliveryLabel(point.delivery)}
                                             </span>
                                             <Edit2 className="size-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                                           </button>
                                         ) : (
-                                          <span className="text-[10px] font-semibold">{getDeliveryLabel(point.delivery)}</span>
+                                          <span className="text-[9px] font-semibold">{getDeliveryLabel(point.delivery)}</span>
                                         )}
                                       </td>
                                     )
@@ -3043,7 +3097,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                         >
                                           <TooltipTrigger
                                             type="button"
-                                            className="text-[10px] font-semibold cursor-help tabular-nums"
+                                            className="text-[9px] font-semibold cursor-help tabular-nums"
                                             onClick={() => setOpenKmTooltip(prev => prev === point.code ? null : point.code)}
                                           >
                                             {hasCoords && distInfo ? formatKm(distInfo.display) : ''}
@@ -3167,8 +3221,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                           )}
                           {isEditMode && hasUnsavedChanges && (
                             <Button
+                              variant="ghost"
                               size="sm"
-                              className="h-7 gap-1.5 text-[11px]"
+                              className="h-7 gap-1.5 text-[11px] !border-0 !bg-transparent shadow-none text-green-600 hover:text-green-700 hover:!bg-green-500/10"
                               onClick={saveChanges}
                               disabled={isSaving}
                             >
@@ -3992,8 +4047,19 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <Input
                     placeholder="Enter route name"
                     value={editingRoute.name}
-                    onChange={(e) => setEditingRoute({ ...editingRoute, name: e.target.value })}
+                    className={editRouteErrors.name ? "border-destructive focus-visible:ring-destructive" : ""}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      const nameDup = routes.find(r => r.id !== editingRoute.id && r.name.trim().toLowerCase() === val.trim().toLowerCase() && r.shift === editingRoute.shift)
+                      setEditRouteErrors(prev => ({ ...prev, name: nameDup ? `Name already used by "${nameDup.code}" (${nameDup.shift})` : val.trim() ? undefined : "Route name is required" }))
+                      setEditingRoute({ ...editingRoute, name: val })
+                    }}
                   />
+                  {editRouteErrors.name && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="size-3" />{editRouteErrors.name}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -4001,15 +4067,31 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <Input
                     placeholder="Enter route code"
                     value={editingRoute.code}
-                    onChange={(e) => setEditingRoute({ ...editingRoute, code: e.target.value })}
+                    className={editRouteErrors.code ? "border-destructive focus-visible:ring-destructive" : ""}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      const codeDup = routes.find(r => r.id !== editingRoute.id && r.code.trim().toLowerCase() === val.trim().toLowerCase())
+                      setEditRouteErrors(prev => ({ ...prev, code: codeDup ? `Code already used by "${codeDup.name}"` : val.trim() ? undefined : "Route code is required" }))
+                      setEditingRoute({ ...editingRoute, code: val })
+                    }}
                   />
+                  {editRouteErrors.code && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="size-3" />{editRouteErrors.code}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Shift</label>
                   <select
                     value={editingRoute.shift}
-                    onChange={(e) => setEditingRoute({ ...editingRoute, shift: e.target.value })}
+                    onChange={(e) => {
+                      const newShift = e.target.value
+                      const nameDup = routes.find(r => r.id !== editingRoute.id && r.name.trim().toLowerCase() === editingRoute.name.trim().toLowerCase() && r.shift === newShift)
+                      setEditRouteErrors(prev => ({ ...prev, name: nameDup ? `Name already used by "${nameDup.code}" (${nameDup.shift})` : editingRoute.name.trim() ? undefined : "Route name is required" }))
+                      setEditingRoute({ ...editingRoute, shift: newShift })
+                    }}
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="AM">AM</option>
@@ -4036,11 +4118,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       onClick={() => {
                         setEditRouteDialogOpen(false)
                         setEditingRoute(null)
+                        setEditRouteErrors({})
                       }}
                     >
                       Cancel
                     </Button>
-                    <Button onClick={handleSaveRoute}>
+                    <Button onClick={handleSaveRoute} disabled={Object.keys(editRouteErrors).length > 0}>
                       <Check className="size-4 mr-2" />
                       Save Changes
                     </Button>
@@ -4048,6 +4131,40 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Clear Log Confirmation Dialog */}
+        <Dialog open={!!clearLogConfirm} onOpenChange={open => { if (!open) setClearLogConfirm(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-destructive">Clear All Log Entries</DialogTitle>
+              <DialogDescription>
+                Semua log entries untuk route ini akan dipadam secara kekal. Tindakan ini tidak boleh diundo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setClearLogConfirm(null)}>Cancel</Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  const routeId = clearLogConfirm
+                  if (!routeId) return
+                  setClearLogConfirm(null)
+                  setCardChangelogs(prev => ({ ...prev, [routeId]: { loading: true, entries: [] } }))
+                  try {
+                    await fetch(`/api/route-notes?routeId=${encodeURIComponent(routeId)}&type=changelog`, { method: 'DELETE' })
+                    setCardChangelogs(prev => ({ ...prev, [routeId]: { loading: false, entries: [] } }))
+                    toast.success('Log cleared', { description: 'All log entries have been removed.', icon: <CheckCircle2 className="size-4 text-primary" />, duration: 3000 })
+                  } catch {
+                    setCardChangelogs(prev => ({ ...prev, [routeId]: { ...prev[routeId], loading: false } }))
+                    toast.error('Failed to clear log', { duration: 3000 })
+                  }
+                }}
+              >
+                <Trash2 className="size-4 mr-2" /> Clear All
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
 
