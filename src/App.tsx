@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
 import { LandingPage } from "@/components/LandingPage"
+import { DeliveryMap } from "@/components/DeliveryMap"
 import { useEditMode } from "@/contexts/EditModeContext"
 
 const RouteList = lazy(() => import("@/components/RouteList").then(m => ({ default: m.RouteList })))
@@ -15,7 +16,8 @@ const CustomRoutePage = lazy(() => import("@/components/CustomRoutePage").then(m
 import { EditModeProvider } from "@/contexts/EditModeContext"
 import { DeviceProvider } from "@/contexts/DeviceContext"
 import { Toaster } from "sonner"
-import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore } from "lucide-react"
+import { Home, Package, Settings2, Images, ChevronDown, Truck, List, Layers, MapPin, ClipboardList, Users, Globe, ExternalLink, Pin, X, Minus, Plus, Archive, ArchiveRestore, Search, Info, Cog, MapPinned, TableProperties, Expand, Shrink } from "lucide-react"
+import { RowInfoModal } from "@/components/RowInfoModal"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,6 +33,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 
 const DAYS = [
   { en: "Monday",    my: "Isnin"  },
@@ -78,6 +82,47 @@ const QUICK_ACCESS_OPTIONS: QuickAccessOption[] = [
   { id: "gallery-album",    icon: Images,        label: "Album",      description: "Photo gallery",        iconClass: "text-pink-500" },
   { id: "settings-profile", icon: Settings2,     label: "Settings",   description: "Profile settings",     iconClass: "text-indigo-500" },
 ]
+
+interface HomeRouteDialogPoint {
+  code: string
+  name: string
+  delivery: string
+  latitude: number
+  longitude: number
+  descriptions: { key: string; value: string }[]
+  markerColor?: string
+  qrCodeImageUrl?: string
+  qrCodeDestinationUrl?: string
+  avatarImageUrl?: string
+  avatarImages?: string[]
+}
+
+type HomeTableColumn = 'no' | 'code' | 'name' | 'delivery' | 'km' | 'action'
+type HomeTableSettingsTab = 'column' | 'row' | 'sorting'
+type HomeTableSort = 'default' | 'code-asc' | 'code-desc' | 'name-asc' | 'name-desc' | 'delivery-asc' | 'delivery-desc'
+
+const HOME_DEFAULT_MAP_CENTER = { lat: 3.06955, lng: 101.5469179 }
+
+function homeHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function homeFormatKm(km: number): string {
+  const rounded = Math.round(km * 10) / 10
+  return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)} Km`
+}
+
+function homeDeliveryLabel(value: string): string {
+  if (value === "Weekday 2" || value === "Weekday 3") return "Weekday"
+  return value
+}
 
 const DEFAULT_QUICK_ACCESS: QuickAccessId[] = []
 
@@ -305,6 +350,25 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [pinnedRoutes, setPinnedRoutes] = useState<Array<{ id: string; name: string; code: string; shift: string }>>(() => {
     try { return JSON.parse(localStorage.getItem("fcalendar_pinned_routes") || "[]") } catch { return [] }
   })
+  const [homeRouteDialogOpen, setHomeRouteDialogOpen] = useState(false)
+  const [homeRouteDialogLoading, setHomeRouteDialogLoading] = useState(false)
+  const [homeRouteDialogError, setHomeRouteDialogError] = useState<string | null>(null)
+  const [homeRouteDialogQuery, setHomeRouteDialogQuery] = useState("")
+  const [homeRouteDialogRoute, setHomeRouteDialogRoute] = useState<{ id: string; name: string; code: string; shift: string } | null>(null)
+  const [homeRouteDialogPoints, setHomeRouteDialogPoints] = useState<HomeRouteDialogPoint[]>([])
+  const [homeRouteDialogView, setHomeRouteDialogView] = useState<'table' | 'map'>('table')
+  const [homeRouteDialogFullscreen, setHomeRouteDialogFullscreen] = useState(false)
+  const [homeRouteMapSettingsOpen, setHomeRouteMapSettingsOpen] = useState(false)
+  const [homeRouteTableSettingsTab, setHomeRouteTableSettingsTab] = useState<HomeTableSettingsTab>('column')
+  const [homeRouteVisibleColumns, setHomeRouteVisibleColumns] = useState<Set<HomeTableColumn>>(() => new Set(['no', 'code', 'name', 'delivery', 'km', 'action']))
+  const [homeRouteTableSort, setHomeRouteTableSort] = useState<HomeTableSort>('default')
+  const [homeRouteMapStyle, setHomeRouteMapStyle] = useState<'google-streets' | 'google-satellite' | 'osm'>('google-streets')
+  const [homeRouteMarkerStyle, setHomeRouteMarkerStyle] = useState<'pin' | 'dot' | 'ring'>('pin')
+  const [homeRouteShowPolyline, setHomeRouteShowPolyline] = useState(false)
+  const [homeRouteMapRefitToken, setHomeRouteMapRefitToken] = useState(0)
+  const [homeRouteMapResizeToken, setHomeRouteMapResizeToken] = useState(0)
+  const [homeRouteSelectedPoint, setHomeRouteSelectedPoint] = useState<HomeRouteDialogPoint | null>(null)
+  const [homeRoutePointModalOpen, setHomeRoutePointModalOpen] = useState(false)
   useEffect(() => {
     const sync = () => {
       try { setPinnedRoutes(JSON.parse(localStorage.getItem("fcalendar_pinned_routes") || "[]")) } catch {}
@@ -325,13 +389,109 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   })
   const pinnedAM = pinnedRoutesOrdered.filter(r => r.shift === "AM").length
   const pinnedPM = pinnedRoutesOrdered.filter(r => r.shift === "PM").length
-  const openPinnedRouteDetail = (routeId: string) => {
+  const openPinnedRouteTable = async (routeId: string) => {
+    const fallbackPinned = pinnedRoutes.find(route => route.id === routeId) ?? null
+    setHomeRouteDialogRoute(fallbackPinned)
+    setHomeRouteDialogPoints([])
+    setHomeRouteDialogQuery("")
+    setHomeRouteDialogError(null)
+    setHomeRouteDialogOpen(true)
+    setHomeRouteDialogLoading(true)
+    setHomeRouteDialogView('table')
+    setHomeRouteDialogFullscreen(false)
+    setHomeRouteMapRefitToken(0)
+    setHomeRouteMapResizeToken(0)
+
     try {
-      sessionStorage.setItem("fcalendar_open_route", routeId)
+      const response = await fetch("/api/routes")
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+      const payload = await response.json()
+      const routes = payload?.data ?? payload ?? []
+      const selected = Array.isArray(routes)
+        ? routes.find((route: { id?: string }) => route?.id === routeId)
+        : null
+
+      if (!selected) {
+        setHomeRouteDialogError("Route not found")
+        return
+      }
+
+      setHomeRouteDialogRoute({
+        id: selected.id,
+        name: selected.name,
+        code: selected.code,
+        shift: selected.shift,
+      })
+      setHomeRouteDialogPoints(
+        Array.isArray(selected.deliveryPoints)
+          ? selected.deliveryPoints.map((point: {
+              code?: string
+              name?: string
+              delivery?: string
+              latitude?: number
+              longitude?: number
+              descriptions?: { key?: string; value?: string }[]
+              markerColor?: string
+              qrCodeImageUrl?: string
+              qrCodeDestinationUrl?: string
+              avatarImageUrl?: string
+              avatarImages?: string[]
+            }) => ({
+              code: point.code ?? "",
+              name: point.name ?? "",
+              delivery: point.delivery ?? "",
+              latitude: Number(point.latitude) || 0,
+              longitude: Number(point.longitude) || 0,
+              descriptions: Array.isArray(point.descriptions)
+                ? point.descriptions
+                    .map((item) => ({ key: item?.key ?? "", value: item?.value ?? "" }))
+                    .filter((item) => item.key.trim() !== "")
+                : [],
+              markerColor: point.markerColor,
+              qrCodeImageUrl: point.qrCodeImageUrl,
+              qrCodeDestinationUrl: point.qrCodeDestinationUrl,
+              avatarImageUrl: point.avatarImageUrl,
+              avatarImages: Array.isArray(point.avatarImages) ? point.avatarImages : undefined,
+            }))
+          : []
+      )
     } catch {
-      // ignore session storage failures and navigate anyway
+      setHomeRouteDialogError("Failed to load route details")
+    } finally {
+      setHomeRouteDialogLoading(false)
     }
-    onNavigate("route-list")
+  }
+
+  const homeRouteDialogRows = homeRouteDialogPoints.filter((point) => {
+    const query = homeRouteDialogQuery.trim().toLowerCase()
+    if (!query) return true
+    return (
+      point.code.toLowerCase().includes(query)
+      || point.name.toLowerCase().includes(query)
+      || point.delivery.toLowerCase().includes(query)
+    )
+  })
+
+  const homeRouteTableRows = [...homeRouteDialogRows].sort((left, right) => {
+    if (homeRouteTableSort === 'default') return 0
+    if (homeRouteTableSort === 'code-asc') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
+    if (homeRouteTableSort === 'code-desc') return right.code.localeCompare(left.code, undefined, { numeric: true, sensitivity: 'base' })
+    if (homeRouteTableSort === 'name-asc') return left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
+    if (homeRouteTableSort === 'name-desc') return right.name.localeCompare(left.name, undefined, { numeric: true, sensitivity: 'base' })
+    if (homeRouteTableSort === 'delivery-asc') return homeDeliveryLabel(left.delivery).localeCompare(homeDeliveryLabel(right.delivery), undefined, { sensitivity: 'base' })
+    if (homeRouteTableSort === 'delivery-desc') return homeDeliveryLabel(right.delivery).localeCompare(homeDeliveryLabel(left.delivery), undefined, { sensitivity: 'base' })
+    return 0
+  })
+
+  const toggleHomeTableColumn = (column: HomeTableColumn) => {
+    setHomeRouteVisibleColumns((prev) => {
+      if (prev.size === 1 && prev.has(column)) return prev
+      const next = new Set(prev)
+      if (next.has(column)) next.delete(column)
+      else next.add(column)
+      return next
+    })
   }
 
   return (
@@ -354,7 +514,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             </div>
             <button
               onClick={() => onNavigate("route-list")}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1 px-0 py-0 text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
             >
               <List className="size-3" />Open List
             </button>
@@ -369,14 +529,13 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             {pinnedRoutesOrdered.map((r) => {
               const isKL  = (r.name + " " + r.code).toLowerCase().includes("kl")
               const isSel = (r.name + " " + r.code).toLowerCase().includes("sel")
+              const routeTitle = /^route\b/i.test(r.name.trim()) ? r.name.trim() : `Route ${r.name}`
               return (
-                <button
+                <div
                   key={r.id}
-                  type="button"
-                  className="group w-full flex flex-col items-start gap-2.5 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 active:scale-[0.97] transition-all duration-150"
-                  onClick={() => openPinnedRouteDetail(r.id)}
+                  className="group w-full flex items-center justify-between gap-3 rounded-xl p-3.5 text-left border border-border bg-card hover:bg-muted/40 hover:border-border/80 transition-all duration-150"
                 >
-                  <div className="flex items-center gap-2.5 w-full">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     {isKL
                       ? <img src="/kl-flag.png" className="shrink-0 object-cover rounded shadow-sm ring-1 ring-black/10 dark:ring-white/10" style={{ width: 32, height: 20 }} alt="KL" />
                       : isSel
@@ -385,24 +544,375 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                         <Pin className="size-3.5 text-primary" />
                         </div>
                     }
-                    <p className="flex-1 text-sm font-semibold text-foreground tracking-tight leading-snug line-clamp-1 min-w-0">{r.name}</p>
+                    <p className="text-sm font-semibold text-foreground tracking-tight leading-snug truncate">{routeTitle}</p>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2 w-full pr-1">
-                    <span className="text-[10px] font-mono text-muted-foreground">{r.code}</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full text-white tracking-wide ${
-                      r.shift === "AM" ? "bg-blue-500" : r.shift === "PM" ? "bg-orange-600" : "bg-muted text-muted-foreground"
-                    }`}>{r.shift || "—"}</span>
-                  </div>
-
-                  <div className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      openPinnedRouteTable(r.id)
+                    }}
+                    className="inline-flex items-center gap-1 px-0 py-0 text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors"
+                  >
                     <List className="size-3" />View
-                  </div>
-                </button>
+                  </button>
+                </div>
               )
             })}
           </div>
         </div>
+      )}
+
+      <Dialog
+        open={homeRouteDialogOpen}
+        onOpenChange={(open) => {
+          setHomeRouteDialogOpen(open)
+          if (!open) {
+            setHomeRouteDialogQuery("")
+            setHomeRouteDialogError(null)
+            setHomeRouteDialogView('table')
+            setHomeRouteDialogFullscreen(false)
+            setHomeRouteMapSettingsOpen(false)
+            setHomeRouteMapResizeToken(0)
+            setHomeRouteMapRefitToken(0)
+          }
+        }}
+      >
+        <DialogContent
+          className={`p-0 gap-0 flex flex-col overflow-hidden duration-300 ease-in-out ${
+            homeRouteDialogFullscreen
+              ? '!fixed !inset-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !w-screen !max-w-none !h-dvh !rounded-none !border-0 !shadow-none'
+              : 'transition-[width,height,max-width,border-radius]'
+          }`}
+          style={homeRouteDialogFullscreen
+            ? {}
+            : { width: '92vw', maxWidth: '56rem', height: 'calc(3 * 44px + 96px)', borderRadius: '0.75rem' }
+          }
+        >
+          <DialogHeader className="border-b border-border bg-background px-5 py-3">
+            <div className="flex items-center gap-3">
+              {homeRouteDialogRoute && (() => {
+                const routeText = `${homeRouteDialogRoute.name} ${homeRouteDialogRoute.code}`.toLowerCase()
+                if (routeText.includes("kl")) {
+                  return <img src="/kl-flag.png" className="object-cover shadow-sm ring-1 ring-black/10 dark:ring-white/10 shrink-0" style={{ width: 28, height: 17, borderRadius: 3 }} alt="KL" />
+                }
+                if (routeText.includes("sel")) {
+                  return <img src="/selangor-flag.png" className="object-cover shadow-sm ring-1 ring-black/10 dark:ring-white/10 shrink-0" style={{ width: 28, height: 17, borderRadius: 3 }} alt="Selangor" />
+                }
+                return (
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-primary/15 ring-1 ring-primary/25">
+                    <Truck className="size-4 text-primary" />
+                  </div>
+                )
+              })()}
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-sm font-semibold tracking-tight truncate">
+                  {homeRouteDialogRoute
+                    ? `Route ${homeRouteDialogRoute.name}`
+                    : "Pinned Route"}
+                </DialogTitle>
+                {homeRouteDialogRoute && (
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {homeRouteDialogRoute.code} · {homeRouteDialogRoute.shift || "-"} · {homeRouteDialogPoints.length} locations
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => setHomeRouteMapSettingsOpen(true)}
+                title={homeRouteDialogView === 'map' ? 'Map Settings' : 'Table Settings'}
+                className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              >
+                <Cog className="size-[15px]" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setHomeRouteDialogView((prev) => {
+                    const next = prev === 'table' ? 'map' : 'table'
+                    if (next === 'map') setHomeRouteMapRefitToken((t) => t + 1)
+                    return next
+                  })
+                  setHomeRouteMapResizeToken((t) => t + 1)
+                }}
+                title={homeRouteDialogView === 'table' ? 'Switch to Map' : 'Switch to Table'}
+                className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg transition-colors hover:bg-muted/60"
+                style={{ color: homeRouteDialogView === 'map' ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }}
+              >
+                {homeRouteDialogView === 'table' ? <MapPinned className="size-[15px]" /> : <TableProperties className="size-[15px]" />}
+              </button>
+
+              <button
+                onClick={() => {
+                  setHomeRouteDialogFullscreen((prev) => !prev)
+                  if (homeRouteDialogView === 'map') setHomeRouteMapResizeToken((t) => t + 1)
+                }}
+                title={homeRouteDialogFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              >
+                {homeRouteDialogFullscreen ? <Shrink className="size-[15px]" /> : <Expand className="size-[15px]" />}
+              </button>
+            </div>
+          </DialogHeader>
+
+          {homeRouteDialogView === 'table' ? (
+            <>
+              <div className="border-b border-border/70 bg-background/95 px-3 py-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                  <Input
+                    value={homeRouteDialogQuery}
+                    onChange={(event) => setHomeRouteDialogQuery(event.target.value)}
+                    placeholder="Search by code, name, delivery..."
+                    className="h-8 pl-8 pr-8 text-[11px]"
+                  />
+                  {homeRouteDialogQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setHomeRouteDialogQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
+                      aria-label="Clear search"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="max-h-[60vh] overflow-auto">
+                {homeRouteDialogLoading ? (
+                  <div className="px-4 py-8 text-center text-xs text-muted-foreground">Loading route table...</div>
+                ) : homeRouteDialogError ? (
+                  <div className="px-4 py-8 text-center text-xs text-destructive">{homeRouteDialogError}</div>
+                ) : homeRouteDialogRows.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-xs text-muted-foreground">No matching location found.</div>
+                ) : (
+                  <table className="w-full border-collapse text-[11px] whitespace-nowrap min-w-max text-center">
+                    <thead className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+                      <tr>
+                        {homeRouteVisibleColumns.has('no') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">#</th>}
+                        {homeRouteVisibleColumns.has('code') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">Code</th>}
+                        {homeRouteVisibleColumns.has('name') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">Name</th>}
+                        {homeRouteVisibleColumns.has('delivery') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">Delivery</th>}
+                        {homeRouteVisibleColumns.has('km') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">KM</th>}
+                        {homeRouteVisibleColumns.has('action') && <th className="h-9 px-3 text-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/70">Action</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {homeRouteTableRows.map((point, index) => (
+                        <tr key={`${point.code}-${index}`} className="border-b border-border/50 odd:bg-muted/10 even:bg-background hover:bg-muted/25 transition-colors">
+                          {homeRouteVisibleColumns.has('no') && <td className="h-9 px-3 text-center font-semibold text-primary">{index + 1}</td>}
+                          {homeRouteVisibleColumns.has('code') && <td className="h-9 px-3 text-center font-semibold">{point.code}</td>}
+                          {homeRouteVisibleColumns.has('name') && <td className="h-9 px-3 text-center font-medium">{point.name}</td>}
+                          {homeRouteVisibleColumns.has('delivery') && <td className="h-9 px-3 text-center font-medium">{homeDeliveryLabel(point.delivery)}</td>}
+                          {homeRouteVisibleColumns.has('km') && (
+                            <td className="h-9 px-3 text-center font-medium">
+                              {point.latitude !== 0 || point.longitude !== 0
+                                ? homeFormatKm(homeHaversineKm(HOME_DEFAULT_MAP_CENTER.lat, HOME_DEFAULT_MAP_CENTER.lng, point.latitude, point.longitude))
+                                : "-"}
+                            </td>
+                          )}
+                          {homeRouteVisibleColumns.has('action') && (
+                            <td className="h-9 px-3 text-center">
+                              <button
+                                type="button"
+                                className="inline-flex items-center justify-center size-7 rounded-lg text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+                                onClick={() => {
+                                  setHomeRouteSelectedPoint(point)
+                                  setHomeRoutePointModalOpen(true)
+                                }}
+                                title="View location details"
+                              >
+                                <Info className="size-3.5" />
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="border-t border-border bg-background/95 px-4 py-2.5 min-h-[52px] flex flex-wrap items-center justify-between gap-2 shrink-0 backdrop-blur-sm">
+                <span className="font-medium text-[11px] text-muted-foreground">Location : {homeRouteDialogRows.length}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 min-h-[400px] relative">
+              <DeliveryMap
+                deliveryPoints={homeRouteDialogPoints}
+                scrollZoom={true}
+                showPolyline={homeRouteShowPolyline}
+                markerStyle={homeRouteMarkerStyle}
+                mapStyle={homeRouteMapStyle}
+                startPoint={HOME_DEFAULT_MAP_CENTER}
+                includeStartInBounds={false}
+                refitToken={homeRouteMapRefitToken}
+                resizeToken={homeRouteMapResizeToken}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={homeRouteMapSettingsOpen} onOpenChange={setHomeRouteMapSettingsOpen}>
+        <DialogContent className="max-w-sm w-[92vw] p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-4 py-3 border-b border-border">
+            <DialogTitle className="text-sm font-semibold">{homeRouteDialogView === 'map' ? 'Map Settings' : 'Table Settings'}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 space-y-4">
+            {homeRouteDialogView === 'map' ? (
+              <>
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Map Style</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: 'google-streets', label: 'Street' },
+                      { key: 'google-satellite', label: 'Satellite' },
+                      { key: 'osm', label: 'OSM' },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className={`h-8 rounded-md text-[11px] font-medium border transition-colors ${homeRouteMapStyle === item.key ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:bg-muted/50'}`}
+                        onClick={() => setHomeRouteMapStyle(item.key as 'google-streets' | 'google-satellite' | 'osm')}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Marker Style</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: 'pin', label: 'Pin' },
+                      { key: 'dot', label: 'Dot' },
+                      { key: 'ring', label: 'Ring' },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className={`h-8 rounded-md text-[11px] font-medium border transition-colors ${homeRouteMarkerStyle === item.key ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:bg-muted/50'}`}
+                        onClick={() => setHomeRouteMarkerStyle(item.key as 'pin' | 'dot' | 'ring')}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setHomeRouteShowPolyline((prev) => !prev)}
+                  className={`h-8 px-3 rounded-md text-[11px] font-medium border transition-colors ${homeRouteShowPolyline ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'}`}
+                >
+                  Polyline: {homeRouteShowPolyline ? 'On' : 'Off'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: 'column', label: 'Column' },
+                    { key: 'row', label: 'Row' },
+                    { key: 'sorting', label: 'Sorting' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      className={`h-8 rounded-md text-[11px] font-medium border transition-colors ${homeRouteTableSettingsTab === tab.key ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'}`}
+                      onClick={() => setHomeRouteTableSettingsTab(tab.key as HomeTableSettingsTab)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {homeRouteTableSettingsTab === 'column' && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Visible Columns</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'no', label: 'No' },
+                        { key: 'code', label: 'Code' },
+                        { key: 'name', label: 'Name' },
+                        { key: 'delivery', label: 'Delivery' },
+                        { key: 'km', label: 'KM' },
+                        { key: 'action', label: 'Action' },
+                      ].map((column) => (
+                        <button
+                          key={column.key}
+                          type="button"
+                          onClick={() => toggleHomeTableColumn(column.key as HomeTableColumn)}
+                          className={`h-8 rounded-md text-[11px] font-medium border transition-colors ${homeRouteVisibleColumns.has(column.key as HomeTableColumn) ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'}`}
+                        >
+                          {column.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {homeRouteTableSettingsTab === 'row' && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Row</p>
+                    <p className="text-[11px] text-muted-foreground">Custom row re-order is available in full Route List page.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHomeRouteMapSettingsOpen(false)
+                        setHomeRouteDialogOpen(false)
+                        onNavigate('route-list')
+                      }}
+                      className="h-8 px-3 rounded-md text-[11px] font-medium border border-border bg-background hover:bg-muted/50 transition-colors"
+                    >
+                      Open Route List
+                    </button>
+                  </div>
+                )}
+
+                {homeRouteTableSettingsTab === 'sorting' && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Sort By</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'default', label: 'Default' },
+                        { key: 'code-asc', label: 'Code A-Z' },
+                        { key: 'code-desc', label: 'Code Z-A' },
+                        { key: 'name-asc', label: 'Name A-Z' },
+                        { key: 'name-desc', label: 'Name Z-A' },
+                        { key: 'delivery-asc', label: 'Delivery A-Z' },
+                        { key: 'delivery-desc', label: 'Delivery Z-A' },
+                      ].map((sortItem) => (
+                        <button
+                          key={sortItem.key}
+                          type="button"
+                          onClick={() => setHomeRouteTableSort(sortItem.key as HomeTableSort)}
+                          className={`h-8 rounded-md text-[11px] font-medium border transition-colors ${homeRouteTableSort === sortItem.key ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'}`}
+                        >
+                          {sortItem.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {homeRouteSelectedPoint && (
+        <RowInfoModal
+          open={homeRoutePointModalOpen}
+          onOpenChange={setHomeRoutePointModalOpen}
+          point={homeRouteSelectedPoint}
+          isEditMode={false}
+        />
       )}
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
@@ -465,11 +975,14 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 
           <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
             {/* Header */}
-            <div className="grid grid-cols-4 items-end border-b border-border bg-card px-4 py-3 gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Day</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Stock In</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Move Front</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Expired</span>
+            <div
+              className="grid items-end border-b border-border bg-card px-4 py-3 gap-2"
+              style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}
+            >
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground text-center">Day</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground text-center">In</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground text-center">Front</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground text-center">Out</span>
             </div>
             {/* Rows */}
             <div className="flex flex-col">
@@ -486,14 +999,12 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                     }}
                   >
                     <div className="overflow-hidden">
-                      <div className={`grid grid-cols-4 items-center px-4 py-3 gap-2${i < DAYS.length - 1 ? ' border-b border-border/60' : ''}`}>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {isToday && (
-                            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
-                          )}
-                          <div className="min-w-0">
-                            <p className={`text-sm font-semibold truncate ${isToday ? "text-primary" : "text-foreground"}`}>{day.en}</p>
-                          </div>
+                      <div
+                        className={`grid items-center px-4 py-3 gap-2${i < DAYS.length - 1 ? ' border-b border-border/60' : ''}`}
+                        style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}
+                      >
+                        <div className="min-w-0 text-center">
+                          <p className={`text-[11px] font-semibold truncate ${isToday ? "text-primary" : "text-foreground"}`}>{day.en}</p>
                         </div>
                         <div className="flex justify-center"><ColorPill color={STOCK_IN_COLORS[i]} size="sm" /></div>
                         <div className="flex justify-center"><ColorPill color={MOVE_FRONT_COLORS[i]} size="sm" /></div>

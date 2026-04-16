@@ -689,12 +689,14 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   useEffect(() => {
     if (isLoading) return
     const pending = sessionStorage.getItem('fcalendar_open_route')
+    const pendingView = sessionStorage.getItem('fcalendar_open_route_view')
     if (pending) {
       sessionStorage.removeItem('fcalendar_open_route')
+      sessionStorage.removeItem('fcalendar_open_route_view')
       setCurrentRouteId(pending)
       setDetailDialogOpen(true)
       setDetailFullscreen(false)
-      setDialogView('table')
+      setDialogView(pendingView === 'map' ? 'map' : 'table')
       setSelectedRows([])
       setCombinedRouteIds(new Set([pending]))
       setShowPolyline(false)
