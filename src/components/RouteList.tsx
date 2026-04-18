@@ -1409,11 +1409,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     [effectiveColumns]
   )
 
-  const tableColSpan = useMemo(
-    () => visibleDataColumns.length + (isActionColumnVisible ? 1 : 0) + (isEditMode ? 1 : 0),
-    [visibleDataColumns.length, isActionColumnVisible, isEditMode]
-  )
-
   // Compute distances for Km column
   // direct → straight-line from start point to each row
   // step   → cumulative chain: start point → Row1 → Row2 → Row3 …
