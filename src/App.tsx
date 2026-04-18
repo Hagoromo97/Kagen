@@ -131,6 +131,28 @@ function homeDeliveryLabel(value: string): string {
   return value
 }
 
+function homeIsDeliveryActive(delivery: string, date: Date = new Date()): boolean {
+  const dayOfWeek = date.getDay()
+  const localNoon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
+  const epochDay = Math.floor(localNoon.getTime() / 86400000)
+  switch (delivery) {
+    case 'Daily':
+      return true
+    case 'Alt 1':
+      return epochDay % 2 !== 0
+    case 'Alt 2':
+      return epochDay % 2 === 0
+    case 'Weekday':
+      return dayOfWeek >= 0 && dayOfWeek <= 4
+    case 'Weekday 2':
+      return dayOfWeek >= 1 && dayOfWeek <= 5
+    case 'Weekday 3':
+      return [0, 2, 5].includes(dayOfWeek)
+    default:
+      return true
+  }
+}
+
 const DEFAULT_QUICK_ACCESS: QuickAccessId[] = []
 
 function isQuickAccessId(value: unknown): value is QuickAccessId {
@@ -512,23 +534,30 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     )
   })
 
-  const homeRouteTableRows = [...homeRouteDialogRows].sort((left, right) => {
-    if (homeRouteSavedSortId) {
-      const saved = homeRouteSavedRowOrders.find(s => s.id === homeRouteSavedSortId)
-      if (!saved) return 0
-      const leftIndex = saved.order.indexOf(left.code)
-      const rightIndex = saved.order.indexOf(right.code)
-      return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex)
-    }
-    if (homeRouteTableSort === 'default') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
-    if (homeRouteTableSort === 'code-asc') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
-    if (homeRouteTableSort === 'code-desc') return right.code.localeCompare(left.code, undefined, { numeric: true, sensitivity: 'base' })
-    if (homeRouteTableSort === 'name-asc') return left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
-    if (homeRouteTableSort === 'name-desc') return right.name.localeCompare(left.name, undefined, { numeric: true, sensitivity: 'base' })
-    if (homeRouteTableSort === 'delivery-asc') return homeDeliveryLabel(left.delivery).localeCompare(homeDeliveryLabel(right.delivery), undefined, { sensitivity: 'base' })
-    if (homeRouteTableSort === 'delivery-desc') return homeDeliveryLabel(right.delivery).localeCompare(homeDeliveryLabel(left.delivery), undefined, { sensitivity: 'base' })
-    return 0
-  })
+  const homeRouteTableRows = (() => {
+    const sorted = [...homeRouteDialogRows].sort((left, right) => {
+      if (homeRouteSavedSortId) {
+        const saved = homeRouteSavedRowOrders.find(s => s.id === homeRouteSavedSortId)
+        if (!saved) return 0
+        const leftIndex = saved.order.indexOf(left.code)
+        const rightIndex = saved.order.indexOf(right.code)
+        return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex)
+      }
+      if (homeRouteTableSort === 'default') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
+      if (homeRouteTableSort === 'code-asc') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
+      if (homeRouteTableSort === 'code-desc') return right.code.localeCompare(left.code, undefined, { numeric: true, sensitivity: 'base' })
+      if (homeRouteTableSort === 'name-asc') return left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
+      if (homeRouteTableSort === 'name-desc') return right.name.localeCompare(left.name, undefined, { numeric: true, sensitivity: 'base' })
+      if (homeRouteTableSort === 'delivery-asc') return homeDeliveryLabel(left.delivery).localeCompare(homeDeliveryLabel(right.delivery), undefined, { sensitivity: 'base' })
+      if (homeRouteTableSort === 'delivery-desc') return homeDeliveryLabel(right.delivery).localeCompare(homeDeliveryLabel(left.delivery), undefined, { sensitivity: 'base' })
+      return 0
+    })
+
+    const today = new Date()
+    const active = sorted.filter((point) => homeIsDeliveryActive(point.delivery, today))
+    const inactive = sorted.filter((point) => !homeIsDeliveryActive(point.delivery, today))
+    return [...active, ...inactive]
+  })()
 
   const getHomeRouteKmValue = (point: HomeRouteDialogPoint, index: number): string => {
     if (point.latitude === 0 && point.longitude === 0) return '-'
