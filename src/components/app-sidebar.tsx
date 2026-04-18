@@ -136,6 +136,21 @@ export function AppSidebar({
   const { isEditMode, setIsEditMode, hasUnsavedChanges, saveChanges, isSaving, discardChanges } = useEditMode()
   const { mode, toggleMode } = useTheme()
 
+  const text = {
+    searchPlaceholder: "Search...",
+    noResults: "No results found",
+    tryDifferentKeyword: "Try a different keyword",
+    darkMode: "Dark Mode",
+    lightMode: "Light Mode",
+    editMode: "Edit Mode",
+    switching: "Switching...",
+    unsavedTitle: "Unsaved Changes",
+    unsavedDescription: "You have unsaved changes. What would you like to do before turning off Edit Mode?",
+    discardChanges: "Discard Changes",
+    saveAndTurnOff: "Save & Turn Off",
+    saving: "Saving...",
+  }
+
   // Mutually exclusive: opening a Main submenu closes Settings, and vice versa
   const handleNavItemChange = (item: string | null) => {
     setOpenNavItem(item)
@@ -184,8 +199,10 @@ export function AppSidebar({
     return (
       "settings".includes(q) ||
       data.settingsItems.some(i => i.title.toLowerCase().includes(q)) ||
-      "dark mode".includes(q) || "light mode".includes(q) || "appearance".includes(q) ||
-      "edit mode".includes(q) || "edit".includes(q)
+      text.darkMode.toLowerCase().includes(q) ||
+      text.lightMode.toLowerCase().includes(q) ||
+      text.editMode.toLowerCase().includes(q) ||
+      "appearance".includes(q) || "edit".includes(q)
     )
   }, [searchQuery])
 
@@ -228,7 +245,7 @@ export function AppSidebar({
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none transition-colors" />
         <input
           type="text"
-          placeholder="Search..."
+          placeholder={text.searchPlaceholder}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="sidebar-search h-8 w-full rounded-md border border-input bg-background pl-8 pr-7 text-[11px] md:text-[11px] shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
@@ -263,8 +280,8 @@ export function AppSidebar({
         {noResults && (
           <div className="flex flex-col items-center gap-1.5 py-6 px-3 text-center animate-in fade-in duration-200">
             <span className="text-xl">🔍</span>
-            <p className="text-xs font-medium text-muted-foreground">No results found</p>
-            <p className="text-[11px] text-muted-foreground/60">Try a different keyword</p>
+            <p className="text-xs font-medium text-muted-foreground">{text.noResults}</p>
+            <p className="text-[11px] text-muted-foreground/60">{text.tryDifferentKeyword}</p>
           </div>
         )}
       </SidebarContent>
@@ -278,7 +295,7 @@ export function AppSidebar({
             ? <Moon className="size-4 shrink-0 text-sidebar-primary" />
             : <Sun  className="size-4 shrink-0 text-sidebar-primary" />}
           <span className="flex-1 text-sm font-medium text-sidebar-foreground/90">
-            {mode === "dark" ? "Dark Mode" : "Light Mode"}
+            {mode === "dark" ? text.darkMode : text.lightMode}
           </span>
           <span onClick={e => e.stopPropagation()}>
             <Switch size="sm" className="fcal-switch-sidebar" checked={mode === "dark"} onCheckedChange={toggleMode} />
@@ -298,7 +315,7 @@ export function AppSidebar({
             <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-primary" : "text-sidebar-foreground/70"}`} />
           )}
           <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
-            {isEditModeTransitioning ? "Switching..." : "Edit Mode"}
+            {isEditModeTransitioning ? text.switching : text.editMode}
           </span>
           {!isEditModeTransitioning && (
             <span onClick={e => e.stopPropagation()}>
@@ -315,9 +332,9 @@ export function AppSidebar({
       <Dialog open={unsavedDialogOpen} onOpenChange={setUnsavedDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogTitle>{text.unsavedTitle}</DialogTitle>
             <DialogDescription>
-              You have unsaved changes. What would you like to do before turning off Edit Mode?
+              {text.unsavedDescription}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
@@ -329,7 +346,7 @@ export function AppSidebar({
                 setIsEditMode(false)
               }}
             >
-              Discard Changes
+              {text.discardChanges}
             </Button>
             <Button
               onClick={async () => {
@@ -339,7 +356,7 @@ export function AppSidebar({
               }}
               disabled={isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save & Turn Off'}
+              {isSaving ? text.saving : text.saveAndTurnOff}
             </Button>
           </DialogFooter>
         </DialogContent>

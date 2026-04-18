@@ -506,6 +506,14 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     ? 'Create a new card route, then add locations from existing Location records'
     : 'Add a new delivery route with details'
   const createRouteButtonLabel = isPlaygroundMode ? 'Create Card Route' : 'Create Route'
+  const clearLogText = {
+    noEntriesToClear: "No log entries to clear",
+    clearAllEntries: "Clear all log entries",
+    title: "Clear All Log Entries",
+    description: "All log entries for this route will be permanently deleted. This action cannot be undone.",
+    cancel: "Cancel",
+    clearAll: "Clear All",
+  }
   const { isEditMode, hasUnsavedChanges, isSaving, setHasUnsavedChanges, registerSaveHandler, saveChanges, registerDiscardHandler } = useEditMode()
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"))
   useEffect(() => {
@@ -2630,7 +2638,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         onClick={() => setClearLogConfirm(route.id)}
                         disabled={!cl || cl.loading || cl.entries.length === 0}
                         style={{ flex: 1, borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: !cl || cl.loading || cl.entries.length === 0 ? '#e5e7eb' : '#fee2e2', color: !cl || cl.loading || cl.entries.length === 0 ? '#6b7280' : '#dc2626', border: !cl || cl.loading || cl.entries.length === 0 ? '1px solid #d1d5db' : '1px solid #fca5a5', cursor: !cl || cl.loading || cl.entries.length === 0 ? 'not-allowed' : 'pointer', opacity: 1 }}
-                        title={!cl || cl.loading || cl.entries.length === 0 ? 'No log entries to clear' : 'Clear all log entries'}
+                        title={!cl || cl.loading || cl.entries.length === 0 ? clearLogText.noEntriesToClear : clearLogText.clearAllEntries}
                       >
                         <Trash2 style={{ width: 11, height: 11 }} /> Clear
                       </button>
@@ -4121,13 +4129,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         <Dialog open={!!clearLogConfirm} onOpenChange={open => { if (!open) setClearLogConfirm(null) }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-destructive">Clear All Log Entries</DialogTitle>
+              <DialogTitle className="text-destructive">{clearLogText.title}</DialogTitle>
               <DialogDescription>
-                Semua log entries untuk route ini akan dipadam secara kekal. Tindakan ini tidak boleh diundo.
+                {clearLogText.description}
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setClearLogConfirm(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setClearLogConfirm(null)}>{clearLogText.cancel}</Button>
               <Button
                 variant="destructive"
                 onClick={async () => {
@@ -4145,7 +4153,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   }
                 }}
               >
-                <Trash2 className="size-4 mr-2" /> Clear All
+                <Trash2 className="size-4 mr-2" /> {clearLogText.clearAll}
               </Button>
             </div>
           </DialogContent>

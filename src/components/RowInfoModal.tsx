@@ -410,21 +410,22 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, allowMarke
                 </button>
               </div>
             ) : (
-              <div className="rounded-xl overflow-hidden">
+              <div className="rounded-xl overflow-hidden border border-border">
                 {drafts && drafts.length > 0 ? (
-                  drafts.map((d, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center cursor-default"
-                    >
-                      <span className="w-[80px] shrink-0 text-[11px] font-medium text-muted-foreground px-2.5 py-2 truncate">
-                        {d.key}
-                      </span>
-                      <span className="flex-1 text-[11px] font-medium text-foreground px-2.5 py-2">
-                        {d.value}
-                      </span>
-                    </div>
-                  ))
+                  <table className="w-full border-collapse">
+                    <tbody>
+                      {drafts.map((d, i) => (
+                        <tr key={i} className={i > 0 ? "border-t border-border" : ""}>
+                          <th className="w-[80px] text-[11px] font-medium text-muted-foreground px-2.5 py-2 text-center bg-muted/30">
+                            {d.key}
+                          </th>
+                          <td className="flex-1 text-[10px] font-normal text-foreground px-2.5 py-2 text-center">
+                            {d.value}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-5">No information added</p>
                 )}

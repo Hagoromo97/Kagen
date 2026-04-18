@@ -38,13 +38,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 
 const DAYS = [
-  { en: "Monday",    my: "Isnin"  },
-  { en: "Tuesday",   my: "Selasa" },
-  { en: "Wednesday", my: "Rabu"   },
-  { en: "Thursday",  my: "Khamis" },
-  { en: "Friday",    my: "Jumaat" },
-  { en: "Saturday",  my: "Sabtu"  },
-  { en: "Sunday",    my: "Ahad"   },
+  { en: "Monday" },
+  { en: "Tuesday" },
+  { en: "Wednesday" },
+  { en: "Thursday" },
+  { en: "Friday" },
+  { en: "Saturday" },
+  { en: "Sunday" },
 ]
 
 const STOCK_IN_COLORS  = ["#3B82F6","#F97316","#92400E","#22C55E","#A855F7","#EC4899","#EAB308"]
@@ -223,7 +223,7 @@ function QuickActionCard({
   )
 }
 
-function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
+function AddQuickAccessCard({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       type="button"
@@ -232,7 +232,7 @@ function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
     >
       <div className="flex items-center gap-2.5">
         <Plus className="size-5 shrink-0 text-primary" />
-        <p className="text-sm font-semibold text-foreground tracking-tight leading-snug truncate">Add Card</p>
+        <p className="text-sm font-semibold text-foreground tracking-tight leading-snug truncate">{label}</p>
       </div>
     </button>
   )
@@ -240,6 +240,28 @@ function AddQuickAccessCard({ onClick }: { onClick: () => void }) {
 
 function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { isEditMode } = useEditMode()
+  const homeText = {
+    addCard: "Add Card",
+    addQuickAccess: "Add Quick Access",
+    chooseCard: "Choose a card to add to Home.",
+    closeQuickAccessPicker: "Close quick access picker",
+    close: "Close",
+    allCardsInUse: "All cards are already in use.",
+    pinnedRoutes: "Pinned Routes",
+    openList: "Open List",
+    view: "View",
+    routePrefix: "Route",
+    routeNotFound: "Route not found",
+    failedLoadRouteDetails: "Failed to load route details",
+    quickOptions: {
+      "route-list": { label: "Route List", description: "Manage vending routes" },
+      "deliveries": { label: "Location", description: "Delivery records" },
+      "rooster": { label: "Rooster", description: "Team schedule" },
+      "plano-vm": { label: "Plano VM", description: "Planogram tools" },
+      "gallery-album": { label: "Album", description: "Photo gallery" },
+      "settings-profile": { label: "Settings", description: "Profile settings" },
+    } as Record<QuickAccessId, { label: string; description: string }>,
+  }
   const [tableExpanded, setTableExpanded] = useState(false)
   const [legendOpen, setLegendOpen] = useState(false)
   const [confirmingLink, setConfirmingLink] = useState<string | null>(null)
@@ -271,7 +293,16 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const todayIndex = (new Date().getDay() + 6) % 7
   const isToolPopoverOpen = confirmingLink !== null || isRymnetPopoverOpen
 
-  const quickAccessById = QUICK_ACCESS_OPTIONS.reduce<Record<QuickAccessId, QuickAccessOption>>((acc, option) => {
+  const localizedQuickAccessOptions = QUICK_ACCESS_OPTIONS.map((option) => {
+    const local = homeText.quickOptions[option.id]
+    return {
+      ...option,
+      label: local?.label ?? option.label,
+      description: local?.description ?? option.description,
+    }
+  })
+
+  const quickAccessById = localizedQuickAccessOptions.reduce<Record<QuickAccessId, QuickAccessOption>>((acc, option) => {
     acc[option.id] = option
     return acc
   }, {} as Record<QuickAccessId, QuickAccessOption>)
@@ -280,7 +311,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     .map(id => quickAccessById[id])
     .filter(Boolean)
 
-  const availableQuickOptions = QUICK_ACCESS_OPTIONS.filter(opt => !quickAccess.includes(opt.id))
+  const availableQuickOptions = localizedQuickAccessOptions.filter(opt => !quickAccess.includes(opt.id))
   const showColorGuide = !archiveState.colorGuide || isEditMode
   const showColorExpired = !archiveState.colorExpired || isEditMode
   const showToolEquipment = !archiveState.toolEquipment || isEditMode
@@ -330,28 +361,28 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <button
           type="button"
-          aria-label="Close quick access picker"
+          aria-label={homeText.closeQuickAccessPicker}
           className="absolute inset-0 bg-black/45 backdrop-blur-sm"
           onClick={() => setShowQuickPicker(false)}
         />
         <div className="relative z-10 w-full max-w-lg rounded-xl border border-border bg-card p-4 shadow-xl">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-foreground">Add Quick Access</p>
-              <p className="text-xs text-muted-foreground">Choose a card to add to Home.</p>
+              <p className="text-sm font-semibold text-foreground">{homeText.addQuickAccess}</p>
+              <p className="text-xs text-muted-foreground">{homeText.chooseCard}</p>
             </div>
             <button
               type="button"
               onClick={() => setShowQuickPicker(false)}
               className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-              aria-label="Close"
+              aria-label={homeText.close}
             >
               <X className="size-4" />
             </button>
           </div>
 
           {availableQuickOptions.length === 0 ? (
-            <p className="text-xs text-muted-foreground">All cards are already in use.</p>
+            <p className="text-xs text-muted-foreground">{homeText.allCardsInUse}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {availableQuickOptions.map(option => (
@@ -474,7 +505,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
         : null
 
       if (!selected) {
-        setHomeRouteDialogError("Route not found")
+        setHomeRouteDialogError(homeText.routeNotFound)
         return
       }
 
@@ -518,7 +549,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           : []
       )
     } catch {
-      setHomeRouteDialogError("Failed to load route details")
+      setHomeRouteDialogError(homeText.failedLoadRouteDetails)
     } finally {
       setHomeRouteDialogLoading(false)
     }
@@ -595,7 +626,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
         <div>
           <div className="mb-2.5 flex items-center justify-between gap-2 px-0.5">
             <div className="flex items-center gap-2">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Pinned Routes</p>
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">{homeText.pinnedRoutes}</p>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                 {pinnedRoutesOrdered.length}
               </span>
@@ -604,7 +635,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               onClick={() => onNavigate("route-list")}
               className="inline-flex items-center gap-1 px-0 py-0 text-[10px] font-semibold text-primary/80 hover:text-primary transition-colors"
             >
-              <List className="size-3" />Open List
+              <List className="size-3" />{homeText.openList}
             </button>
           </div>
 
@@ -617,7 +648,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             {pinnedRoutesOrdered.map((r) => {
               const isKL  = (r.name + " " + r.code).toLowerCase().includes("kl")
               const isSel = (r.name + " " + r.code).toLowerCase().includes("sel")
-              const routeTitle = /^route\b/i.test(r.name.trim()) ? r.name.trim() : `Route ${r.name}`
+              const routeTitle = /^route\b/i.test(r.name.trim()) ? r.name.trim() : `${homeText.routePrefix} ${r.name}`
               return (
                 <div
                   key={r.id}
@@ -643,7 +674,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                     }}
                     className="inline-flex items-center gap-1 px-0 py-0 text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors"
                   >
-                    <List className="size-3" />View
+                      <List className="size-3" />{homeText.view}
                   </button>
                 </div>
               )
@@ -1120,7 +1151,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
             />
           ))}
           {isEditMode && quickAccess.length < QUICK_ACCESS_LIMIT && (
-            <AddQuickAccessCard onClick={() => setShowQuickPicker(v => !v)} />
+            <AddQuickAccessCard onClick={() => setShowQuickPicker(v => !v)} label={homeText.addCard} />
           )}
         </div>
 
@@ -1475,6 +1506,29 @@ function AppContent() {
   const { open, openMobile, isMobile, toggleSidebar, setOpen, setOpenMobile } = useSidebar()
   const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
 
+  const contentText = {
+    locationTitle: "Location",
+    locationSubtitle: "View and manage delivery records.",
+    breadcrumb: {
+      vendingMachine: "Vending Machine",
+      routeList: "Route List",
+      custom: "Custom",
+      location: "Location",
+      schedule: "Schedule",
+      rooster: "Rooster",
+      settings: "Settings",
+      profile: "Profile",
+      notifications: "Notifications",
+      font: "Font",
+      routeColours: "Route Colours",
+      storage: "Storage",
+      security: "Security",
+      gallery: "Gallery",
+      album: "Album",
+      home: "Home",
+    },
+  }
+
   const handlePageChange = (page: string) => {
     if (page === currentPage) return
     // Auto-close sidebar on navigation
@@ -1499,9 +1553,9 @@ function AppContent() {
             <div className="shrink-0">
               <div className="flex items-center gap-3 mb-1">
                 <MapPin className="size-4 shrink-0 text-primary" />
-                <h2 className="text-base font-semibold tracking-tight text-foreground">Location</h2>
+                <h2 className="text-base font-semibold tracking-tight text-foreground">{contentText.locationTitle}</h2>
               </div>
-              <p className="ml-7 text-sm text-muted-foreground leading-relaxed">View and manage delivery records.</p>
+              <p className="ml-7 text-sm text-muted-foreground leading-relaxed">{contentText.locationSubtitle}</p>
               <Separator className="mt-4" />
             </div>
             <DeliveryTableDialog />
@@ -1535,33 +1589,33 @@ function AppContent() {
   const getPageBreadcrumbs = (): { parent?: { label: string; icon: React.ElementType }; current: string } => {
     switch (currentPage) {
       case "route-list":
-        return { parent: { label: "Vending Machine", icon: Package }, current: "Route List" }
+        return { parent: { label: contentText.breadcrumb.vendingMachine, icon: Package }, current: contentText.breadcrumb.routeList }
       case "custom":
-        return { parent: { label: "Vending Machine", icon: Package }, current: "Custom" }
+        return { parent: { label: contentText.breadcrumb.vendingMachine, icon: Package }, current: contentText.breadcrumb.custom }
       case "deliveries":
-        return { parent: { label: "Vending Machine", icon: Package }, current: "Location" }
+        return { parent: { label: contentText.breadcrumb.vendingMachine, icon: Package }, current: contentText.breadcrumb.location }
       case "rooster":
-        return { parent: { label: "Schedule", icon: Users }, current: "Rooster" }
+        return { parent: { label: contentText.breadcrumb.schedule, icon: Users }, current: contentText.breadcrumb.rooster }
       case "settings":
       case "settings-profile":
-        return { parent: { label: "Settings", icon: Settings2 }, current: "Profile" }
+        return { parent: { label: contentText.breadcrumb.settings, icon: Settings2 }, current: contentText.breadcrumb.profile }
       case "settings-notifications":
-        return { parent: { label: "Settings", icon: Settings2 }, current: "Notifications" }
+        return { parent: { label: contentText.breadcrumb.settings, icon: Settings2 }, current: contentText.breadcrumb.notifications }
       case "settings-appearance-font":
-        return { parent: { label: "Settings", icon: Settings2 }, current: "Font" }
+        return { parent: { label: contentText.breadcrumb.settings, icon: Settings2 }, current: contentText.breadcrumb.font }
       case "settings-route-colors":
-        return { parent: { label: "Settings", icon: Settings2 }, current: "Route Colours" }
+        return { parent: { label: contentText.breadcrumb.settings, icon: Settings2 }, current: contentText.breadcrumb.routeColours }
       case "settings-storage":
-        return { parent: { label: "Settings", icon: Settings2 }, current: "Storage" }
+        return { parent: { label: contentText.breadcrumb.settings, icon: Settings2 }, current: contentText.breadcrumb.storage }
       case "settings-security":
-        return { parent: { label: "Settings", icon: Settings2 }, current: "Security" }
+        return { parent: { label: contentText.breadcrumb.settings, icon: Settings2 }, current: contentText.breadcrumb.security }
       case "plano-vm":
-        return { parent: { label: "Gallery", icon: Images }, current: "Plano VM" }
+        return { parent: { label: contentText.breadcrumb.gallery, icon: Images }, current: "Plano VM" }
       case "gallery-album":
-        return { parent: { label: "Gallery", icon: Images }, current: "Album" }
+        return { parent: { label: contentText.breadcrumb.gallery, icon: Images }, current: contentText.breadcrumb.album }
       case "home":
       default:
-        return { current: "Home" }
+        return { current: contentText.breadcrumb.home }
     }
   }
 
@@ -1675,17 +1729,29 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export function App() {
   const [landed, setLanded] = useState(false)
+  const [showContent, setShowContent] = useState(false)
+
+  useEffect(() => {
+    if (landed) {
+      const timer = setTimeout(() => setShowContent(true), 50)
+      return () => clearTimeout(timer)
+    } else {
+      setShowContent(false)
+    }
+  }, [landed])
 
   return (
     <DeviceProvider>
       <ErrorBoundary>
         {!landed && <LandingPage onEnter={() => setLanded(true)} />}
         {landed && (
-          <SidebarProvider defaultOpen={false}>
-            <EditModeProvider>
-              <AppContent />
-            </EditModeProvider>
-          </SidebarProvider>
+          <div className={`transition-opacity duration-600 ease-out ${showContent ? "opacity-100" : "opacity-0"}`}>
+            <SidebarProvider defaultOpen={false}>
+              <EditModeProvider>
+                <AppContent />
+              </EditModeProvider>
+            </SidebarProvider>
+          </div>
         )}
         <PWAInstallPrompt />
         <PWAUpdatePrompt />

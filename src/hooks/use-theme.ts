@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 
 export type ColorMode = "light" | "dark"
 const LS_EYE_COMFORT = "eye-comfort"
-const LS_APP_LANGUAGE = "app-language"
 
 /** meta theme-color backgrounds */
 const META_BG: Record<ColorMode, string> = {
@@ -42,15 +41,6 @@ export const FONT_OPTIONS: { id: AppFont; label: string; family: string; googleI
 ]
 
 export const DEFAULT_APP_FONT: AppFont = "quicksand"
-
-export type AppLanguage = "en" | "ms"
-
-function getStoredOrDefaultLanguage(): AppLanguage {
-  const stored = localStorage.getItem(LS_APP_LANGUAGE)
-  if (stored === "en" || stored === "ms") return stored
-  localStorage.setItem(LS_APP_LANGUAGE, "en")
-  return "en"
-}
 
 function getStoredOrDefaultFont(): AppFont {
   const stored = localStorage.getItem("app-font")
@@ -98,9 +88,6 @@ export function useTheme() {
   )
   const [eyeComfort, setEyeComfort] = useState<boolean>(() =>
     localStorage.getItem(LS_EYE_COMFORT) === "1"
-  )
-  const [appLanguage, setAppLanguage] = useState<AppLanguage>(() =>
-    getStoredOrDefaultLanguage()
   )
 
   // Apply color mode
@@ -152,11 +139,10 @@ export function useTheme() {
     localStorage.setItem(LS_EYE_COMFORT, eyeComfort ? "1" : "0")
   }, [eyeComfort])
 
-  // App language preference
+  // App language is fixed to English
   useEffect(() => {
-    localStorage.setItem(LS_APP_LANGUAGE, appLanguage)
-    document.documentElement.setAttribute("lang", appLanguage === "ms" ? "ms" : "en")
-  }, [appLanguage])
+    document.documentElement.setAttribute("lang", "en")
+  }, [])
 
   const toggleMode = () => setMode(prev => prev === "light" ? "dark" : "light")
   const toggleEyeComfort = () => setEyeComfort(prev => !prev)
@@ -172,7 +158,6 @@ export function useTheme() {
     appFont, setAppFont,
     appZoom, setAppZoom,
     textSize, setTextSize,
-    appLanguage, setAppLanguage,
     eyeComfort, setEyeComfort, toggleEyeComfort,
   }
 }

@@ -430,8 +430,8 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   // Column dates for current view
   const monthDates = useMemo(() => getMonthDates(currentDate), [currentDate])
   const colDates: Date[] = viewMode === "month" ? monthDates : weekDates
-  const staffColWidth = 120
-  const dayColWidth = viewMode === "month" ? 92 : 112
+  const staffColWidth = 108
+  const dayColWidth = viewMode === "month" ? 84 : 100
 
   // ── Shift CRUD ────────────────────────────────────────────────────────────
 
@@ -552,7 +552,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
       <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
         <div className="loading-shell flex items-center gap-2.5 text-muted-foreground">
           <Loader2 className="loading-spinner size-5 animate-spin" />
-          <span className="text-sm loading-text">Loading Rooster…</span>
+          <span className="text-sm loading-text">Loading Rooster...</span>
         </div>
       </div>
     )
@@ -584,7 +584,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
           </button>
         </div>
 
-        <h2 className="text-sm font-bold flex-1 truncate">{headerLabel}</h2>
+        <h2 className="text-[13px] font-bold flex-1 truncate">{headerLabel}</h2>
 
         <div className="flex items-center gap-1.5 shrink-0">
           <button
@@ -710,7 +710,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
             </colgroup>
             <thead>
               <tr>
-                <th className="sticky top-0 left-0 z-30 bg-card border-b border-r border-border px-3 py-3 text-center" style={{ width: `${staffColWidth}px`, minWidth: `${staffColWidth}px` }}>
+                <th className="sticky top-0 left-0 z-30 bg-card border-b border-r border-border px-2.5 py-2.5 text-center" style={{ width: `${staffColWidth}px`, minWidth: `${staffColWidth}px` }}>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-1.5">
                     <Users className="size-3" />Staff
                   </span>
@@ -721,7 +721,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                   return (
                     <th
                       key={toDateKey(date)}
-                      className={`sticky top-0 z-20 border-b border-r border-border text-center py-2.5 px-2 font-normal ${
+                      className={`sticky top-0 z-20 border-b border-r border-border text-center py-2 px-1.5 font-normal ${
                         isToday ? "bg-primary/[0.06]" : "bg-card"
                       }`}
                       style={{ width: `${dayColWidth}px`, minWidth: `${dayColWidth}px` }}
@@ -754,7 +754,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                   <tr key={resource.id} className={ri % 2 !== 0 ? "bg-muted/[0.03]" : ""}>
 
                     {/* ── Staff cell ── */}
-                    <td className="sticky left-0 z-10 bg-card border-b border-r border-border p-3 align-top">
+                    <td className="sticky left-0 z-10 bg-card border-b border-r border-border p-2.5 align-top">
                       <div className="flex flex-col items-center text-center">
                           <p className="text-[11px] font-bold text-foreground leading-tight whitespace-nowrap">{resource.name}</p>
                           {resource.role && (
@@ -805,7 +805,7 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
                       return (
                         <td
                           key={dateKey}
-                          className={`border-b border-r border-border p-1.5 transition-colors ${
+                          className={`border-b border-r border-border p-1 transition-colors ${
                             isToday ? "bg-primary/[0.02]" : ""
                           } ${isEditMode ? "align-middle cursor-pointer hover:bg-muted/25 text-center" : "align-top"}`}
                           style={{ width: `${dayColWidth}px`, minWidth: `${dayColWidth}px`, minHeight: "72px" }}
