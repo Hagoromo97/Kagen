@@ -687,7 +687,7 @@ function SidebarMenuSubButton({
       data-active={isActive}
       className={cn(
         "text-sidebar-foreground ring-sidebar-ring hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground [&>svg]:text-sidebar-accent-foreground flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 outline-hidden focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-[15px] [&>svg]:shrink-0 transition-[background-color,color,box-shadow] duration-150",
-        "data-[active=true]:bg-sidebar-primary/16 data-[active=true]:text-sidebar-primary data-[active=true]:shadow-[inset_0_0_0_1px_hsl(var(--sidebar-primary)/0.35)] dark:data-[active=true]:bg-sidebar-primary/22 dark:data-[active=true]:shadow-[inset_0_0_0_1px_hsl(var(--sidebar-primary)/0.45)]",
+        "data-[active=true]:bg-sidebar-primary/10 data-[active=true]:text-sidebar-primary data-[active=true]:font-semibold data-[active=true]:shadow-[inset_0_0_0_1px_hsl(var(--sidebar-primary)/0.24)] dark:data-[active=true]:bg-sidebar-primary/16 dark:data-[active=true]:shadow-[inset_0_0_0_1px_hsl(var(--sidebar-primary)/0.34)]",
         size === "sm" && "text-[10px]",
         size === "md" && "text-[11.5px]",
         "group-data-[collapsible=icon]:hidden",

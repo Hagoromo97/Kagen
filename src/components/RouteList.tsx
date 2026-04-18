@@ -2900,10 +2900,19 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                                 </button>
                               )}
                             </div>
-                            {isPlaygroundMode && (
+                            {(isPlaygroundMode || isEditMode) && (
                               <button
                                 type="button"
-                                onClick={() => { setPgAddLocSearch(""); setPgAddLocSelected(new Set()); setPgAddLocOpen(true) }}
+                                onClick={() => {
+                                  if (isPlaygroundMode) {
+                                    setPgAddLocSearch("")
+                                    setPgAddLocSelected(new Set())
+                                    setPgAddLocOpen(true)
+                                    return
+                                  }
+                                  setCodeError("")
+                                  setAddPointDialogOpen(true)
+                                }}
                                 className="shrink-0 h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-border bg-background text-[11px] font-medium text-foreground hover:bg-muted/60 transition-colors"
                               >
                                 <Plus className="size-3.5" />
@@ -2920,7 +2929,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               </div>
                             </div>
                           ) : (
-                          <table className="border-collapse text-[11px] whitespace-nowrap min-w-max w-full text-center">
+                          <table className="border-collapse text-[11px] whitespace-nowrap min-w-max w-full text-center [&_th]:text-center [&_td]:text-center">
                             <thead className="sticky top-0 z-10 backdrop-blur-sm" style={{ background: 'hsl(var(--background)/0.92)' }}>
                               <tr>
                                 {isEditMode && (
@@ -3150,27 +3159,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             )
                           })}
                           
-                          {/* Add New Row */}
-                          {isEditMode && (
-                          <tr 
-                            className="border border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/3 cursor-pointer transition-all duration-150 group"
-                            onClick={() => {
-                              setAddPointDialogOpen(true)
-                              setCodeError("")
-                            }}
-                          >
-                            <td colSpan={tableColSpan} className="py-3 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-                                  <Plus className="size-3.5 text-primary" />
-                                </div>
-                                <span className="text-[11px] font-medium text-muted-foreground group-hover:text-primary transition-colors">
-                                  Add New Delivery Point
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
-                          )}
                         </tbody>
                       </table>
                     )}
