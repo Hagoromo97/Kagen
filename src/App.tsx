@@ -375,7 +375,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     { key: 'km', label: 'KM', visible: false },
     { key: 'action', label: 'Action', visible: true },
   ])
-  const [homeRouteTableSort, setHomeRouteTableSort] = useState<HomeTableSort>('default')
+  const [homeRouteTableSort, setHomeRouteTableSort] = useState<HomeTableSort>('code-asc')
   const [homeRouteSavedRowOrders, setHomeRouteSavedRowOrders] = useState<HomeSavedRowOrder[]>([])
   const [homeRouteSavedSortId, setHomeRouteSavedSortId] = useState<string | null>(null)
   const [homeRouteKmCalculateBy, setHomeRouteKmCalculateBy] = useState<HomeKmCalculateBy>('hq')
@@ -418,6 +418,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
     setHomeRouteDialogFullscreen(false)
     setHomeRouteMapRefitToken(0)
     setHomeRouteMapResizeToken(0)
+    setHomeRouteTableSort('code-asc')
     setHomeRouteSavedSortId(null)
 
     try {
@@ -519,7 +520,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
       const rightIndex = saved.order.indexOf(right.code)
       return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex)
     }
-    if (homeRouteTableSort === 'default') return 0
+    if (homeRouteTableSort === 'default') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
     if (homeRouteTableSort === 'code-asc') return left.code.localeCompare(right.code, undefined, { numeric: true, sensitivity: 'base' })
     if (homeRouteTableSort === 'code-desc') return right.code.localeCompare(left.code, undefined, { numeric: true, sensitivity: 'base' })
     if (homeRouteTableSort === 'name-asc') return left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
@@ -978,7 +979,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                             onClick={() => {
                               setHomeRouteSavedSortId(null)
                               if (isAsc) setHomeRouteTableSort(desc)
-                              else if (isDesc) setHomeRouteTableSort('default')
+                              else if (isDesc) setHomeRouteTableSort(asc)
                               else setHomeRouteTableSort(asc)
                             }}
                             className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs transition-colors${
@@ -1018,7 +1019,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                                 key={saved.id}
                                 type="button"
                                 onClick={() => {
-                                  setHomeRouteTableSort('default')
+                                  setHomeRouteTableSort('code-asc')
                                   setHomeRouteSavedSortId(saved.id)
                                 }}
                                 className={`w-full text-left px-3.5 py-2.5 rounded-lg border text-xs transition-colors ${
@@ -1035,11 +1036,11 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                       )}
                     </div>
 
-                    {(homeRouteTableSort !== 'default' || homeRouteSavedSortId !== null) && (
+                    {(homeRouteTableSort !== 'code-asc' || homeRouteSavedSortId !== null) && (
                       <button
                         type="button"
                         onClick={() => {
-                          setHomeRouteTableSort('default')
+                          setHomeRouteTableSort('code-asc')
                           setHomeRouteSavedSortId(null)
                         }}
                         className="w-full h-8 rounded-lg border border-border bg-background text-[11px] font-medium text-muted-foreground hover:bg-muted/50 transition-colors"

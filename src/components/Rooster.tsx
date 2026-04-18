@@ -11,6 +11,7 @@ import {
   Settings2,
   Search,
   CalendarDays,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -613,13 +614,24 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
               value={historyQuery}
               onChange={(event) => setHistoryQuery(event.target.value)}
               placeholder="Search history: staff, route, code, date (YYYY-MM-DD)"
-              className="h-8 pl-8 pr-8 text-[11px]"
+              className="h-8 pl-8 pr-14 text-[11px]"
             />
+            {historyQuery.trim() && (
+              <button
+                type="button"
+                onClick={() => setHistoryQuery("")}
+                className="absolute right-8 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-600 transition-colors"
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
             <label
               title="Pick a date"
-              className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground/60 hover:text-foreground transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-blue-500 hover:text-blue-600 transition-colors"
             >
-              <CalendarDays className="size-3.5" />
+              <CalendarDays className="w-5 h-5" />
               <input
                 type="date"
                 className="sr-only"
