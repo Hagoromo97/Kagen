@@ -782,8 +782,10 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                       </tr>
                     </thead>
                     <tbody className="text-[9px]">
-                      {homeRouteTableRows.map((point, index) => (
-                        <tr key={`${point.code}-${index}`} className="border-b border-border/50 odd:bg-muted/10 even:bg-background hover:bg-muted/25 transition-colors">
+                      {homeRouteTableRows.map((point, index) => {
+                        const isOff = !homeIsDeliveryActive(point.delivery)
+                        return (
+                        <tr key={`${point.code}-${index}`} className={`border-b border-border/50 odd:bg-muted/10 even:bg-background hover:bg-muted/25 transition-colors${isOff ? ' opacity-40' : ''}`}>
                           {homeRouteDraftColumns.filter(c => c.visible).map(col => {
                             if (col.key === 'no') return <td key="no" className="h-9 px-3 text-center font-semibold text-primary">{index + 1}</td>
                             if (col.key === 'code') return <td key="code" className="h-9 px-3 text-center font-semibold">{point.code}</td>
@@ -798,7 +800,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                               <td key="action" className="h-9 px-3 text-center">
                                 <button
                                   type="button"
-                                  className="inline-flex items-center justify-center size-7 rounded-lg text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+                                  className={`inline-flex items-center justify-center size-7 rounded-lg transition-colors ${isOff ? 'text-red-500 hover:bg-red-500/10' : 'text-emerald-600 hover:bg-emerald-500/10'}`}
                                   onClick={() => {
                                     setHomeRouteSelectedPoint(point)
                                     setHomeRoutePointModalOpen(true)
@@ -812,7 +814,8 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                             return null
                           })}
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 )}
