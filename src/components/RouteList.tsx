@@ -2624,20 +2624,20 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     </div>
 
                     {/* Footer */}
-                    <div style={{ padding: '0.6rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                      {cl && !cl.loading && cl.entries.length > 0 && (
-                        <button
-                          onClick={() => setClearLogConfirm(route.id)}
-                          style={{ width: '100%', borderRadius: 9, fontSize: '0.72rem', fontWeight: 700, padding: '0.4rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
-                        >
-                          <Trash2 style={{ width: 11, height: 11 }} /> Clear All
-                        </button>
-                      )}
+                    <div style={{ padding: '0.6rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem' }}>
                       <button
                         onClick={() => setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } }))}
-                        style={{ width: '100%', borderRadius: 9, fontSize: '0.75rem', fontWeight: 700, padding: '0.45rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: `linear-gradient(135deg, ${markerColor}, ${markerColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}40`, letterSpacing: '0.01em' }}
+                        style={{ flex: 1, borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: `linear-gradient(135deg, ${markerColor}, ${markerColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}40`, letterSpacing: '0.01em' }}
                       >
-                        <ArrowDown style={{ width: 11, height: 11, transform: 'rotate(90deg)' }} /> Back to card
+                        <ArrowDown style={{ width: 11, height: 11, transform: 'rotate(90deg)' }} /> Back
+                      </button>
+                      <button
+                        onClick={() => setClearLogConfirm(route.id)}
+                        disabled={!cl || cl.loading || cl.entries.length === 0}
+                        style={{ flex: 1, borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: !cl || cl.loading || cl.entries.length === 0 ? '#e5e7eb' : '#fee2e2', color: !cl || cl.loading || cl.entries.length === 0 ? '#6b7280' : '#dc2626', border: !cl || cl.loading || cl.entries.length === 0 ? '1px solid #d1d5db' : '1px solid #fca5a5', cursor: !cl || cl.loading || cl.entries.length === 0 ? 'not-allowed' : 'pointer', opacity: 1 }}
+                        title={!cl || cl.loading || cl.entries.length === 0 ? 'No log entries to clear' : 'Clear all log entries'}
+                      >
+                        <Trash2 style={{ width: 11, height: 11 }} /> Clear
                       </button>
                     </div>
                   </div>
