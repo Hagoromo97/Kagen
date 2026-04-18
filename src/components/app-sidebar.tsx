@@ -292,8 +292,8 @@ export function AppSidebar({
           onClick={toggleMode}
         >
           {mode === "dark"
-            ? <Moon className="size-4 shrink-0 text-sidebar-primary" />
-            : <Sun  className="size-4 shrink-0 text-sidebar-primary" />}
+            ? <Moon className="size-4 shrink-0 text-violet-400" />
+            : <Sun  className="size-4 shrink-0 text-amber-400" />}
           <span className="flex-1 text-sm font-medium text-sidebar-foreground/90">
             {mode === "dark" ? text.darkMode : text.lightMode}
           </span>
@@ -312,7 +312,7 @@ export function AppSidebar({
           {isEditModeTransitioning ? (
             <Loader2 className="size-4 shrink-0 animate-spin text-primary" />
           ) : (
-            <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-primary" : "text-sidebar-foreground/70"}`} />
+            <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-emerald-400" : "text-emerald-500/60"}`} />
           )}
           <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
             {isEditModeTransitioning ? text.switching : text.editMode}
@@ -324,7 +324,7 @@ export function AppSidebar({
           )}
         </div>
         <Separator className="mx-1" />
-        <NavUser user={data.user} onNavigate={onNavigate} />
+        <NavUser className="mx-1" user={data.user} onNavigate={onNavigate} />
       </SidebarFooter>
     </Sidebar>
 

@@ -1259,7 +1259,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
           className="group w-full flex items-center gap-3 px-3.5 py-3.5 hover:bg-muted/40 active:scale-[0.99] transition-all duration-150 text-left"
           onClick={() => setLegendOpen(v => !v)}
         >
-          <Layers className="size-5 text-violet-500 shrink-0" />
+          <Layers className="size-5 text-foreground shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground tracking-tight leading-snug">Colour Expired</p>
             <p className="text-xs text-muted-foreground mt-0.5 leading-snug">Colour codes for stock activities</p>
@@ -1482,7 +1482,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors group"
                 >
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    <i className="bi bi-android2 text-base leading-none text-green-500" aria-hidden="true" />
+                    <i className="bi bi-android2 text-base leading-none text-foreground" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground leading-tight">Play Store</p>

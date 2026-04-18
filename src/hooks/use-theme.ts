@@ -5,8 +5,8 @@ const LS_EYE_COMFORT = "eye-comfort"
 
 /** meta theme-color backgrounds */
 const META_BG: Record<ColorMode, string> = {
-  light: "#e0f2ff",
-  dark:  "#0a1330",
+  light: "#f6f6f6",
+  dark:  "#0b0b0b",
 }
 
 export type AppFont =
@@ -40,7 +40,7 @@ export const FONT_OPTIONS: { id: AppFont; label: string; family: string; googleI
   { id: "caveat",            label: "Caveat",            family: "'Caveat', cursive",               googleId: "Caveat:wght@400;500;600;700" },
 ]
 
-export const DEFAULT_APP_FONT: AppFont = "quicksand"
+export const DEFAULT_APP_FONT: AppFont = "outfit"
 
 function getStoredOrDefaultFont(): AppFont {
   const stored = localStorage.getItem("app-font")

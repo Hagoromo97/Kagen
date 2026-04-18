@@ -42,12 +42,12 @@ import { DEFAULT_APP_FONT, FONT_OPTIONS } from "./hooks/use-theme"
         link.href = `https://fonts.googleapis.com/css2?family=${fontOpt.googleId}&display=swap`
         document.head.appendChild(link)
       }
-      // also preload Quicksand if not already loaded
-      const quicksandId = "Quicksand:wght@400;500;600;700"
-      if (fontOpt.googleId !== quicksandId) {
+      // also preload default modern font if not already loaded
+      const defaultFontId = "Outfit:wght@300;400;500;600;700"
+      if (fontOpt.googleId !== defaultFontId) {
         const preload = document.createElement("link")
         preload.rel  = "stylesheet"
-        preload.href = `https://fonts.googleapis.com/css2?family=${quicksandId}&display=swap`
+        preload.href = `https://fonts.googleapis.com/css2?family=${defaultFontId}&display=swap`
         document.head.appendChild(preload)
       }
       document.documentElement.style.setProperty("--app-font", fontOpt.family)

@@ -37,6 +37,7 @@ function getInitials(name: string): string {
 export function NavUser({
   user,
   onNavigate,
+  className,
 }: {
   user: {
     name: string
@@ -44,16 +45,17 @@ export function NavUser({
     avatar: string
   }
   onNavigate?: (page: string) => void
+  className?: string
 }) {
   const initials = getInitials(user.name)
   return (
-    <SidebarMenu>
+    <SidebarMenu className={className}>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="h-auto rounded-md px-3 py-2 hover:bg-sidebar-accent/50 data-[state=open]:bg-sidebar-accent/70 data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
