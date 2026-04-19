@@ -37,6 +37,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 const DAYS = [
   { en: "Monday" },
@@ -102,7 +103,7 @@ interface HomeRouteDialogPoint {
 type HomeTableColumn = 'no' | 'code' | 'name' | 'delivery' | 'km' | 'action'
 type HomeTableSettingsTab = 'column' | 'sorting'
 type HomeTableSort = 'default' | 'code-asc' | 'code-desc' | 'name-asc' | 'name-desc' | 'delivery-asc' | 'delivery-desc'
-type HomeKmCalculateBy = 'hq' | 'previous'
+type HomeKmCalculateBy = 'direct' | 'step'
 interface HomeSavedRowOrder {
   id: string
   label: string
@@ -432,7 +433,9 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [homeRouteTableSort, setHomeRouteTableSort] = useState<HomeTableSort>('code-asc')
   const [homeRouteSavedRowOrders, setHomeRouteSavedRowOrders] = useState<HomeSavedRowOrder[]>([])
   const [homeRouteSavedSortId, setHomeRouteSavedSortId] = useState<string | null>(null)
-  const [homeRouteKmCalculateBy, setHomeRouteKmCalculateBy] = useState<HomeKmCalculateBy>('hq')
+  const [homeRouteKmCalculateBy, setHomeRouteKmCalculateBy] = useState<HomeKmCalculateBy>('direct')
+  const [homeRouteKmStartPoint, setHomeRouteKmStartPoint] = useState<{ lat: number; lng: number }>({ ...HOME_DEFAULT_MAP_CENTER })
+  const [draftHomeKmStartPoint, setDraftHomeKmStartPoint] = useState<{ lat: number; lng: number }>({ ...HOME_DEFAULT_MAP_CENTER })
   const [homeRouteMapStyle, setHomeRouteMapStyle] = useState<'google-streets' | 'google-satellite' | 'osm'>('google-streets')
   const [homeRouteMarkerStyle, setHomeRouteMarkerStyle] = useState<'pin' | 'dot' | 'ring'>('pin')
   const [homeRouteShowPolyline, setHomeRouteShowPolyline] = useState(false)
@@ -594,14 +597,14 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const getHomeRouteKmValue = (point: HomeRouteDialogPoint, index: number): string => {
     if (point.latitude === 0 && point.longitude === 0) return '-'
 
-    if (homeRouteKmCalculateBy === 'previous' && index > 0) {
+    if (homeRouteKmCalculateBy === 'step' && index > 0) {
       const previousPoint = homeRouteTableRows[index - 1]
       if (previousPoint && (previousPoint.latitude !== 0 || previousPoint.longitude !== 0)) {
         return homeFormatKm(homeHaversineKm(previousPoint.latitude, previousPoint.longitude, point.latitude, point.longitude))
       }
     }
 
-    return homeFormatKm(homeHaversineKm(HOME_DEFAULT_MAP_CENTER.lat, HOME_DEFAULT_MAP_CENTER.lng, point.latitude, point.longitude))
+    return homeFormatKm(homeHaversineKm(homeRouteKmStartPoint.lat, homeRouteKmStartPoint.lng, point.latitude, point.longitude))
   }
 
   const moveHomeTableColumn = (index: number, dir: -1 | 1) => {
@@ -735,7 +738,10 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               </div>
 
               <button
-                onClick={() => setHomeRouteMapSettingsOpen(true)}
+                onClick={() => {
+                  setDraftHomeKmStartPoint({ ...homeRouteKmStartPoint })
+                  setHomeRouteMapSettingsOpen(true)
+                }}
                 title={homeRouteDialogView === 'map' ? 'Map Settings' : 'Table Settings'}
                 className="shrink-0 w-[32px] h-[32px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
               >
@@ -1001,27 +1007,80 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                 {/* Sorting tab */}
                 {homeRouteTableSettingsTab === 'sorting' && (
                   <div className="space-y-2">
-                    <div className="rounded-xl border border-border bg-background p-2.5 space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">KM Calculate By</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {([
-                          { key: 'hq' as const, label: 'HQ' },
-                          { key: 'previous' as const, label: 'Previous Row' },
-                        ]).map((item) => (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => setHomeRouteKmCalculateBy(item.key)}
-                            className={`h-8 rounded-md border text-[11px] font-medium transition-colors ${
-                              homeRouteKmCalculateBy === item.key
-                                ? 'border-primary bg-primary/10 text-primary'
-                                : 'border-border bg-background hover:bg-muted/50 text-foreground'
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
+                    <div className="rounded-xl border border-border bg-background p-3 space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">KM Column Settings</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setHomeRouteKmCalculateBy('direct')}
+                          className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                            homeRouteKmCalculateBy === 'direct'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                          }`}
+                        >
+                          From Start Point
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHomeRouteKmCalculateBy('step')}
+                          className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                            homeRouteKmCalculateBy === 'step'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                          }`}
+                        >
+                          Step by Step
+                        </button>
                       </div>
+
+                      {homeRouteKmCalculateBy === 'direct' && (
+                        <>
+                          <div className="grid grid-cols-2 gap-2">
+                            <label className="text-[11px] text-muted-foreground">
+                              Start Lat
+                              <Input
+                                type="number"
+                                step="0.000001"
+                                value={draftHomeKmStartPoint.lat}
+                                onChange={(e) => {
+                                  const next = Number.parseFloat(e.target.value)
+                                  if (Number.isFinite(next)) setDraftHomeKmStartPoint(prev => ({ ...prev, lat: next }))
+                                }}
+                                onBlur={() => setHomeRouteKmStartPoint({ ...draftHomeKmStartPoint })}
+                                className="h-8 mt-1 text-xs"
+                              />
+                            </label>
+                            <label className="text-[11px] text-muted-foreground">
+                              Start Lng
+                              <Input
+                                type="number"
+                                step="0.000001"
+                                value={draftHomeKmStartPoint.lng}
+                                onChange={(e) => {
+                                  const next = Number.parseFloat(e.target.value)
+                                  if (Number.isFinite(next)) setDraftHomeKmStartPoint(prev => ({ ...prev, lng: next }))
+                                }}
+                                onBlur={() => setHomeRouteKmStartPoint({ ...draftHomeKmStartPoint })}
+                                className="h-8 mt-1 text-xs"
+                              />
+                            </label>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setDraftHomeKmStartPoint({ ...HOME_DEFAULT_MAP_CENTER })
+                                setHomeRouteKmStartPoint({ ...HOME_DEFAULT_MAP_CENTER })
+                              }}
+                              className="text-xs"
+                            >
+                              Reset Start Point
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="rounded-xl border border-border bg-background p-2.5">

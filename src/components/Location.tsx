@@ -86,6 +86,22 @@ type ColumnKey = typeof ALL_COLUMNS[number]["key"]
 
 const DEFAULT_VISIBLE_COLUMNS: ColumnKey[] = ["no", "code", "name", "delivery", "action"]
 
+// ─── Delivery active helper ─────────────────────────────────────────────────
+function isDeliveryActive(delivery: string, date: Date = new Date()): boolean {
+  const dayOfWeek = date.getDay()
+  const localNoon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
+  const epochDay  = Math.floor(localNoon.getTime() / 86400000)
+  switch (delivery) {
+    case 'Daily':     return true
+    case 'Alt 1':     return epochDay % 2 !== 0
+    case 'Alt 2':     return epochDay % 2 === 0
+    case 'Weekday':   return dayOfWeek >= 0 && dayOfWeek <= 4
+    case 'Weekday 2': return dayOfWeek >= 1 && dayOfWeek <= 5
+    case 'Weekday 3': return [0, 2, 5].includes(dayOfWeek)
+    default:          return true
+  }
+}
+
 // ─── Delivery option definitions ─────────────────────────────────────────────
 interface DeliveryItem {
   value: string
@@ -771,7 +787,11 @@ export function DeliveryTableDialog() {
                       <td className="px-2 py-2 text-center">
                         <button
                           type="button"
-                          className="inline-flex size-6 items-center justify-center p-0 text-muted-foreground transition-colors hover:text-foreground"
+                          className={`inline-flex size-6 items-center justify-center p-0 transition-colors ${
+                            isDeliveryActive(pt.delivery)
+                              ? 'text-emerald-600 hover:text-emerald-700'
+                              : 'text-red-500 hover:text-red-600'
+                          }`}
                           aria-label={`View info for ${pt.name}`}
                           title={`View info for ${pt.name}`}
                           onClick={() => setActiveActionPoint(pt)}
