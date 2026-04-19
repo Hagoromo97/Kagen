@@ -78,12 +78,12 @@ const LS_HOME_ARCHIVE = "fcalendar_home_archive"
 const QUICK_ACCESS_LIMIT = 4
 
 const QUICK_ACCESS_OPTIONS: QuickAccessOption[] = [
-  { id: "route-list",       icon: ClipboardList, label: "Route List", description: "Manage vending routes", iconClass: "text-violet-500" },
-  { id: "deliveries",       icon: MapPin,        label: "Location",   description: "Delivery records",     iconClass: "text-emerald-500" },
-  { id: "rooster",          icon: Users,         label: "Rooster",    description: "Team schedule",        iconClass: "text-orange-500" },
-  { id: "plano-vm",         icon: Package,       label: "Plano VM",   description: "Planogram tools",      iconClass: "text-sky-500" },
-  { id: "gallery-album",    icon: Images,        label: "Album",      description: "Photo gallery",        iconClass: "text-pink-500" },
-  { id: "settings-profile", icon: Settings2,     label: "Settings",   description: "Profile settings",     iconClass: "text-indigo-500" },
+  { id: "route-list",       icon: ClipboardList, label: "Route List", description: "Manage vending routes", iconClass: "theme-accent-violet" },
+  { id: "deliveries",       icon: MapPin,        label: "Location",   description: "Delivery records",     iconClass: "theme-accent-emerald" },
+  { id: "rooster",          icon: Users,         label: "Rooster",    description: "Team schedule",        iconClass: "theme-accent-orange" },
+  { id: "plano-vm",         icon: Package,       label: "Plano VM",   description: "Planogram tools",      iconClass: "theme-accent-blue" },
+  { id: "gallery-album",    icon: Images,        label: "Album",      description: "Photo gallery",        iconClass: "theme-accent-pink" },
+  { id: "settings-profile", icon: Settings2,     label: "Settings",   description: "Profile settings",     iconClass: "theme-accent-indigo" },
 ]
 
 interface HomeRouteDialogPoint {
@@ -214,7 +214,7 @@ function QuickActionCard({
             e.stopPropagation()
             onRemove()
           }}
-          className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-0 bg-transparent text-red-600 hover:text-red-700 transition-colors"
+          className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-0 bg-transparent theme-danger transition-colors"
           aria-label={`Remove ${label}`}
           title={`Remove ${label}`}
         >
@@ -823,7 +823,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                       {homeRouteTableRows.map((point, index) => {
                         const isOff = !homeIsDeliveryActive(point.delivery)
                         return (
-                        <tr key={`${point.code}-${index}`} className={`border-b border-border/50 odd:bg-muted/10 even:bg-background hover:bg-muted/25 transition-colors${isOff ? ' opacity-40' : ''}`}>
+                        <tr key={`${point.code}-${index}`} className={`odd:bg-muted/10 even:bg-background hover:bg-muted/25 transition-colors${isOff ? ' opacity-40' : ''}`}>
                           {homeRouteDraftColumns.filter(c => c.visible).map(col => {
                             if (col.key === 'no') return <td key="no" className="h-9 px-3 text-center font-semibold text-primary">{index + 1}</td>
                             if (col.key === 'code') return <td key="code" className="h-9 px-3 text-center font-semibold">{point.code}</td>
@@ -1383,7 +1383,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               icon: Truck,
               bootstrapIconClass: "bi bi-check2-all",
               accentClass: "bg-orange-500/15 ring-1 ring-orange-500/25",
-              iconClass: "text-orange-500",
+              iconClass: "theme-accent-orange",
             },
             {
               label: "Checklist Driver",
@@ -1393,7 +1393,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               imageSrc: "/jotform1.png",
               imageClass: "w-9 h-9 object-contain scale-[2.25]",
               accentClass: "bg-blue-500/15 ring-1 ring-blue-500/25",
-              iconClass: "text-blue-500",
+              iconClass: "theme-accent-blue",
             },
             {
               label: "Web Portal",
@@ -1403,7 +1403,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               imageSrc: "/FamilyMart.png",
               imageClass: "w-9 h-9 rounded-xl object-cover",
               accentClass: "bg-violet-500/15 ring-1 ring-violet-500/25",
-              iconClass: "text-violet-500",
+              iconClass: "theme-accent-violet",
             },
           ].map(({ label, description, href, icon: Icon, imageSrc, imageClass, iconClass, bootstrapIconClass }) => {
             const iconEl = (

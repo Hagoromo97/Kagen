@@ -2162,7 +2162,28 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         />
       )}
       {/* Route List */}
-      <div className="mx-auto max-w-[1440px] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+      <div className="relative isolate mx-auto min-h-full max-w-[1440px] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url(${isDark ? bgDark : bgLight})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+              opacity: isDark ? 0.18 : 0.14,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: isDark
+                ? 'linear-gradient(180deg, hsl(var(--background) / 0.84), hsl(var(--background) / 0.9))'
+                : 'linear-gradient(180deg, hsl(var(--background) / 0.72), hsl(var(--background) / 0.84))',
+            }}
+          />
+        </div>
         {/* Page header */}
         <div className="mb-5 sm:mb-6">
           <div className="mb-1.5 flex items-center gap-2.5 sm:gap-3">
@@ -2310,10 +2331,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             <div
               onMouseEnter={() => setHoveredRouteId(route.id)}
               onMouseLeave={() => setHoveredRouteId(prev => (prev === route.id ? null : prev))}
-              style={{ width: '100%', maxWidth: cardW, height: cardH, borderRadius: 22, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card))', border: `${cardBorderWidth}px solid ${cardBorderColor}`, boxShadow: cardShadow, transition: 'border-color 180ms ease, box-shadow 180ms ease, border-width 180ms ease' }}
+              style={{ width: '100%', maxWidth: cardW, height: cardH, borderRadius: 22, overflow: 'hidden', position: 'relative', background: 'hsl(var(--card) / 0.58)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', border: `${cardBorderWidth}px solid ${cardBorderColor}`, boxShadow: cardShadow, transition: 'border-color 180ms ease, box-shadow 180ms ease, border-width 180ms ease' }}
             >
-              {/* Background image – subtle */}
-              <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${isDark ? bgDark : bgLight})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.18, zIndex: 0, pointerEvents: 'none' }} />
               {/* Sliding wrapper */}
               <div style={{ position: 'relative', zIndex: 1, display: 'flex', width: cardW * 3, height: '100%', transform: cardPanel.edit ? `translateX(-${cardW * 2}px)` : cardPanel.info ? `translateX(-${cardW}px)` : 'translateX(0)', transition: 'transform 0.38s cubic-bezier(0.4,0,0.2,1)' }}>
 
@@ -2560,7 +2579,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   }
                   const formatExact = (iso: string) => new Date(iso).toLocaleString('en-MY', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                   return (
-                  <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'hsl(var(--card))', backdropFilter: 'blur(16px)', borderRadius: 14, overflow: 'hidden' }}>
+                  <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'transparent', borderRadius: 14, overflow: 'hidden' }}>
                     {/* Header */}
                     <div style={{ padding: '0.9rem 1.1rem 0.7rem', background: `linear-gradient(135deg, ${markerColor}22, ${markerColor}0a)`, borderBottom: `1.5px solid ${markerColor}30`, flexShrink: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
@@ -2648,7 +2667,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 })()}
 
                 {/* ── Panel 3: Edit ── */}
-                <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'hsl(var(--card))' }}>
+                <div style={{ width: cardW, flexShrink: 0, height: cardH, display: 'flex', flexDirection: 'column', background: 'transparent' }}>
                   <div style={{ padding: '0.95rem 1rem 0.8rem', background: `linear-gradient(180deg, ${markerColor}18, transparent)`, borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
                     <div style={{ width: 31, height: 31, borderRadius: 9, background: `linear-gradient(135deg, ${markerColor}, ${markerColor}bb)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 12px ${markerColor}40` }}>
                       <Edit2 style={{ color: '#fff', width: 13, height: 13 }} />
@@ -2967,14 +2986,14 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             const isEditingThisRow = editingCell?.rowCode === point.code
                             const hasRowPending = [...pendingCellEdits].some(k => k.startsWith(`${point.code}-`))
                             return (
-                              <tr key={point.code} className={`border-b transition-colors duration-100 ${
+                              <tr key={point.code} className={`transition-colors duration-100 ${
                                 isEditingThisRow
-                                  ? 'border-primary/45 bg-primary/10'
+                                  ? 'bg-primary/10'
                                   : hasRowPending
-                                  ? 'border-amber-400/40 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-900/10'
+                                  ? 'bg-amber-50/40 dark:bg-amber-900/10'
                                   : isActive
-                                  ? index % 2 === 0 ? 'border-border/50 bg-background hover:bg-muted/30' : 'border-border/50 bg-muted/20 hover:bg-muted/35'
-                                  : 'border-border/40 bg-muted/30 text-muted-foreground/80 hover:bg-muted/45'
+                                  ? index % 2 === 0 ? 'bg-background hover:bg-muted/30' : 'bg-muted/20 hover:bg-muted/35'
+                                  : 'bg-muted/30 text-muted-foreground/80 hover:bg-muted/45'
                               }`}
                               >
                                 {isEditMode && (

@@ -500,6 +500,20 @@ body {
     --sidebar-accent-foreground:  hsl(0 0% 14%);
     --sidebar-border:             hsl(0 0% 78%);
     --sidebar-ring:               hsl(0 0% 18%);
+
+    /* Semantic accents */
+    --accent-blue:    212 96% 42%;
+    --accent-emerald: 160 84% 34%;
+    --accent-orange:  24 95% 46%;
+    --accent-violet:  262 84% 56%;
+    --accent-pink:    335 78% 48%;
+    --accent-indigo:  238 71% 58%;
+    --accent-amber:   38 92% 44%;
+    --accent-danger:  0 78% 46%;
+
+    /* Switch colors */
+    --switch-thumb: hsl(0 0% 100%);
+    --switch-sidebar-on: hsl(var(--accent-emerald));
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────── */
@@ -561,6 +575,19 @@ body {
     --sidebar-accent-foreground:  hsl(0 0% 90%);
     --sidebar-border:             hsl(0 0% 22%);
     --sidebar-ring:               hsl(0 0% 82%);
+
+    /* Semantic accents tuned for dark surfaces */
+    --accent-blue:    210 100% 72%;
+    --accent-emerald: 154 73% 58%;
+    --accent-orange:  27 98% 66%;
+    --accent-violet:  266 94% 76%;
+    --accent-pink:    333 86% 72%;
+    --accent-indigo:  238 91% 77%;
+    --accent-amber:   44 96% 67%;
+    --accent-danger:  0 90% 71%;
+
+    --switch-thumb: hsl(0 0% 98%);
+    --switch-sidebar-on: hsl(var(--accent-emerald));
 }
 
 /* ── Eye Comfort Mode ─────────────────────────────────────── */
@@ -737,6 +764,16 @@ body {
 }
 
 @layer utilities {
+  .theme-accent-blue { color: hsl(var(--accent-blue)); }
+  .theme-accent-emerald { color: hsl(var(--accent-emerald)); }
+  .theme-accent-orange { color: hsl(var(--accent-orange)); }
+  .theme-accent-violet { color: hsl(var(--accent-violet)); }
+  .theme-accent-pink { color: hsl(var(--accent-pink)); }
+  .theme-accent-indigo { color: hsl(var(--accent-indigo)); }
+  .theme-accent-amber { color: hsl(var(--accent-amber)); }
+  .theme-danger { color: hsl(var(--accent-danger)); }
+  .theme-danger:hover { color: hsl(var(--accent-danger) / 0.8); }
+
   .hover-elevate {
     transition: background-color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
                 box-shadow 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
@@ -844,7 +881,7 @@ body {
   left: 3px !important;
   transform: translateY(-50%) !important;
   border-radius: 50% !important;
-  background: #ffffff !important;
+  background: var(--switch-thumb) !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.35) !important;
   transition: left 0.2s ease !important;
 }
@@ -857,7 +894,7 @@ body {
   left: 3px !important;
   transform: translateY(-50%) !important;
   border-radius: 50% !important;
-  background: #ffffff !important;
+  background: var(--switch-thumb) !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.25) !important;
   transition: left 0.2s ease !important;
 }
@@ -867,10 +904,7 @@ body {
   background: var(--primary) !important;
 }
 .fcal-switch-sidebar.p-highlight .p-inputswitch-slider {
-  background: #16a34a !important;
-}
-.dark .fcal-switch-sidebar.p-highlight .p-inputswitch-slider {
-  background: #22c55e !important;
+  background: var(--switch-sidebar-on) !important;
 }
 .fcal-switch-md.p-highlight .p-inputswitch-slider::before {
   left: calc(2.75rem - 1.125rem - 3px) !important;   /* trackW - thumbSz - pad */
@@ -936,6 +970,32 @@ body {
   pointer-events: none;
   will-change: opacity, transform;
 }
+
+/* Theme compatibility for legacy hardcoded utility color classes used across screens. */
+.text-blue-500 { color: hsl(var(--accent-blue)) !important; }
+.text-emerald-500 { color: hsl(var(--accent-emerald)) !important; }
+.text-orange-500 { color: hsl(var(--accent-orange)) !important; }
+.text-violet-500,
+.text-violet-600 { color: hsl(var(--accent-violet)) !important; }
+.text-pink-500 { color: hsl(var(--accent-pink)) !important; }
+.text-indigo-500 { color: hsl(var(--accent-indigo)) !important; }
+.text-sky-500 { color: hsl(var(--accent-blue)) !important; }
+.text-red-600,
+.text-red-700 { color: hsl(var(--accent-danger)) !important; }
+.text-amber-600,
+.text-amber-700 { color: hsl(var(--accent-amber)) !important; }
+
+.dark .dark\:text-violet-300,
+.dark .dark\:text-violet-400,
+.dark .dark\:text-violet-500,
+.dark .dark\:text-violet-600 { color: hsl(var(--accent-violet)) !important; }
+.dark .dark\:text-amber-300,
+.dark .dark\:text-amber-400,
+.dark .dark\:text-amber-500,
+.dark .dark\:text-amber-600 { color: hsl(var(--accent-amber)) !important; }
+.dark .dark\:text-red-300,
+.dark .dark\:text-red-400,
+.dark .dark\:text-red-500 { color: hsl(var(--accent-danger)) !important; }
 
 .animate-in {
   animation-fill-mode: both;

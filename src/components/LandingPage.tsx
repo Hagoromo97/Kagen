@@ -7,31 +7,31 @@ const FEATURES = [
     icon: CalendarDays,
     title: "Route Calendar",
     description: "Plan and track daily delivery routes with colour-coded schedules.",
-    color: "text-blue-500",
+    color: "theme-accent-blue",
   },
   {
     icon: MapPin,
     title: "Location Tracking",
     description: "Log delivery locations and manage stop records efficiently.",
-    color: "text-emerald-500",
+    color: "theme-accent-emerald",
   },
   {
     icon: Package,
     title: "VM Management",
     description: "Monitor vending machine stock, planograms, and movements.",
-    color: "text-orange-500",
+    color: "theme-accent-orange",
   },
   {
     icon: Users,
     title: "Rooster",
     description: "View shift schedules in weekly or monthly calendar view.",
-    color: "text-purple-500",
+    color: "theme-accent-violet",
   },
   {
     icon: Layers,
     title: "Gallery",
     description: "Store and browse VM photo albums organised by album.",
-    color: "text-pink-500",
+    color: "theme-accent-pink",
   },
 ]
 
@@ -97,9 +97,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <div className="w-full max-w-3xl mx-auto text-center space-y-8">
           {/* Main Title */}
           <h1
-            className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.4rem,7.2vw,2.2rem)] sm:text-2xl lg:text-3xl font-bold tracking-tight break-words [text-wrap:balance] transition-all duration-700 ${
-              isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"
-            } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.4rem,7.2vw,2.2rem)] sm:text-2xl lg:text-3xl font-bold tracking-tight break-words [text-wrap:balance] text-foreground transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "100ms" : "0ms" }}
           >
             Data Brutal
@@ -107,9 +105,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
           {/* Description */}
           <p
-            className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed transition-all duration-700 ${
-              isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"
-            } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed text-muted-foreground transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "150ms" : "0ms" }}
           >
             Streamline your delivery routes, track locations, and manage operations with a single powerful tool.
@@ -118,11 +114,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           {/* CTA Button */}
           <button
             onClick={handleEnter}
-            className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-medium text-sm border active:scale-[0.96] transition-all duration-200 ${
-              isDark
-                ? "bg-transparent text-slate-300 border-slate-500/80 hover:bg-slate-700/20 hover:border-slate-400"
-                : "bg-[hsl(var(--card)/0.9)] text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--card))] hover:border-[hsl(var(--ring)/0.7)] shadow-sm"
-            } ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-medium text-sm border border-border/90 bg-card/85 text-foreground hover:bg-card hover:border-ring/70 shadow-sm active:scale-[0.96] transition-all duration-200 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "200ms" : "0ms" }}
           >
             <span className="relative z-10">Get Started</span>
@@ -139,19 +131,15 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
             {FEATURES.map(({ icon: Icon, title, description, color }) => (
               <div
                 key={title}
-                className={`group relative p-5 rounded-2xl border transition-all duration-300 transform hover:scale-105 cursor-default ${
-                  isDark
-                    ? "border-slate-600/70 bg-[hsl(var(--card)/0.45)] hover:bg-[hsl(var(--card)/0.7)]"
-                    : "border-[hsl(var(--border)/0.85)] bg-[hsl(var(--card)/0.75)] hover:bg-[hsl(var(--card))] shadow-sm hover:shadow-md"
-                }`}
+                className="group relative p-5 rounded-2xl border border-border/80 bg-card/70 hover:bg-card/95 shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105 cursor-default"
               >
                 <div className="mb-2.5 flex items-center gap-2.5">
                   <div className={color}>
                     <Icon className="size-5" />
                   </div>
-                  <h3 className={`text-sm font-semibold text-left leading-none ${isDark ? "text-slate-300" : "text-[hsl(var(--foreground))]"}`}>{title}</h3>
+                  <h3 className="text-sm font-semibold text-left leading-none text-foreground">{title}</h3>
                 </div>
-                <p className={`text-xs text-left mt-1.5 leading-relaxed ${isDark ? "text-slate-400" : "text-[hsl(var(--muted-foreground))]"}`}>{description}</p>
+                <p className="text-xs text-left mt-1.5 leading-relaxed text-muted-foreground">{description}</p>
               </div>
             ))}
           </div>

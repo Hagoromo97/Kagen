@@ -51,7 +51,7 @@ const data = {
       title: "Schedule",
       url: "#",
       icon: Users,
-      color: "#6366F1",
+      color: "hsl(var(--accent-indigo))",
       isActive: false,
       items: [
         {
@@ -65,7 +65,7 @@ const data = {
       title: "Vending Machine",
       url: "#",
       icon: Package,
-      color: "#10B981",
+      color: "hsl(var(--accent-emerald))",
       isActive: false,
       items: [
         {
@@ -90,7 +90,7 @@ const data = {
       title: "Gallery",
       url: "#",
       icon: Images,
-      color: "#EC4899",
+      color: "hsl(var(--accent-pink))",
       isActive: false,
       items: [
         {
@@ -292,8 +292,8 @@ export function AppSidebar({
           onClick={toggleMode}
         >
           {mode === "dark"
-            ? <Moon className="size-4 shrink-0 text-violet-400" />
-            : <Sun  className="size-4 shrink-0 text-amber-400" />}
+            ? <Moon className="size-4 shrink-0 theme-accent-indigo" />
+            : <Sun  className="size-4 shrink-0 theme-accent-amber" />}
           <span className="flex-1 text-sm font-medium text-sidebar-foreground/90">
             {mode === "dark" ? text.darkMode : text.lightMode}
           </span>
@@ -312,7 +312,7 @@ export function AppSidebar({
           {isEditModeTransitioning ? (
             <Loader2 className="size-4 shrink-0 animate-spin text-primary" />
           ) : (
-            <Pencil className={`size-4 shrink-0 ${isEditMode ? "text-emerald-400" : "text-emerald-500/60"}`} />
+            <Pencil className={`size-4 shrink-0 ${isEditMode ? "theme-accent-emerald" : "text-[hsl(var(--accent-emerald)/0.65)]"}`} />
           )}
           <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
             {isEditModeTransitioning ? text.switching : text.editMode}

@@ -731,7 +731,7 @@ export function DeliveryTableDialog() {
                 {visibleColumns.has("action")   && <th className="px-2 py-3 text-center w-12">Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border font-semibold">
+            <tbody className="font-semibold">
               {displayed.length === 0 ? (
                 <tr>
                   <td colSpan={visibleColumns.size} className="text-center py-16 text-muted-foreground">
