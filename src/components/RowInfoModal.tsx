@@ -443,7 +443,7 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, allowMarke
                 {hasCoords && (
                   <div className="overflow-hidden rounded-xl border border-border">
                     <div className="transition-transform duration-300 ease-in-out" style={{ display: 'grid', gridTemplateColumns: '100% 100%', transform: pendingUrlLabel === 'Google Maps' ? 'translateX(-100%)' : 'translateX(0)' }}>
-                      <button onClick={() => openUrl(gmapsUrl, "Google Maps")} className="w-full flex items-center gap-2.5 px-3 py-2 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
+                      <button onClick={() => openUrl(gmapsUrl, "Google Maps")} className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
                         <img src="/Gmaps.png" alt="Google Maps" className="w-7 h-7 rounded-lg object-cover shrink-0" />
                         <span className="flex-1 text-left text-xs font-semibold text-foreground">Google Maps</span>
                         <ChevronRight className="size-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0" />
@@ -474,7 +474,7 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, allowMarke
                 {hasCoords && (
                   <div className="overflow-hidden rounded-xl border border-border">
                     <div className="transition-transform duration-300 ease-in-out" style={{ display: 'grid', gridTemplateColumns: '100% 100%', transform: pendingUrlLabel === 'Waze' ? 'translateX(-100%)' : 'translateX(0)' }}>
-                      <button onClick={() => openUrl(wazeUrl, "Waze")} className="w-full flex items-center gap-2.5 px-3 py-2 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
+                      <button onClick={() => openUrl(wazeUrl, "Waze")} className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
                         <img src="/waze.png" alt="Waze" className="w-7 h-7 rounded-lg object-cover shrink-0" />
                         <span className="flex-1 text-left text-xs font-semibold text-foreground">Waze</span>
                         <ChevronRight className="size-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0" />
@@ -504,7 +504,7 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, allowMarke
                 {/* FamilyMart row */}
                 <div className="overflow-hidden rounded-xl border border-border">
                   <div className="transition-transform duration-300 ease-in-out" style={{ display: 'grid', gridTemplateColumns: '100% 100%', transform: pendingUrlLabel === 'FamilyMart' ? 'translateX(-100%)' : 'translateX(0)' }}>
-                      <button onClick={() => openUrl(familyMartUrl, "FamilyMart")} className="w-full flex items-center gap-2.5 px-3 py-2 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
+                      <button onClick={() => openUrl(familyMartUrl, "FamilyMart")} className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
                       <img src="/FamilyMart.png" alt="FamilyMart" className="w-7 h-7 rounded-lg object-cover shrink-0" />
                       <span className="flex-1 text-left text-xs font-semibold text-foreground">FamilyMart</span>
                       <ChevronRight className="size-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0" />
@@ -534,7 +534,7 @@ export function RowInfoModal({ open, onOpenChange, point, isEditMode, allowMarke
                 {!isEditMode && qrCodeDestinationUrl && (
                   <div className="overflow-hidden rounded-xl border border-border">
                     <div className="transition-transform duration-300 ease-in-out" style={{ display: 'grid', gridTemplateColumns: '100% 100%', transform: pendingUrlLabel === 'QR Code' ? 'translateX(-100%)' : 'translateX(0)' }}>
-                      <button onClick={() => openUrl(qrCodeDestinationUrl, "QR Code")} className="w-full flex items-center gap-2.5 px-3 py-2 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
+                      <button onClick={() => openUrl(qrCodeDestinationUrl, "QR Code")} className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-muted/50 hover:bg-muted transition-all active:scale-[0.98] group">
                         <QrCode className="w-7 h-7 text-orange-500 shrink-0 p-1" />
                         <span className="flex-1 text-left text-xs font-semibold text-foreground">QR Code</span>
                         <ChevronRight className="size-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors shrink-0" />

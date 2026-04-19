@@ -108,6 +108,29 @@
   }
 }
 
+/* ── Button improvements: smooth transitions, shadows & hover effects ──────── */
+button[data-slot="button"] {
+  position: relative;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button[data-slot="button"]:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button[data-slot="button"]:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Smooth shadow transitions for default variant */
+button[data-slot="button"][data-variant="default"]:not(:disabled) {
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 160ms ease;
+}
+
+button[data-slot="button"][data-variant="secondary"]:not(:disabled) {
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 160ms ease;
+}
+
 .landing-cta::before {
   content: "";
   position: absolute;

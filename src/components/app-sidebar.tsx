@@ -232,7 +232,7 @@ export function AppSidebar({
                 <img
                   src={fmLogo}
                   alt="FM logo"
-                  className="mx-auto h-[92px] w-[92px] shrink-0 object-contain"
+                  className="mx-auto h-[100px] w-[100px] shrink-0 object-contain scale-110"
                 />
               </a>
             </SidebarMenuButton>
@@ -241,21 +241,21 @@ export function AppSidebar({
       </SidebarHeader>
       <Separator className="my-1" />
       {/* Search field */}
-      <div className="relative mt-1 mb-2 px-2 sidebar-search-wrapper">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none transition-colors" />
+      <div className="relative mt-1 mb-4 px-2 sidebar-search-wrapper">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none transition-colors" />
         <input
           type="text"
           placeholder={text.searchPlaceholder}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="sidebar-search h-8 w-full rounded-md border border-input bg-background pl-8 pr-7 text-[11px] md:text-[11px] shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
+          className="sidebar-search h-10 w-full rounded-md border border-input bg-background pl-9 pr-8 text-xs md:text-sm shadow-none outline-none ring-0 transition-all duration-200 placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150"
           >
-            <X className="size-3.5" />
+            <X className="size-4" />
           </button>
         )}
       </div>

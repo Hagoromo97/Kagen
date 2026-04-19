@@ -6,6 +6,7 @@ import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt"
 import { LandingPage } from "@/components/LandingPage"
 import { DeliveryMap } from "@/components/DeliveryMap"
 import { useEditMode } from "@/contexts/EditModeContext"
+import { useTheme } from "@/hooks/use-theme"
 
 const RouteList = lazy(() => import("@/components/RouteList").then(m => ({ default: m.RouteList })))
 const Settings = lazy(() => import("@/components/Settings").then(m => ({ default: m.Settings })))
@@ -1467,7 +1468,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors group"
                 >
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    <i className="bi bi-apple text-base leading-none" aria-hidden="true" />
+                    <i className="bi bi-apple text-base leading-none text-zinc-400" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground leading-tight">App Store</p>
@@ -1482,7 +1483,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors group"
                 >
                   <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                    <i className="bi bi-android2 text-base leading-none text-foreground" aria-hidden="true" />
+                    <i className="bi bi-android2 text-base leading-none text-green-500" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground leading-tight">Play Store</p>
@@ -1504,6 +1505,8 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState("home")
   const [isTransitioning, setIsTransitioning] = useState(false)
   const { open, openMobile, isMobile, toggleSidebar, setOpen, setOpenMobile } = useSidebar()
+  const { mode } = useTheme()
+  const isDark = mode === "dark"
   const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
 
   const contentText = {
@@ -1632,9 +1635,16 @@ function AppContent() {
       )}
       
       <main
-        className={`relative flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background origin-center transition-all duration-350 ease-out will-change-[transform,filter,opacity] ${isSidebarActive ? "opacity-70 scale-[0.955] blur-[3px] saturate-75" : "opacity-100 scale-100 blur-0 saturate-100"}`}
+        className={`relative isolate flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background origin-center transition-all duration-350 ease-out will-change-[transform,filter,opacity] ${isSidebarActive ? "opacity-70 scale-[0.955] blur-[3px] saturate-75" : "opacity-100 scale-100 blur-0 saturate-100"}`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
+        {isDark && (
+          <>
+            <div className="pointer-events-none absolute inset-0 z-0 bg-[hsl(var(--background))]" />
+            <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_38%),radial-gradient(circle_at_80%_70%,hsl(var(--accent)/0.14),transparent_42%)]" />
+          </>
+        )}
+
         <header className="glass-header sticky top-0 z-30 flex shrink-0 items-center gap-2 px-3 md:px-5 transition-colors duration-300" style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)', paddingBottom: '0.5rem', minHeight: 'calc(3.25rem + max(env(safe-area-inset-top), 10px))' }}>
           <SidebarTrigger className="-ml-1 shrink-0" />
           <Separator orientation="vertical" className="mr-1 md:mr-2 h-4 shrink-0" />
@@ -1684,7 +1694,7 @@ function AppContent() {
 
         </header>
         <Suspense fallback={null}>
-          <div className={`flex flex-col flex-1 min-h-0 ${(currentPage === "deliveries" || currentPage === "route-list") ? "overflow-hidden" : "overflow-y-auto"} ${isTransitioning ? "page-fade-out" : "page-fade-in"}`}>
+          <div className={`relative z-10 flex flex-col flex-1 min-h-0 ${(currentPage === "deliveries" || currentPage === "route-list") ? "overflow-hidden" : "overflow-y-auto"} ${isTransitioning ? "page-fade-out" : "page-fade-in"}`}>
             {renderContent()}
           </div>
         </Suspense>
