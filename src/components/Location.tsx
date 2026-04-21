@@ -440,16 +440,16 @@ export function DeliveryTableDialog() {
       {/* ── Search + Filter Bar ─────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/20 shrink-0">
         <div className="relative flex-1 min-w-[140px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
           <Input
             placeholder="Search code, name, route… (e.g. KL am)"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-8 pr-8 h-9 text-[11px] md:text-[11px] rounded-lg"
+            className="pl-10 pr-10 h-11 text-[12px] md:text-[12px] rounded-lg"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>

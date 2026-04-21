@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import bgDark from "../../icon/darkm.jpeg"
 import bgLight from "../../icon/lightm.jpeg"
-import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, SlidersHorizontal, Filter, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
+import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
@@ -541,7 +541,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const isInteractingWithSearchSuggestions = useRef(false)
   const [filterRegion, setFilterRegion] = useState<"all" | "KL" | "Sel">("all")
   const [filterShift, setFilterShift] = useState<"all" | "AM" | "PM">("all")
-  const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [showAllRoutes, setShowAllRoutes] = useState(false)
   const [headerItems, setHeaderItems] = useState<RouteListHeaderItem[]>(loadRouteListHeaderItems)
   const headerSnapshotRef = useRef<RouteListHeaderItem[]>([])
@@ -2140,6 +2139,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const editActionFs = btnFs
   const editChipFs = badgeFs
   const previewRows = cardH >= 520 ? 5 : cardH >= 460 ? 4 : 3
+  const hasActiveSearchOrFilter = !!searchQuery.trim() || filterRegion !== "all" || filterShift !== "all"
 
   return (
     <div className="relative font-light flex-1 min-h-0 h-full overflow-y-auto overscroll-contain">
@@ -2156,13 +2156,13 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         <button
           type="button"
           aria-label="Close search suggestions"
-          className="fixed inset-0 z-20 bg-background/35 backdrop-blur-[2px]"
+          className="fixed inset-0 z-10 bg-transparent"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setSearchFocused(false)}
         />
       )}
       {/* Route List */}
-      <div className="relative isolate mx-auto min-h-full max-w-[1440px] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+      <div className="relative z-20 isolate mx-auto min-h-full max-w-[1440px] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div
             style={{
@@ -2196,11 +2196,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
               {(filterRegion !== 'all' || filterShift !== 'all') && <span className="ml-1 text-primary font-medium">· filtered</span>}
             </p>
           </div>
-          <Separator className="mt-3 sm:mt-4" />
-        </div>
-        {/* Search + Filter */}
-        <div className="sticky top-0 z-20 mb-5 flex items-center justify-center gap-2.5 border-b border-border/40 bg-background/80 px-4 py-2 backdrop-blur-md sm:-mx-5 sm:mb-6 sm:gap-3 sm:px-5 sm:py-2.5 lg:-mx-8 lg:px-8">
-          <div className="relative z-30 w-full max-w-sm">
+          <div className="mt-2 flex flex-col gap-2 sm:mt-3 sm:flex-row sm:items-center">
+          <div className="relative z-30 flex-1 min-w-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50 pointer-events-none" />
             <input
               type="text"
@@ -2214,7 +2211,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 }
                 setTimeout(() => setSearchFocused(false), 120)
               }}
-              className="w-full h-12 pl-11 pr-10 bg-card/75 backdrop-blur-md rounded-xl text-[11px] md:text-[11px] placeholder:text-muted-foreground/40 outline-none ring-1 ring-border/60 focus:ring-2 focus:ring-primary/40 shadow-sm transition-shadow"
+              className={`w-full h-12 pl-11 pr-10 bg-background/95 rounded-xl text-[11px] md:text-[11px] text-foreground placeholder:text-muted-foreground/50 outline-none ring-1 shadow-sm transition-all duration-200 ${
+                searchQuery.trim()
+                  ? "ring-primary/45"
+                  : "ring-border/70 focus:ring-2 focus:ring-primary/40"
+              }`}
             />
             {searchQuery && (
               <button
@@ -2227,7 +2228,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
 
             {searchFocused && searchSuggestions.length > 0 && (
               <div
-                className="absolute z-30 mt-2 w-full rounded-xl border border-border bg-card/85 backdrop-blur-md shadow-lg overflow-hidden max-h-[220px] overflow-y-auto overscroll-contain"
+                className="absolute z-40 mt-2 w-full rounded-xl border border-border bg-background shadow-lg overflow-hidden max-h-[220px] overflow-y-auto overscroll-contain"
                 style={{ WebkitOverflowScrolling: 'touch' }}
                 onMouseDown={() => {
                   isInteractingWithSearchSuggestions.current = true
@@ -2266,32 +2267,62 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             )}
           </div>
 
+          <select
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value as "all" | "KL" | "Sel")}
+            className={`h-11 shrink-0 rounded-xl border bg-background px-3 text-[11px] font-medium text-foreground outline-none ring-1 ring-transparent transition-all duration-200 focus:ring-primary/30 sm:w-[110px] ${
+              filterRegion !== "all"
+                ? "border-primary/45 shadow-[0_0_0_1px_hsl(var(--primary)/0.08)]"
+                : "border-border/70"
+            }`}
+            aria-label="Filter region"
+          >
+            <option value="all">All Region</option>
+            <option value="KL">KL</option>
+            <option value="Sel">Sel</option>
+          </select>
+
+          <select
+            value={filterShift}
+            onChange={(e) => setFilterShift(e.target.value as "all" | "AM" | "PM")}
+            className={`h-11 shrink-0 rounded-xl border bg-background px-3 text-[11px] font-medium text-foreground outline-none ring-1 ring-transparent transition-all duration-200 focus:ring-primary/30 sm:w-[110px] ${
+              filterShift !== "all"
+                ? "border-primary/45 shadow-[0_0_0_1px_hsl(var(--primary)/0.08)]"
+                : "border-border/70"
+            }`}
+            aria-label="Filter shift"
+          >
+            <option value="all">All Shift</option>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+
+          {hasActiveSearchOrFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("")
+                setFilterRegion("all")
+                setFilterShift("all")
+              }}
+              className="h-11 shrink-0 rounded-xl border border-border/70 bg-background px-3 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-muted/70 hover:text-foreground animate-in fade-in zoom-in-95"
+            >
+              Reset
+            </button>
+          )}
+
           {pinnedIds.size > 0 && (
             <button
               type="button"
               onClick={clearPinnedRoutes}
-              className="h-12 shrink-0 rounded-xl border border-border/70 bg-card/75 px-3 text-[11px] font-semibold text-muted-foreground shadow-sm backdrop-blur-md transition-colors hover:bg-muted/80 hover:text-foreground"
+              className="h-11 shrink-0 rounded-xl border border-border/70 bg-background px-3 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
               title="Unpin all routes from Home"
             >
               Unpin All
             </button>
           )}
-
-          {/* Single Filter Button */}
-          <button
-            onClick={() => setFilterModalOpen(true)}
-            className={`relative h-12 w-12 flex items-center justify-center rounded-xl ring-1 shadow-sm backdrop-blur-md transition-colors ${
-              filterRegion !== "all" || filterShift !== "all"
-                ? "bg-primary/95 text-primary-foreground ring-primary"
-                : "bg-card/75 text-muted-foreground ring-border/60 hover:bg-muted/80"
-            }`}
-          >
-            <Filter className="size-5" />
-            {(filterRegion !== "all" || filterShift !== "all") && (
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-orange-400 ring-2 ring-background" />
-            )}
-          </button>
-
+          </div>
+          <Separator className="mt-3 sm:mt-4" />
         </div>
 
         {/* ── Card list ── */}
@@ -2340,7 +2371,18 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 <div style={{ width: cardW, flexShrink: 0, display: 'flex', flexDirection: 'column', height: cardH }}>
 
                   {/* ── Colored header band ── */}
-                  <div style={{ position: 'relative', background: 'transparent', overflow: 'hidden', flexShrink: 0, padding: `${cardPadV} ${cardPad} calc(${cardPadV} * 1.2)` }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      padding: `${cardPadV} ${cardPad} calc(${cardPadV} * 0.9)`,
+                      background: isDark
+                        ? `linear-gradient(180deg, ${markerColor}22 0%, rgba(15, 23, 42, 0.12) 68%, transparent 100%)`
+                        : `linear-gradient(180deg, ${markerColor}1c 0%, rgba(255, 255, 255, 0.46) 68%, transparent 100%)`,
+                      borderBottom: `1px solid ${markerColor}2e`,
+                    }}
+                  >
                     {/* Header content */}
                     <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       {/* Route name */}
@@ -2351,44 +2393,44 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                         <span style={{ fontSize: cardFontSm, fontWeight: 700, color: 'hsl(var(--muted-foreground))' }}>.</span>
                         <span style={{ fontSize: cardFontSm, fontWeight: 800, color: route.shift === 'AM' ? '#16a34a' : route.shift === 'PM' ? '#c2410c' : 'hsl(var(--muted-foreground))' }}>{route.shift}</span>
                       </div>
-                      <div style={{ height: 1, marginTop: '0.44rem', background: `linear-gradient(90deg, transparent, ${markerColor}55, transparent)` }} />
-                      {/* Pin (left) + stops (right) — bottom row */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: `${(1.2 * Math.min(1, cardW / 340)).toFixed(2)}rem` }}>
-                        <button
-                          onClick={e => { e.stopPropagation(); togglePin(route) }}
-                          title={isPinnedCard ? "Unpin from Home" : "Pin to Home"}
-                          style={{
-                            background: isPinnedCard ? `${markerColor}18` : 'hsl(var(--muted)/0.5)',
-                            border: `1px solid ${isPinnedCard ? markerColor + '55' : 'hsl(var(--border)/0.6)'}`,
-                            borderRadius: 10,
-                            padding: `${rowPadV} ${rowPadH}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1,
-                            transition: 'all 0.18s', gap: '0.3rem',
-                          }}
-                        >
-                          <span style={{ fontSize: '0.9rem' }}>{isPinnedCard ? '📌' : '📍'}</span>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem' }}>
-                            <span style={{ fontSize: `${(0.73 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 700, color: isPinnedCard ? markerColor : 'hsl(var(--muted-foreground))', letterSpacing: '0.03em', lineHeight: 1 }}>
-                              {isPinnedCard ? 'Pinned' : 'Pin'}
-                            </span>
-                            <span style={{ fontSize: `${(0.57 * Math.min(1, cardW / 340)).toFixed(2)}rem`, color: 'hsl(var(--muted-foreground))', opacity: 0.75, lineHeight: 1, whiteSpace: 'nowrap' }}>
-                              {isPinnedCard ? 'Tap to unpin' : 'Show on Home'}
-                            </span>
-                          </div>
-                        </button>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                          <span style={{ fontSize: `${(1.0 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 900, color: isDark ? '#c0c7d0' : markerColor, lineHeight: 1 }}>{route.deliveryPoints.length}</span>
-                          <span style={{ fontSize: `${(0.63 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 700, color: isDark ? '#c0c7d0' : markerColor, opacity: isDark ? 0.85 : 0.6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>stops</span>
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Header separator moved above pin/stops */}
+                    {/* Header content only (without pin and stops) */}
                   </div>
 
                   {/* ── Body ── */}
                   <div style={{ flex: 1, padding: `${rowGap} ${cardPad} 0`, display: 'flex', flexDirection: 'column', gap: bodyGap, overflow: 'hidden' }}>
+
+                    {/* Pin + stop count moved outside header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.55rem', marginBottom: '0.1rem' }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); togglePin(route) }}
+                        title={isPinnedCard ? "Unpin from Home" : "Pin to Home"}
+                        style={{
+                          background: isPinnedCard ? `${markerColor}18` : 'hsl(var(--muted)/0.5)',
+                          border: `1px solid ${isPinnedCard ? markerColor + '55' : 'hsl(var(--border)/0.6)'}`,
+                          borderRadius: 10,
+                          padding: `${rowPadV} ${rowPadH}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1,
+                          transition: 'all 0.18s', gap: '0.3rem',
+                        }}
+                      >
+                        <span style={{ fontSize: '0.9rem' }}>{isPinnedCard ? '📌' : '📍'}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem' }}>
+                          <span style={{ fontSize: `${(0.73 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 700, color: isPinnedCard ? markerColor : 'hsl(var(--muted-foreground))', letterSpacing: '0.03em', lineHeight: 1 }}>
+                            {isPinnedCard ? 'Pinned' : 'Pin'}
+                          </span>
+                          <span style={{ fontSize: `${(0.57 * Math.min(1, cardW / 340)).toFixed(2)}rem`, color: 'hsl(var(--muted-foreground))', opacity: 0.75, lineHeight: 1, whiteSpace: 'nowrap' }}>
+                            {isPinnedCard ? 'Tap to unpin' : 'Show on Home'}
+                          </span>
+                        </div>
+                      </button>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                        <span style={{ fontSize: `${(1.0 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 900, color: isDark ? '#c0c7d0' : markerColor, lineHeight: 1 }}>{route.deliveryPoints.length}</span>
+                        <span style={{ fontSize: `${(0.63 * Math.min(1, cardW / 340)).toFixed(2)}rem`, fontWeight: 700, color: isDark ? '#c0c7d0' : markerColor, opacity: isDark ? 0.85 : 0.6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>stops</span>
+                      </div>
+                    </div>
 
                     {/* Stops list — responsive row count */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: rowGap }}>
@@ -2400,7 +2442,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             <span style={{ width: iconSz, height: iconSz, borderRadius: 6, background: `linear-gradient(135deg, ${markerColor}dd, ${markerColor}88)`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: iconFs, fontWeight: 800, flexShrink: 0, boxShadow: `0 1px 3px ${markerColor}22` }}>{i + 1}</span>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, color: 'hsl(var(--foreground))', fontWeight: 600, minWidth: 0 }}>{pt.name}</span>
                             {km !== null && (
-                              <span style={{ fontSize: `calc(${cardFontXs} - 1px)`, fontWeight: 600, color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
+                              <span style={{ fontSize: `calc(${cardFontSm} - 1px)`, fontWeight: 600, color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
                                 {formatKm(km)}
                               </span>
                             )}
@@ -2545,7 +2587,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   </div>{/* end Body */}
 
                   {/* Footer */}
-                  <div style={{ padding: `${rowGap} ${cardPad} ${cardPadV}`, display: 'flex', gap: '0.45rem', borderTop: `1px solid ${markerColor}55` }}>
+                  <div style={{ padding: `${rowGap} ${cardPad} ${cardPadV}`, display: 'flex', gap: '0.45rem', borderTop: `1.5px solid ${markerColor}60`, background: isDark ? 'rgba(148, 163, 184, 0.04)' : 'rgba(255, 255, 255, 0.38)' }}>
                     {isEditMode && (
                       <button onClick={() => openExclusiveCardPanel(route.id, 'edit')} style={{ flex: 1, borderRadius: 11, fontSize: btnFs, fontWeight: 700, padding: `${btnPad} 0`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: markerColor, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}44` }}>
                         <Edit2 style={{ width: iconSz * 0.6, height: iconSz * 0.6 }} /> Edit
@@ -2902,23 +2944,23 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                       </div>
                     ) : (
                         <div className="h-full flex flex-col">
-                          <div className="shrink-0 border-b border-border/70 bg-background/95 px-3 py-2 flex items-center gap-2">
+                          <div className="shrink-0 border-b border-border/70 bg-background/95 px-3 py-2.5 flex items-center gap-2">
                             <div className="relative flex-1">
-                              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
                               <Input
                                 value={detailSearchQuery}
                                 onChange={(e) => setDetailSearchQuery(e.target.value)}
                                 placeholder="Search by code, name, delivery..."
-                                className="h-8 pl-8 pr-8 text-[11px]"
+                                className="h-10 pl-10 pr-10 text-[12px]"
                               />
                               {detailSearchQuery && (
                                 <button
                                   type="button"
                                   onClick={() => setDetailSearchQuery("")}
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
+                                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
                                   aria-label="Clear search"
                                 >
-                                  <X className="size-3.5" />
+                                  <X className="size-4" />
                                 </button>
                               )}
                             </div>
@@ -3957,87 +3999,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </Dialog>
       )}
 
-      <Dialog open={filterModalOpen} onOpenChange={setFilterModalOpen}>
-        <DialogContent className="w-[92vw] max-w-sm overflow-hidden flex flex-col gap-0 p-0 rounded-2xl">
-          <div className="px-5 pt-5 pb-4 border-b border-border shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-primary/10">
-                <SlidersHorizontal className="size-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-sm font-bold leading-tight">Route Filter</DialogTitle>
-                <DialogDescription className="text-xs mt-0.5">Filter route cards by region and shift</DialogDescription>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-4 space-y-4">
-            <div className="rounded-xl border border-border bg-background p-3">
-              <p className="text-xs text-muted-foreground">
-                Select filters to narrow down the route list.
-              </p>
-            </div>
-
-            <div className="space-y-2.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Region</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(["all", "KL", "Sel"] as const).map(r => (
-                  <button
-                    key={r}
-                    onClick={() => setFilterRegion(r)}
-                    className={`h-10 rounded-lg text-xs font-semibold transition-all ${
-                      filterRegion === r
-                        ? r === "KL" ? "bg-blue-500 text-white shadow-sm"
-                          : r === "Sel" ? "bg-red-500 text-white shadow-sm"
-                          : "bg-foreground text-background shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
-                    }`}
-                  >
-                    {r === "all" ? "All" : r}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shift</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(["all", "AM", "PM"] as const).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setFilterShift(s)}
-                    className={`h-10 rounded-lg text-xs font-semibold transition-all ${
-                      filterShift === s
-                        ? s === "AM" ? "bg-orange-500 text-white shadow-sm"
-                          : s === "PM" ? "bg-indigo-500 text-white shadow-sm"
-                          : "bg-foreground text-background shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
-                    }`}
-                  >
-                    {s === "all" ? "All" : s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="px-5 py-3.5 border-t border-border shrink-0 bg-background flex items-center gap-3">
-            {(filterRegion !== "all" || filterShift !== "all") && (
-              <button
-                className="text-xs font-medium text-destructive hover:text-destructive/80 transition-colors"
-                onClick={() => {
-                  setFilterRegion("all")
-                  setFilterShift("all")
-                }}
-              >
-                Reset
-              </button>
-            )}
-            <div className="flex-1" />
-            <Button size="sm" onClick={() => setFilterModalOpen(false)}>Close</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
         </div>
 
         {/* Edit Route Dialog */}

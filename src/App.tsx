@@ -732,7 +732,7 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
               <div className="min-w-0 flex-1">
                 <DialogTitle className="text-sm font-semibold tracking-tight truncate">
                   {homeRouteDialogRoute
-                    ? `Route ${homeRouteDialogRoute.name}`
+                    ? `${homeRouteDialogRoute.name}`
                     : "Pinned Route"}
                 </DialogTitle>
               </div>
@@ -779,23 +779,23 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 
           {homeRouteDialogView === 'table' ? (
             <>
-              <div className="border-b border-border/70 bg-background/95 px-3 py-2">
+              <div className="border-b border-border/70 bg-background/95 px-3 py-2.5">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                  <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
                   <Input
                     value={homeRouteDialogQuery}
                     onChange={(event) => setHomeRouteDialogQuery(event.target.value)}
                     placeholder="Search by code, name, delivery..."
-                    className="h-8 pl-8 pr-8 text-[11px]"
+                    className="h-10 pl-10 pr-10 text-[12px]"
                   />
                   {homeRouteDialogQuery && (
                     <button
                       type="button"
                       onClick={() => setHomeRouteDialogQuery("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground"
                       aria-label="Clear search"
                     >
-                      <X className="size-3.5" />
+                      <X className="size-4" />
                     </button>
                   )}
                 </div>
