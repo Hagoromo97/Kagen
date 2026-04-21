@@ -1563,10 +1563,37 @@ function HomePage({ onNavigate }: { onNavigate: (page: string) => void }) {
 function AppContent() {
   const [currentPage, setCurrentPage] = useState("home")
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [pinnedRouteCount, setPinnedRouteCount] = useState(0)
   const { open, openMobile, isMobile, toggleSidebar, setOpen, setOpenMobile } = useSidebar()
   const { mode } = useTheme()
   const isDark = mode === "dark"
   const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
+
+  useEffect(() => {
+    const syncPinnedCount = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("fcalendar_pinned_routes") || "[]") as { id?: string }[]
+        const ids = new Set(stored.map(item => item.id).filter((id): id is string => Boolean(id)))
+        setPinnedRouteCount(ids.size)
+      } catch {
+        setPinnedRouteCount(0)
+      }
+    }
+
+    syncPinnedCount()
+    window.addEventListener("fcalendar_pins_changed", syncPinnedCount)
+    window.addEventListener("storage", syncPinnedCount)
+    return () => {
+      window.removeEventListener("fcalendar_pins_changed", syncPinnedCount)
+      window.removeEventListener("storage", syncPinnedCount)
+    }
+  }, [])
+
+  const handleUnpinAll = () => {
+    localStorage.setItem("fcalendar_pinned_routes", JSON.stringify([]))
+    window.dispatchEvent(new Event("fcalendar_pins_changed"))
+    setPinnedRouteCount(0)
+  }
 
   const contentText = {
     locationTitle: "Location",
@@ -1750,6 +1777,19 @@ function AppContent() {
               })()}
             </BreadcrumbList>
           </Breadcrumb>
+
+          {currentPage === "route-list" && pinnedRouteCount > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleUnpinAll}
+              className="ml-2 h-8 shrink-0 rounded-lg px-2.5 text-[11px] font-semibold"
+              title="Unpin all routes from Home"
+            >
+              Unpin All
+            </Button>
+          )}
 
         </header>
         <Suspense fallback={null}>

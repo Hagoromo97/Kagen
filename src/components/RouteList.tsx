@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import bgDark from "../../icon/darkm.jpeg"
 import bgLight from "../../icon/lightm.jpeg"
-import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
+import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown, Filter } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
@@ -152,6 +152,51 @@ interface ExistingLocationOption {
 }
 
 type EditableField = 'code' | 'name' | 'latitude' | 'longitude'
+type RouteRegionFilter = 'all' | 'KL' | 'Sel'
+type RouteShiftFilter = 'all' | 'AM' | 'PM'
+type RouteCombinedFilter =
+  | 'all'
+  | 'region:KL'
+  | 'region:Sel'
+  | 'shift:AM'
+  | 'shift:PM'
+  | 'combo:KL:AM'
+  | 'combo:KL:PM'
+  | 'combo:Sel:AM'
+  | 'combo:Sel:PM'
+
+function toRouteCombinedFilter(region: RouteRegionFilter, shift: RouteShiftFilter): RouteCombinedFilter {
+  if (region === 'all' && shift === 'all') return 'all'
+  if (region !== 'all' && shift === 'all') return region === 'KL' ? 'region:KL' : 'region:Sel'
+  if (region === 'all' && shift !== 'all') return shift === 'AM' ? 'shift:AM' : 'shift:PM'
+  if (region === 'KL' && shift === 'AM') return 'combo:KL:AM'
+  if (region === 'KL' && shift === 'PM') return 'combo:KL:PM'
+  if (region === 'Sel' && shift === 'AM') return 'combo:Sel:AM'
+  return 'combo:Sel:PM'
+}
+
+function parseRouteCombinedFilter(value: RouteCombinedFilter): { region: RouteRegionFilter; shift: RouteShiftFilter } {
+  switch (value) {
+    case 'region:KL':
+      return { region: 'KL', shift: 'all' }
+    case 'region:Sel':
+      return { region: 'Sel', shift: 'all' }
+    case 'shift:AM':
+      return { region: 'all', shift: 'AM' }
+    case 'shift:PM':
+      return { region: 'all', shift: 'PM' }
+    case 'combo:KL:AM':
+      return { region: 'KL', shift: 'AM' }
+    case 'combo:KL:PM':
+      return { region: 'KL', shift: 'PM' }
+    case 'combo:Sel:AM':
+      return { region: 'Sel', shift: 'AM' }
+    case 'combo:Sel:PM':
+      return { region: 'Sel', shift: 'PM' }
+    default:
+      return { region: 'all', shift: 'all' }
+  }
+}
 
 // Returns true if the delivery point is active on the given date
 function isDeliveryActive(delivery: string, date: Date = new Date()): boolean {
@@ -538,9 +583,26 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [newRoute, setNewRoute] = useState({ name: "", code: "", shift: "AM" })
   const [searchQuery, setSearchQuery] = useState("")
   const [searchFocused, setSearchFocused] = useState(false)
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
+  const [filterModalTab, setFilterModalTab] = useState<'shift' | 'region'>('shift')
   const isInteractingWithSearchSuggestions = useRef(false)
-  const [filterRegion, setFilterRegion] = useState<"all" | "KL" | "Sel">("all")
-  const [filterShift, setFilterShift] = useState<"all" | "AM" | "PM">("all")
+  const [combinedFilter, setCombinedFilter] = useState<RouteCombinedFilter>('all')
+  const { region: filterRegion, shift: filterShift } = useMemo(
+    () => parseRouteCombinedFilter(combinedFilter),
+    [combinedFilter]
+  )
+  const setRegionFilter = useCallback((nextRegion: RouteRegionFilter) => {
+    setCombinedFilter(prev => {
+      const { shift } = parseRouteCombinedFilter(prev)
+      return toRouteCombinedFilter(nextRegion, shift)
+    })
+  }, [])
+  const setShiftFilter = useCallback((nextShift: RouteShiftFilter) => {
+    setCombinedFilter(prev => {
+      const { region } = parseRouteCombinedFilter(prev)
+      return toRouteCombinedFilter(region, nextShift)
+    })
+  }, [])
   const [showAllRoutes, setShowAllRoutes] = useState(false)
   const [headerItems, setHeaderItems] = useState<RouteListHeaderItem[]>(loadRouteListHeaderItems)
   const headerSnapshotRef = useRef<RouteListHeaderItem[]>([])
@@ -672,10 +734,23 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     })
   }, [routes])
 
-  const clearPinnedRoutes = useCallback(() => {
-    setPinnedIds(new Set())
-    localStorage.setItem("fcalendar_pinned_routes", JSON.stringify([]))
-    window.dispatchEvent(new Event("fcalendar_pins_changed"))
+  useEffect(() => {
+    const syncPinnedFromStorage = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("fcalendar_pinned_routes") || "[]") as { id?: string }[]
+        const ids = new Set(stored.map(item => item.id).filter((id): id is string => Boolean(id)))
+        setPinnedIds(ids)
+      } catch {
+        setPinnedIds(new Set())
+      }
+    }
+
+    window.addEventListener("fcalendar_pins_changed", syncPinnedFromStorage)
+    window.addEventListener("storage", syncPinnedFromStorage)
+    return () => {
+      window.removeEventListener("fcalendar_pins_changed", syncPinnedFromStorage)
+      window.removeEventListener("storage", syncPinnedFromStorage)
+    }
   }, [])
 
   // Fetch routes from database
@@ -841,7 +916,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   }, [routes, searchQuery, filterRegion, filterShift])
 
   // Reset showAllRoutes when search or filter changes
-  useEffect(() => { setShowAllRoutes(false) }, [searchQuery, filterRegion, filterShift])
+  useEffect(() => { setShowAllRoutes(false) }, [searchQuery, combinedFilter])
 
   // Only show first 3 route cards when collapsed
   const displayedRoutes = showAllRoutes ? filteredRoutes : filteredRoutes.slice(0, 4)
@@ -2139,7 +2214,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const editActionFs = btnFs
   const editChipFs = badgeFs
   const previewRows = cardH >= 520 ? 5 : cardH >= 460 ? 4 : 3
-  const hasActiveSearchOrFilter = !!searchQuery.trim() || filterRegion !== "all" || filterShift !== "all"
+  const hasActiveSearchOrFilter = !!searchQuery.trim() || combinedFilter !== 'all'
 
   return (
     <div className="relative font-light flex-1 min-h-0 h-full overflow-y-auto overscroll-contain">
@@ -2193,11 +2268,11 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           <div className="ml-6 mt-2.5 px-3 py-2 sm:ml-7 sm:mt-3 sm:px-4 sm:py-2.5">
             <p className="text-[11px] text-foreground/90">
               {filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}
-              {(filterRegion !== 'all' || filterShift !== 'all') && <span className="ml-1 text-primary font-medium">· filtered</span>}
+              {combinedFilter !== 'all' && <span className="ml-1 text-primary font-medium">· filtered</span>}
             </p>
           </div>
-          <div className="mt-2 flex flex-col gap-2 sm:mt-3 sm:flex-row sm:items-center">
-          <div className="relative z-30 flex-1 min-w-0">
+          <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-3">
+          <div className="relative z-30 min-w-0 flex-1 sm:flex-none sm:w-[320px] lg:w-[380px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50 pointer-events-none" />
             <input
               type="text"
@@ -2211,7 +2286,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                 }
                 setTimeout(() => setSearchFocused(false), 120)
               }}
-              className={`w-full h-12 pl-11 pr-10 bg-background/95 rounded-xl text-[11px] md:text-[11px] text-foreground placeholder:text-muted-foreground/50 outline-none ring-1 shadow-sm transition-all duration-200 ${
+              className={`w-full h-12 pl-11 pr-10 bg-background/95 rounded-[11px] text-[11px] md:text-[11px] text-foreground placeholder:text-muted-foreground/50 outline-none ring-1 shadow-sm transition-all duration-200 ${
                 searchQuery.trim()
                   ? "ring-primary/45"
                   : "ring-border/70 focus:ring-2 focus:ring-primary/40"
@@ -2267,61 +2342,139 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             )}
           </div>
 
-          <select
-            value={filterRegion}
-            onChange={(e) => setFilterRegion(e.target.value as "all" | "KL" | "Sel")}
-            className={`h-11 shrink-0 rounded-xl border bg-background px-3 text-[11px] font-medium text-foreground outline-none ring-1 ring-transparent transition-all duration-200 focus:ring-primary/30 sm:w-[110px] ${
-              filterRegion !== "all"
-                ? "border-primary/45 shadow-[0_0_0_1px_hsl(var(--primary)/0.08)]"
-                : "border-border/70"
+          <button
+            type="button"
+            onClick={() => setFilterModalOpen(true)}
+            className={`h-11 w-11 shrink-0 rounded-[11px] border bg-background p-0 text-foreground outline-none ring-1 ring-transparent transition-all duration-200 focus:ring-primary/30 inline-flex items-center justify-center ${
+              combinedFilter !== 'all'
+                ? 'border-primary/45 shadow-[0_0_0_1px_hsl(var(--primary)/0.08)] text-primary'
+                : 'border-border/70 text-muted-foreground hover:text-foreground'
             }`}
-            aria-label="Filter region"
+            aria-label="Open route filters"
+            title="Filter routes"
           >
-            <option value="all">All Region</option>
-            <option value="KL">KL</option>
-            <option value="Sel">Sel</option>
-          </select>
-
-          <select
-            value={filterShift}
-            onChange={(e) => setFilterShift(e.target.value as "all" | "AM" | "PM")}
-            className={`h-11 shrink-0 rounded-xl border bg-background px-3 text-[11px] font-medium text-foreground outline-none ring-1 ring-transparent transition-all duration-200 focus:ring-primary/30 sm:w-[110px] ${
-              filterShift !== "all"
-                ? "border-primary/45 shadow-[0_0_0_1px_hsl(var(--primary)/0.08)]"
-                : "border-border/70"
-            }`}
-            aria-label="Filter shift"
-          >
-            <option value="all">All Shift</option>
-            <option value="AM">AM</option>
-            <option value="PM">PM</option>
-          </select>
+            <Filter className="size-4" />
+          </button>
 
           {hasActiveSearchOrFilter && (
             <button
               type="button"
               onClick={() => {
                 setSearchQuery("")
-                setFilterRegion("all")
-                setFilterShift("all")
+                setCombinedFilter('all')
               }}
               className="h-11 shrink-0 rounded-xl border border-border/70 bg-background px-3 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-muted/70 hover:text-foreground animate-in fade-in zoom-in-95"
             >
               Reset
             </button>
           )}
-
-          {pinnedIds.size > 0 && (
-            <button
-              type="button"
-              onClick={clearPinnedRoutes}
-              className="h-11 shrink-0 rounded-xl border border-border/70 bg-background px-3 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
-              title="Unpin all routes from Home"
-            >
-              Unpin All
-            </button>
-          )}
           </div>
+
+          <Dialog open={filterModalOpen} onOpenChange={setFilterModalOpen}>
+            <DialogContent className="sm:max-w-[380px]">
+              <DialogHeader>
+                <DialogTitle>Filter Routes</DialogTitle>
+              </DialogHeader>
+
+              <div className="mt-1 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 p-1">
+                <button
+                  type="button"
+                  onClick={() => setFilterModalTab('shift')}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
+                    filterModalTab === 'shift'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Filter by Shift
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterModalTab('region')}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
+                    filterModalTab === 'region'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Filter by Region
+                </button>
+              </div>
+
+              {filterModalTab === 'shift' ? (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'all', label: 'All' },
+                    { value: 'AM', label: 'AM' },
+                    { value: 'PM', label: 'PM' },
+                  ] as const).map(opt => {
+                    const active = filterShift === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setShiftFilter(opt.value)}
+                        className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                          active
+                            ? 'border-primary/45 bg-primary/10 text-primary'
+                            : 'border-border/70 bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'all', label: 'All' },
+                    { value: 'KL', label: 'KL' },
+                    { value: 'Sel', label: 'Sel' },
+                  ] as const).map(opt => {
+                    const active = filterRegion === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setRegionFilter(opt.value)}
+                        className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                          active
+                            ? 'border-primary/45 bg-primary/10 text-primary'
+                            : 'border-border/70 bg-background text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">Current: {filterRegion} . {filterShift}</p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCombinedFilter('all')}
+                    className="h-8 px-3 text-[11px]"
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setFilterModalOpen(false)}
+                    className="h-8 px-3 text-[11px]"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Separator className="mt-3 sm:mt-4" />
         </div>
 
@@ -2402,7 +2555,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <div style={{ flex: 1, padding: `${rowGap} ${cardPad} 0`, display: 'flex', flexDirection: 'column', gap: bodyGap, overflow: 'hidden' }}>
 
                     {/* Pin + stop count moved outside header */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.55rem', marginBottom: '0.1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.9rem', marginTop: '0.2rem', marginBottom: '0.45rem' }}>
                       <button
                         onClick={e => { e.stopPropagation(); togglePin(route) }}
                         title={isPinnedCard ? "Unpin from Home" : "Pin to Home"}
@@ -2490,17 +2643,17 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                           {Object.entries(grouped).map(([type, pts]) => {
                             const popKey = `${route.id}-badge-${type}`
                             const isOpen = badgePopover === popKey
-                            const badgeTextColor = isDark ? '#d1d5db' : '#525866'
-                            const badgeCountColor = isDark ? '#f3f4f6' : '#374151'
+                            const badgeTextColor = isDark ? '#1f2937' : '#eef2f7'
+                            const badgeCountColor = isDark ? '#111827' : '#ffffff'
                             const badgeBackground = isDark
-                              ? 'linear-gradient(135deg, #434b59, #2f3744)'
-                              : 'linear-gradient(135deg, #eef1f4, #d3d9e1)'
-                            const badgeBorder = isDark ? '#626d7d' : '#b7c0cc'
-                            const badgeTextShadow = isDark ? '0 1px 0 #0008' : '0 1px 0 #fff8'
+                              ? 'linear-gradient(135deg, #e3e7ec, #b8c1cc)'
+                              : 'linear-gradient(135deg, #59616d, #343b46)'
+                            const badgeBorder = isDark ? '#aeb7c2' : '#454d58'
+                            const badgeTextShadow = isDark ? '0 1px 0 #ffffff8a' : '0 1px 0 #00000059'
                             return (
                               <Popover key={type} open={isOpen} onOpenChange={open => setBadgePopover(open ? popKey : null)}>
                                 <PopoverTrigger asChild>
-                                  <span onClick={() => setBadgePopover(isOpen ? null : popKey)} style={{ display: 'inline-flex', alignItems: 'center', fontSize: badgeFs, fontWeight: 700, color: badgeTextColor, background: badgeBackground, padding: '2px 9px', borderRadius: '6px', border: `1px solid ${badgeBorder}`, flexShrink: 0, letterSpacing: '0.03em', textShadow: badgeTextShadow, cursor: 'pointer', opacity: isOpen ? 0.75 : 1, transition: 'opacity 0.15s' }}>
+                                  <span onClick={() => setBadgePopover(isOpen ? null : popKey)} style={{ display: 'inline-flex', alignItems: 'center', fontSize: badgeFs, fontWeight: 700, color: badgeTextColor, background: badgeBackground, padding: '3px 10px', borderRadius: '5px', border: `1px solid ${badgeBorder}`, boxShadow: isDark ? '0 1px 0 #ffffff66 inset, 0 2px 6px rgba(15,23,42,0.16)' : '0 1px 0 #ffffff1f inset, 0 2px 6px rgba(15,23,42,0.2)', flexShrink: 0, letterSpacing: '0.03em', textShadow: badgeTextShadow, cursor: 'pointer', opacity: isOpen ? 0.75 : 1, transition: 'opacity 0.15s' }}>
                                     {getDeliveryLabel(type)}&nbsp;<span style={{ opacity: isDark ? 0.45 : 0.55, fontWeight: 500 }}>&bull;</span>&nbsp;<span style={{ color: badgeCountColor, fontWeight: 700 }}>{pts.length}</span>
                                   </span>
                                 </PopoverTrigger>
@@ -2559,10 +2712,10 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     {savedCustomLabels.length > 0 && (
                       <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '0.15rem' }}>
                         {savedCustomLabels.map(lbl => {
-                          const badgeTextColor = isDark ? '#d1d5db' : '#525866'
-                          const badgeBg = isDark ? 'linear-gradient(135deg, #434b59, #2f3744)' : 'linear-gradient(135deg, #eef1f4, #d3d9e1)'
-                          const badgeBorder = isDark ? '#626d7d' : '#b7c0cc'
-                          const badgeTextShadow = isDark ? '0 1px 0 #0008' : '0 1px 0 #fff8'
+                          const badgeTextColor = isDark ? '#1f2937' : '#eef2f7'
+                          const badgeBg = isDark ? 'linear-gradient(135deg, #e3e7ec, #b8c1cc)' : 'linear-gradient(135deg, #59616d, #343b46)'
+                          const badgeBorder = isDark ? '#aeb7c2' : '#454d58'
+                          const badgeTextShadow = isDark ? '0 1px 0 #ffffff8a' : '0 1px 0 #00000059'
                           return (
                           <span
                             key={lbl}
@@ -2571,8 +2724,9 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               fontSize: badgeFs, fontWeight: 700,
                               color: badgeTextColor,
                               background: badgeBg,
-                              padding: '2px 9px', borderRadius: '6px',
+                              padding: '3px 10px', borderRadius: '5px',
                               border: `1px solid ${badgeBorder}`,
+                              boxShadow: isDark ? '0 1px 0 #ffffff66 inset, 0 2px 6px rgba(15,23,42,0.16)' : '0 1px 0 #ffffff1f inset, 0 2px 6px rgba(15,23,42,0.2)',
                               letterSpacing: '0.03em',
                               textShadow: badgeTextShadow,
                             }}
@@ -3730,7 +3884,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
             </p>
             {filterRegion !== "all" && (
               <button
-                onClick={() => setFilterRegion("all")}
+                onClick={() => setCombinedFilter('all')}
                 className="mt-3 text-xs text-primary hover:underline"
               >
                 Clear filter
