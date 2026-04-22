@@ -11,8 +11,14 @@ function getDeviceType(width: number): DeviceType {
   return "desktop"
 }
 
+// Helper to get initial mobile state (for SSR compatibility)
+function getInitialMobileState(): boolean {
+  if (typeof window === "undefined") return false
+  return window.innerWidth < MOBILE_BREAKPOINT
+}
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = React.useState<boolean>(getInitialMobileState())
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
@@ -24,12 +30,12 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return !!isMobile
+  return isMobile
 }
 
 export function useDeviceType(): DeviceType {
   const [device, setDevice] = React.useState<DeviceType>(() =>
-    typeof window !== "undefined" ? getDeviceType(window.innerWidth) : "desktop"
+    getDeviceType(typeof window !== "undefined" ? window.innerWidth : 1024)
   )
 
   React.useEffect(() => {
