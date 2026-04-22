@@ -59,12 +59,23 @@ export function NavMain({
   // Auto-expand all groups when searching
   const isSearching = searchQuery.trim().length > 0
 
-  const handleToggle = (title: string, hasChildren: boolean, page?: string) => {
+  const handleToggle = (
+    title: string,
+    hasChildren: boolean,
+    page?: string,
+    singleChildPage?: string
+  ) => {
     if (!hasChildren) {
       if (page) onSubItemClick?.(page)
       else onItemClick?.(title)
       return
     }
+
+    if (singleChildPage) {
+      onSubItemClick?.(singleChildPage)
+      return
+    }
+
     setOpenItem(openItem === title ? null : title)
     onItemClick?.(title)
   }
@@ -77,6 +88,7 @@ export function NavMain({
         items.map((item) => {
           const hasChildren = !!item.items?.length
           const isOpen = isSearching ? true : openItem === item.title
+          const singleChildPage = item.items?.length === 1 ? item.items[0]?.page : undefined
 
           return (
             <Collapsible
@@ -89,7 +101,7 @@ export function NavMain({
                 <SidebarMenuButton
                   tooltip={item.title}
                   className="font-medium transition-colors duration-150"
-                  onClick={() => handleToggle(item.title, hasChildren, item.page)}
+                  onClick={() => handleToggle(item.title, hasChildren, item.page, singleChildPage)}
                 >
                   <item.icon
                       className="size-[14px]"
