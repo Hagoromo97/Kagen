@@ -608,13 +608,13 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
 
       <div className="px-4 py-2 border-b border-border/70 bg-background/70">
         <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-md">
+          <div className="relative w-full max-w-2xl">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               value={historyQuery}
               onChange={(event) => setHistoryQuery(event.target.value)}
               placeholder="Search history: staff, route, code, date (YYYY-MM-DD)"
-              className="h-8 pl-8 pr-14 text-[11px]"
+              className="h-10 pl-9 pr-16 text-xs sm:text-sm"
             />
             {historyQuery.trim() && (
               <button
