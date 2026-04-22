@@ -166,6 +166,7 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
   const { isMobile, state, openMobile, setOpenMobile, setOpen } = useSidebar()
+  const mobileSidebarContentRef = React.useRef<HTMLDivElement>(null)
 
   // Sync sidebar state when mode changes (mobile ↔ desktop)
   React.useEffect(() => {
@@ -174,6 +175,14 @@ function Sidebar({
       setOpen(false)
     }
   }, [isMobile, setOpen])
+
+  React.useEffect(() => {
+    if (!isMobile || !openMobile) return
+
+    // Keep mobile drawer anchored at the top of the viewport after zoom/scroll gestures.
+    window.scrollTo({ top: 0, behavior: "auto" })
+    mobileSidebarContentRef.current?.scrollTo({ top: 0, behavior: "auto" })
+  }, [isMobile, openMobile])
 
   if (collapsible === "none") {
     return (
@@ -197,15 +206,11 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="bg-sidebar text-sidebar-foreground h-[100svh] max-h-[100svh] w-(--sidebar-width) overflow-hidden p-0 [&>button]:hidden"
           onOpenAutoFocus={e => e.preventDefault()}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              top: "env(safe-area-inset-top)",
-              bottom: "env(safe-area-inset-bottom)",
-              height:
-                "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
             } as React.CSSProperties
           }
           side={side}
@@ -214,7 +219,12 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div
+            ref={mobileSidebarContentRef}
+            className="flex h-full w-full flex-col overflow-auto pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+          >
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )
