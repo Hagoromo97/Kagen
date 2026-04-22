@@ -1,7 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
-import bgDark from "../../icon/darkm.jpeg"
-import bgLight from "../../icon/lightm.jpeg"
-import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown, Filter, ChevronLeft, ChevronRight } from "lucide-react"
+import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown, Filter } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
@@ -603,7 +601,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       return toRouteCombinedFilter(region, nextShift)
     })
   }, [])
-  const [showAllRoutes, setShowAllRoutes] = useState(false)
   const [headerItems, setHeaderItems] = useState<RouteListHeaderItem[]>(loadRouteListHeaderItems)
   const headerSnapshotRef = useRef<RouteListHeaderItem[]>([])
 
@@ -695,7 +692,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const cardCarouselRef = useRef<HTMLDivElement>(null)
   const [cardW, setCardW] = useState(300)
   const [cardH, setCardH] = useState(460)
-  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0)
   const CAROUSEL_GAP = 20
   useEffect(() => {
     const el = cardContainerRef.current
@@ -918,62 +914,12 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     )
   }, [routes, searchQuery, filterRegion, filterShift])
 
-  // Reset showAllRoutes when search or filter changes
-  useEffect(() => { setShowAllRoutes(false) }, [searchQuery, combinedFilter])
-
-  // Only show first 3 route cards when collapsed
   const displayedRoutes = filteredRoutes
 
-  const scrollToCarouselIndex = useCallback((index: number) => {
-    const scroller = cardCarouselRef.current
-    if (!scroller) return
-    const cards = scroller.querySelectorAll<HTMLElement>('[data-route-carousel-item="true"]')
-    if (!cards.length) return
-    const boundedIndex = Math.max(0, Math.min(index, cards.length - 1))
-    cards[boundedIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
-  }, [])
-
   useEffect(() => {
-    const scroller = cardCarouselRef.current
-    if (!scroller) return
-
-    const updateActiveIndex = () => {
-      const cards = Array.from(scroller.querySelectorAll<HTMLElement>('[data-route-carousel-item="true"]'))
-      if (!cards.length) {
-        setActiveCarouselIndex(0)
-        return
-      }
-
-      const scrollLeft = scroller.scrollLeft
-      let nearestIndex = 0
-      let nearestDistance = Number.POSITIVE_INFINITY
-
-      cards.forEach((card, index) => {
-        const distance = Math.abs(card.offsetLeft - scrollLeft)
-        if (distance < nearestDistance) {
-          nearestDistance = distance
-          nearestIndex = index
-        }
-      })
-
-      setActiveCarouselIndex(nearestIndex)
-    }
-
-    updateActiveIndex()
-    scroller.addEventListener('scroll', updateActiveIndex, { passive: true })
-    window.addEventListener('resize', updateActiveIndex)
-
-    return () => {
-      scroller.removeEventListener('scroll', updateActiveIndex)
-      window.removeEventListener('resize', updateActiveIndex)
-    }
-  }, [displayedRoutes.length, cardW])
-
-  useEffect(() => {
-    setActiveCarouselIndex(0)
     const scroller = cardCarouselRef.current
     if (scroller) scroller.scrollTo({ left: 0, behavior: 'auto' })
-  }, [searchQuery, combinedFilter, showAllRoutes])
+  }, [searchQuery, combinedFilter])
 
   const SEARCH_SUGGESTION_LIMIT = 20
 

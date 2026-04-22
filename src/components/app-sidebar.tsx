@@ -216,7 +216,6 @@ export function AppSidebar({
     onNavigate?.(page)
   }
 
-  const isDark = mode === "dark"
   return (
     <>
     <Sidebar {...props}>
