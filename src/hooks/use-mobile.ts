@@ -12,18 +12,27 @@ function getDeviceType(width: number): DeviceType {
 }
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean>(() =>
-    typeof window !== "undefined" ? window.innerWidth < MOBILE_BREAKPOINT : false
-  )
+  const [isMobile, setIsMobile] = React.useState<boolean>(() => {
+    if (typeof window === "undefined") return false
+    return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches
+  })
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    const update = () => {
+      setIsMobile(mql.matches)
     }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
+
+    mql.addEventListener("change", update)
+    window.addEventListener("resize", update)
+    window.visualViewport?.addEventListener("resize", update)
+    update()
+
+    return () => {
+      mql.removeEventListener("change", update)
+      window.removeEventListener("resize", update)
+      window.visualViewport?.removeEventListener("resize", update)
+    }
   }, [])
 
   return isMobile
@@ -37,8 +46,13 @@ export function useDeviceType(): DeviceType {
   React.useEffect(() => {
     const update = () => setDevice(getDeviceType(window.innerWidth))
     window.addEventListener("resize", update)
+    window.visualViewport?.addEventListener("resize", update)
     update()
-    return () => window.removeEventListener("resize", update)
+
+    return () => {
+      window.removeEventListener("resize", update)
+      window.visualViewport?.removeEventListener("resize", update)
+    }
   }, [])
 
   return device

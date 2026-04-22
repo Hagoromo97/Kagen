@@ -116,6 +116,7 @@ const data = {
 
 const SETTINGS_PAGES = new Set([
   "settings-profile",
+  "settings-notifications",
   "settings-appearance-font","settings-route-colors","settings-storage","settings-security",
 ])
 
@@ -135,6 +136,25 @@ export function AppSidebar({
   const [isEditModeTransitioning, setIsEditModeTransitioning] = React.useState(false)
   const { isEditMode, setIsEditMode, hasUnsavedChanges, saveChanges, isSaving, discardChanges } = useEditMode()
   const { mode, toggleMode } = useTheme()
+
+  React.useEffect(() => {
+    if (!currentPage) return
+
+    if (SETTINGS_PAGES.has(currentPage)) {
+      setSettingsOpen(true)
+      setOpenNavItem(null)
+      return
+    }
+
+    const matchedMainItem = data.navMain.find((item) =>
+      item.items?.some((sub) => sub.page === currentPage)
+    )
+
+    if (matchedMainItem) {
+      setOpenNavItem(matchedMainItem.title)
+      setSettingsOpen(false)
+    }
+  }, [currentPage])
 
   const text = {
     searchPlaceholder: "Search...",

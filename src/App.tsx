@@ -1721,7 +1721,7 @@ function AppContent() {
       {/* Backdrop for desktop sidebar — only render when not mobile AND open */}
       {!isMobile && open && (
         <div
-          className="fixed inset-0 z-40 bg-black/45 transition-all duration-350 ease-out backdrop-blur-md pointer-events-auto"
+          className="fixed inset-0 z-40 bg-black/30 transition-all duration-350 ease-out backdrop-blur-md pointer-events-auto"
           onClick={toggleSidebar}
         />
       )}
