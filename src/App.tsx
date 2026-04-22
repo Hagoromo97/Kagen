@@ -1720,10 +1720,10 @@ function AppContent() {
     <>
       <AppSidebar onNavigate={handlePageChange} currentPage={currentPage} />
       
-      {/* Backdrop for desktop sidebar */}
-      {!isMobileViewport && (
+      {/* Backdrop for desktop sidebar — only render when not mobile AND open */}
+      {!isMobileViewport && open && (
         <div
-          className={`fixed inset-0 z-40 bg-black/45 transition-all duration-350 ease-out ${open ? "opacity-100 backdrop-blur-md pointer-events-auto" : "opacity-0 backdrop-blur-0 pointer-events-none"}`}
+          className="fixed inset-0 z-40 bg-black/45 transition-all duration-350 ease-out backdrop-blur-md pointer-events-auto"
           onClick={toggleSidebar}
         />
       )}
