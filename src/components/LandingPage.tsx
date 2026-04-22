@@ -37,7 +37,6 @@ const FEATURES = [
 
 export function LandingPage({ onEnter }: { onEnter: () => void }) {
   const [visible, setVisible] = useState(false)
-  const [exiting, setExiting] = useState(false)
   const { mode, toggleMode } = useTheme()
   const isDark = mode === "dark"
 
@@ -47,20 +46,11 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
     return () => clearTimeout(t)
   }, [])
 
-  const handleEnter = () => {
-    setExiting(true)
-    setTimeout(onEnter, 450)
-  }
-
   return (
     <div
       className={`fixed inset-0 z-50 flex flex-col overflow-y-auto transition-opacity duration-300 ease-in-out ${visible ? "opacity-100" : "opacity-0"}`}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {/* Exit overlay */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-50 bg-black transition-opacity duration-400 ease-in-out ${exiting ? "opacity-100" : "opacity-0"}`}
-      />
 
       {/* Background */}
       {isDark ? (
@@ -97,7 +87,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <div className="w-full max-w-3xl mx-auto text-center space-y-8">
           {/* Main Title */}
           <h1
-            className={`mx-auto max-w-[14ch] px-2 text-[clamp(1.4rem,7.2vw,2.2rem)] sm:text-2xl lg:text-3xl font-bold tracking-tight break-words [text-wrap:balance] text-foreground transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            className={`mx-auto max-w-[16ch] px-2 text-[clamp(1.75rem,6vw,2.6rem)] font-extrabold tracking-tight break-words [text-wrap:balance] text-foreground transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             style={{ transitionDelay: visible ? "100ms" : "0ms" }}
           >
             Data Brutal
@@ -105,17 +95,17 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
           {/* Description */}
           <p
-            className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed text-muted-foreground transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
-            style={{ transitionDelay: visible ? "150ms" : "0ms" }}
+            className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed text-muted-foreground transition-all duration-700 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            style={{ transitionDelay: visible ? "160ms" : "0ms" }}
           >
-            Streamline your delivery routes, track locations, and manage operations with a single powerful tool.
+            Streamline your delivery routes, track locations, and manage operations — all in one place.
           </p>
 
           {/* CTA Button */}
           <button
-            onClick={handleEnter}
-            className={`landing-cta relative inline-flex items-center gap-2 overflow-hidden px-5 py-2.5 rounded-lg font-medium text-sm border border-border/90 bg-card/85 text-foreground hover:bg-card hover:border-ring/70 shadow-sm active:scale-[0.96] transition-all duration-200 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
-            style={{ transitionDelay: visible ? "200ms" : "0ms" }}
+            onClick={onEnter}
+            className={`landing-cta relative inline-flex items-center gap-2.5 overflow-hidden px-6 py-3 rounded-xl font-semibold text-sm border border-border/80 bg-card/90 text-foreground hover:bg-card hover:border-ring/60 shadow-md active:scale-[0.96] transition-all duration-200 ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+            style={{ transitionDelay: visible ? "220ms" : "0ms" }}
           >
             <span className="relative z-10">Get Started</span>
             <ArrowRight className="landing-cta-arrow relative z-10 size-4" />
@@ -123,23 +113,23 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
           {/* Features Grid */}
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16 transition-all duration-700 ${
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 mt-14 transition-all duration-700 ${
               visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
             }`}
-            style={{ transitionDelay: visible ? "250ms" : "0ms" }}
+            style={{ transitionDelay: visible ? "280ms" : "0ms" }}
           >
             {FEATURES.map(({ icon: Icon, title, description, color }) => (
               <div
                 key={title}
-                className="group relative p-5 rounded-2xl border border-border/80 bg-card/70 hover:bg-card/95 shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105 cursor-default"
+                className="group relative p-4 sm:p-5 rounded-2xl border border-border/70 bg-card/75 hover:bg-card hover:border-border/90 shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-[1.03] cursor-default text-left"
               >
-                <div className="mb-2.5 flex items-center gap-2.5">
-                  <div className={color}>
-                    <Icon className="size-5" />
+                <div className="mb-3 flex items-center gap-3">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background/60 ring-1 ring-border/50 ${color}`}>
+                    <Icon className="size-4" />
                   </div>
-                  <h3 className="text-sm font-semibold text-left leading-none text-foreground">{title}</h3>
+                  <h3 className="text-sm font-semibold leading-snug text-foreground">{title}</h3>
                 </div>
-                <p className="text-xs text-left mt-1.5 leading-relaxed text-muted-foreground">{description}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground pl-0.5">{description}</p>
               </div>
             ))}
           </div>

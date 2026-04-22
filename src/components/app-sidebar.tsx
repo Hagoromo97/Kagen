@@ -288,13 +288,13 @@ export function AppSidebar({
       <SidebarFooter>
         {/* Theme toggle */}
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-sidebar-accent/50 transition-colors cursor-pointer mx-1"
+          className="flex items-center gap-2 px-3 py-2.5 rounded-md hover:bg-sidebar-accent/50 transition-colors cursor-pointer mx-1"
           onClick={toggleMode}
         >
           {mode === "dark"
             ? <Moon className="size-4 shrink-0 theme-accent-indigo" />
             : <Sun  className="size-4 shrink-0 theme-accent-amber" />}
-          <span className="flex-1 text-[15px] font-medium text-sidebar-foreground/90">
+          <span className="flex-1 text-sm font-medium text-sidebar-foreground/90">
             {mode === "dark" ? text.darkMode : text.lightMode}
           </span>
           <span onClick={e => e.stopPropagation()}>
@@ -303,7 +303,7 @@ export function AppSidebar({
         </div>
         {/* Edit Mode toggle */}
         <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors cursor-pointer mx-1 ${
+          className={`flex items-center gap-2 px-3 py-2.5 rounded-md transition-colors cursor-pointer mx-1 ${
             isEditMode ? "text-primary hover:bg-primary/10" : "hover:bg-sidebar-accent/50"
           }`}
           onClick={handleEditModeToggle}
@@ -314,7 +314,7 @@ export function AppSidebar({
           ) : (
             <Pencil className={`size-4 shrink-0 ${isEditMode ? "theme-accent-emerald" : "text-[hsl(var(--accent-emerald)/0.65)]"}`} />
           )}
-          <span className={`flex-1 text-[15px] font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
+          <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
             {isEditModeTransitioning ? text.switching : text.editMode}
           </span>
           {!isEditModeTransitioning && (

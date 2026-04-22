@@ -425,6 +425,11 @@ body {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   font-family: var(--app-font, 'Nunito', 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif);
+  /* Sharper, more professional text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  letter-spacing: -0.005em;
 }
 
 /* Prefer native Apple UI font rendering on iOS devices. */
@@ -499,11 +504,11 @@ body {
     color-scheme: light;
 
     /* Surfaces — monochrome */
-  --background:        hsl(0 0% 97%);
+  --background:        hsl(40 20% 97%);
   --foreground:        hsl(0 0% 9%);
   --card:              hsl(0 0% 100%);
   --card-foreground:   hsl(0 0% 9%);
-  --card-border:       hsl(0 0% 84%);
+  --card-border:       hsl(36 8% 82%);
   --popover:           hsl(0 0% 100%);
   --popover-foreground: hsl(0 0% 9%);
 
@@ -523,8 +528,8 @@ body {
     --destructive:       hsl(0 0% 22%);
 
     /* Chrome */
-    --border:  hsl(0 0% 80%);
-    --input:   hsl(0 0% 80%);
+    --border:  hsl(36 8% 79%);
+    --input:   hsl(36 8% 79%);
     --ring:    hsl(0 0% 16%);
 
     /* Charts */
@@ -540,6 +545,7 @@ body {
     --elevate-2:      rgba(0, 0, 0, 0.06);
     --shadow-soft: 0 10px 24px -16px rgba(0, 0, 0, 0.22);
     --shadow-lift: 0 18px 34px -18px rgba(0, 0, 0, 0.34);
+    --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
 
     /* Background atmosphere */
     --bg-glow-1: hsla(0, 0%, 0%, 0.08);
@@ -618,13 +624,14 @@ body {
     --elevate-2:      rgba(255, 255, 255, 0.06);
     --shadow-soft: 0 10px 28px -16px rgba(2, 8, 23, 0.7);
     --shadow-lift: 0 18px 40px -20px rgba(2, 8, 23, 0.86);
+    --card-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.28), 0 1px 3px -1px rgba(0, 0, 0, 0.2);
 
     /* Background atmosphere */
     --bg-glow-1: hsla(0, 0%, 100%, 0.06);
     --bg-glow-2: hsla(0, 0%, 100%, 0.02);
 
     /* Sidebar */
-    --sidebar:                    transparent;
+    --sidebar:                    hsl(0 0% 7% / 0.92);
     --sidebar-bg-image:           url('/icon/darkm.jpeg');
     --sidebar-bg-opacity:         0.18;
     --sidebar-bg-filter:          none;
@@ -816,10 +823,17 @@ body {
                 border-color 0.22s cubic-bezier(0.25, 0.1, 0.25, 1),
                 box-shadow 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
   }
+  /* Subtle elevation for standard card/panel elements */
+  [data-slot="card"] {
+    box-shadow: var(--card-shadow);
+  }
   .glass-header {
     @apply backdrop-blur-lg bg-background/95 border-b border-border/70;
+    box-shadow: 0 1px 0 0 hsl(var(--border) / 0.5),
+                0 4px 16px -4px hsl(var(--foreground) / 0.06);
     transition: background-color 0.28s cubic-bezier(0.25, 0.1, 0.25, 1),
-                border-color 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
+                border-color 0.22s cubic-bezier(0.25, 0.1, 0.25, 1),
+                box-shadow 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
   }
 }
 
@@ -895,6 +909,20 @@ body {
   }
   [data-device="mobile"] .page-pad {
     padding: var(--sp-sm) var(--sp-md);
+  }
+
+  /* ── Section label / divider heading style ───────────────────────────── */
+  .section-label {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ── Consistent page content container ──────────────────────────────── */
+  .page-content {
+    @apply flex flex-col gap-5 px-4 pb-4 pt-6 md:px-6 md:pb-6 md:pt-8 max-w-2xl mx-auto w-full;
   }
 }
 

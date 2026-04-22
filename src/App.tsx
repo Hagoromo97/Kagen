@@ -1569,6 +1569,12 @@ function AppContent() {
   const isDark = mode === "dark"
   const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
 
+  // Close sidebar on initial mount (coming from landing page)
+  useEffect(() => {
+    setOpen(false)
+    setOpenMobile(false)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const syncPinnedCount = () => {
       try {
@@ -1724,12 +1730,16 @@ function AppContent() {
         className={`relative isolate flex w-full flex-1 flex-col min-h-0 overflow-hidden bg-background origin-center transition-all duration-350 ease-out will-change-[transform,filter,opacity] ${isSidebarActive ? "opacity-70 scale-[0.955] blur-[3px] saturate-75" : "opacity-100 scale-100 blur-0 saturate-100"}`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {isDark && (
-          <>
+        <>
+          {isDark && (
             <div className="pointer-events-none absolute inset-0 z-0 bg-[hsl(var(--background))]" />
-            <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_38%),radial-gradient(circle_at_80%_70%,hsl(var(--accent)/0.14),transparent_42%)]" />
-          </>
-        )}
+          )}
+          <div className={`pointer-events-none absolute inset-0 z-0 ${
+            isDark
+              ? "bg-[radial-gradient(circle_at_20%_30%,hsl(var(--primary)/0.18),transparent_38%),radial-gradient(circle_at_80%_70%,hsl(var(--accent)/0.14),transparent_42%)]"
+              : "bg-[radial-gradient(circle_at_12%_20%,hsl(218_86%_54%/0.07),transparent_44%),radial-gradient(circle_at_88%_80%,hsl(262_84%_56%/0.055),transparent_42%),radial-gradient(circle_at_55%_55%,hsl(160_84%_34%/0.03),transparent_50%)]"
+          }`} />
+        </>
 
         <header className="glass-header sticky top-0 z-30 flex shrink-0 items-center gap-2 px-3 md:px-5 transition-colors duration-300" style={{ paddingTop: 'max(env(safe-area-inset-top), 10px)', paddingBottom: '0.5rem', minHeight: 'calc(3.25rem + max(env(safe-area-inset-top), 10px))' }}>
           <SidebarTrigger className="-ml-1 shrink-0" />
@@ -1838,28 +1848,32 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export function App() {
   const [landed, setLanded] = useState(false)
-  const [showContent, setShowContent] = useState(false)
+  const [landingVisible, setLandingVisible] = useState(true)
 
-  useEffect(() => {
-    if (landed) {
-      const timer = setTimeout(() => setShowContent(true), 50)
-      return () => clearTimeout(timer)
-    } else {
-      setShowContent(false)
-    }
-  }, [landed])
+  const handleEnter = () => {
+    setLanded(true)
+    // Give a short delay then fade out the landing overlay
+    setTimeout(() => setLandingVisible(false), 80)
+  }
 
   return (
     <DeviceProvider>
       <ErrorBoundary>
-        {!landed && <LandingPage onEnter={() => setLanded(true)} />}
-        {landed && (
-          <div className={`transition-opacity duration-600 ease-out ${showContent ? "opacity-100" : "opacity-0"}`}>
-            <SidebarProvider defaultOpen={true}>
-              <EditModeProvider>
-                <AppContent />
-              </EditModeProvider>
-            </SidebarProvider>
+        {/* Main app always mounted — visible immediately once landing fades */}
+        <div className={`transition-opacity duration-500 ease-out ${landed ? "opacity-100" : "opacity-0"}`}>
+          <SidebarProvider defaultOpen={true}>
+            <EditModeProvider>
+              <AppContent />
+            </EditModeProvider>
+          </SidebarProvider>
+        </div>
+        {/* Landing page overlays on top, fades out on enter */}
+        {landingVisible && (
+          <div
+            className={`transition-opacity duration-400 ease-in-out ${landed ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+            onTransitionEnd={() => { if (landed) setLandingVisible(false) }}
+          >
+            <LandingPage onEnter={handleEnter} />
           </div>
         )}
         <PWAInstallPrompt />
