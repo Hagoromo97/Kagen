@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react"
-import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown, Filter } from "lucide-react"
+import { List, Info, Plus, Check, X, Edit2, Trash2, Search, Save, ArrowUp, ArrowDown, Truck, Loader2, Cog, CheckCircle2, MapPin, Route, AlertCircle, History, MapPinned, TableProperties, Shrink, Expand, ChevronUp, ChevronDown, ChevronsUpDown, Filter, ChevronLeft, ChevronRight } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { RowInfoModal } from "./RowInfoModal"
@@ -612,6 +612,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const [clearLogConfirm, setClearLogConfirm] = useState<string | null>(null) // routeId
   // ── Per-card edit form state ───────────────────────────────────────
   const [editPanelState, setEditPanelState] = useState<Record<string, { name: string; code: string; shift: string; color: string; labels: string[] }>>({})
+  const [showAllRoutes, setShowAllRoutes] = useState(false)
   const [editPanelErrors, setEditPanelErrors] = useState<Record<string, { name?: string; code?: string }>>({})
   const getCardPanel = (id: string) => cardPanels[id] ?? { info: false, edit: false }
   const openExclusiveCardPanel = useCallback((routeId: string, panel: 'info' | 'edit') => {
@@ -692,7 +693,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   const cardCarouselRef = useRef<HTMLDivElement>(null)
   const [cardW, setCardW] = useState(300)
   const [cardH, setCardH] = useState(460)
-  const CAROUSEL_GAP = 20
+  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0)
   useEffect(() => {
     const el = cardContainerRef.current
     if (!el) return
@@ -914,12 +915,62 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
     )
   }, [routes, searchQuery, filterRegion, filterShift])
 
-  const displayedRoutes = filteredRoutes
+  // Reset showAllRoutes when search or filter changes
+  useEffect(() => { setShowAllRoutes(false) }, [searchQuery, combinedFilter])
+
+  // Only show first 3 route cards when collapsed
+  const displayedRoutes = showAllRoutes ? filteredRoutes : filteredRoutes.slice(0, 4)
+
+  const scrollToCarouselIndex = useCallback((index: number) => {
+    const scroller = cardCarouselRef.current
+    if (!scroller) return
+    const cards = scroller.querySelectorAll<HTMLElement>('[data-route-carousel-item="true"]')
+    if (!cards.length) return
+    const boundedIndex = Math.max(0, Math.min(index, cards.length - 1))
+    cards[boundedIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
+  }, [])
 
   useEffect(() => {
     const scroller = cardCarouselRef.current
+    if (!scroller) return
+
+    const updateActiveIndex = () => {
+      const cards = Array.from(scroller.querySelectorAll<HTMLElement>('[data-route-carousel-item="true"]'))
+      if (!cards.length) {
+        setActiveCarouselIndex(0)
+        return
+      }
+
+      const scrollLeft = scroller.scrollLeft
+      let nearestIndex = 0
+      let nearestDistance = Number.POSITIVE_INFINITY
+
+      cards.forEach((card, index) => {
+        const distance = Math.abs(card.offsetLeft - scrollLeft)
+        if (distance < nearestDistance) {
+          nearestDistance = distance
+          nearestIndex = index
+        }
+      })
+
+      setActiveCarouselIndex(nearestIndex)
+    }
+
+    updateActiveIndex()
+    scroller.addEventListener('scroll', updateActiveIndex, { passive: true })
+    window.addEventListener('resize', updateActiveIndex)
+
+    return () => {
+      scroller.removeEventListener('scroll', updateActiveIndex)
+      window.removeEventListener('resize', updateActiveIndex)
+    }
+  }, [displayedRoutes.length, cardW])
+
+  useEffect(() => {
+    setActiveCarouselIndex(0)
+    const scroller = cardCarouselRef.current
     if (scroller) scroller.scrollTo({ left: 0, behavior: 'auto' })
-  }, [searchQuery, combinedFilter])
+  }, [searchQuery, combinedFilter, showAllRoutes])
 
   const SEARCH_SUGGESTION_LIMIT = 20
 
@@ -2458,19 +2509,41 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </div>
 
         {/* ── Card list (carousel) ── */}
-        <div ref={cardContainerRef} className="mt-3 sm:mt-4" style={{ width: '100%' }}>
+        <div ref={cardContainerRef} style={{ width: '100%' }}>
+        {displayedRoutes.length > 1 && (
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="text-[11px] font-medium text-muted-foreground">
+              Card {Math.min(activeCarouselIndex + 1, displayedRoutes.length)} / {displayedRoutes.length}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => scrollToCarouselIndex(activeCarouselIndex - 1)}
+                disabled={activeCarouselIndex <= 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground transition-colors hover:text-foreground hover:bg-muted/60 disabled:opacity-45 disabled:cursor-not-allowed"
+                aria-label="Previous card"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToCarouselIndex(activeCarouselIndex + 1)}
+                disabled={activeCarouselIndex >= displayedRoutes.length - 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground transition-colors hover:text-foreground hover:bg-muted/60 disabled:opacity-45 disabled:cursor-not-allowed"
+                aria-label="Next card"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <div
           ref={cardCarouselRef}
           style={{
-            display: 'flex',
-            gap: `${CAROUSEL_GAP}px`,
-            overflowX: 'auto',
-            overflowY: 'hidden',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+            gap: 'clamp(1rem, 2vw, 1.75rem)',
             alignItems: 'start',
-            scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch',
-            paddingBottom: '0.35rem',
-            scrollbarWidth: 'thin',
           }}
         >
         {displayedRoutes.map((route, routeIndex) => {
@@ -2495,11 +2568,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           const savedCustomLabels = toCustomLabels(route.labels)
           const ep = editPanelState[route.id] ?? { name: route.name, code: route.code, shift: route.shift, color: route.color || markerColor, labels: savedCustomLabels }
           return (
-          <div
-            key={route.id}
-            data-route-carousel-item="true"
-            style={{ display: 'flex', justifyContent: 'center', minWidth: cardW, maxWidth: cardW, scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-          >
+          <div key={route.id} style={{ display: 'flex', justifyContent: 'center', minWidth: 0 }}>
             {/* ── Route Card ── */}
             <div
               onMouseEnter={() => setHoveredRouteId(route.id)}
@@ -3832,7 +3901,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
           </div>
           )
         })}
-        </div>
         </div> {/* end card list */}
 
         {/* No Results Message */}
@@ -5182,7 +5250,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </Button>
       )}
 
-
+    </div>
     </div>
   )
 }
