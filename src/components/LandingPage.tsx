@@ -80,10 +80,10 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <button
           onClick={toggleMode}
           aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 active:scale-[0.94] ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200 active:scale-[0.94] ${
             isDark
-              ? "border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.7)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--secondary)/0.9)] hover:text-[hsl(var(--foreground))]"
-              : "border-[hsl(var(--border))] bg-[hsl(var(--card)/0.8)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--card))] hover:text-[hsl(var(--foreground))] shadow-sm"
+              ? "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
           }`}
         >
           {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
