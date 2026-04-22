@@ -1855,7 +1855,7 @@ export function App() {
         {!landed && <LandingPage onEnter={() => setLanded(true)} />}
         {landed && (
           <div className={`transition-opacity duration-600 ease-out ${showContent ? "opacity-100" : "opacity-0"}`}>
-            <SidebarProvider defaultOpen={false}>
+            <SidebarProvider defaultOpen={true}>
               <EditModeProvider>
                 <AppContent />
               </EditModeProvider>
