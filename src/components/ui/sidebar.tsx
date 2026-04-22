@@ -166,6 +166,10 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const isMobileViewport =
+    typeof window !== "undefined"
+      ? window.innerWidth < MOBILE_BREAKPOINT
+      : isMobile
 
   if (collapsible === "none") {
     return (
@@ -182,7 +186,7 @@ function Sidebar({
     )
   }
 
-  if (isMobile) {
+  if (isMobileViewport) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
