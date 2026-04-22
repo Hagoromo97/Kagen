@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { RefreshCw, Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2, Info } from "lucide-react"
+import { Loader2, AlertCircle, AlertTriangle, Search, X, ChevronUp, ChevronDown as ChevronDownIcon, ChevronsUpDown, Filter, Save, Check, Columns2, Info } from "lucide-react"
 import { cn, parseSmartQuery } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RowInfoModal } from "@/components/RowInfoModal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DeliveryMap } from "@/components/DeliveryMap"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DeliveryPoint {
@@ -163,6 +164,7 @@ export function DeliveryTableDialog() {
   const [routes, setRoutes]   = useState<Route[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<"table" | "map">("table")
   const [activeActionPoint, setActiveActionPoint] = useState<FlatPoint | null>(null)
 
   // Pending edits: key = `${routeId}::${rowIndex}`, value = new delivery string
@@ -378,6 +380,21 @@ export function DeliveryTableDialog() {
   }
 
   const totalPoints = flat.length
+  const mapPoints = useMemo(() => {
+    return displayed
+      .filter((point) => point.latitude !== 0 || point.longitude !== 0)
+      .map((point) => ({
+        code: point.code,
+        name: point.name,
+        delivery: point.delivery,
+        latitude: point.latitude,
+        longitude: point.longitude,
+        descriptions: point.descriptions,
+        routeLabel: `${point.routeName} (${point.routeCode})`,
+        routeId: point.routeId,
+      }))
+  }, [displayed])
+
   const pointDistances = useMemo(() => {
     const distances = new Map<string, string>()
 
@@ -412,10 +429,13 @@ export function DeliveryTableDialog() {
             <AlertTriangle className="w-3 h-3" />{dupNameCount} dup name
           </span>
         )}
-        <Button size="sm" variant="ghost" onClick={fetchRoutes} disabled={loading || isSaving} className="ml-auto h-7 gap-1.5 text-xs">
-          <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-          Refresh
-        </Button>
+        <button
+          type="button"
+          onClick={() => setViewMode((value) => (value === "map" ? "table" : "map"))}
+          className="ml-auto h-7 px-3 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-muted transition-colors shrink-0"
+        >
+          {viewMode === "map" ? "Map" : "Table"}
+        </button>
         {pendingEdits.size > 0 && (
           <Button
             size="sm"
@@ -717,7 +737,7 @@ export function DeliveryTableDialog() {
       )}
 
       {/* ── Table — fills remaining height, scrolls inside ── */}
-      {(!loading || flat.length > 0) && !error && (
+      {(!loading || flat.length > 0) && !error && viewMode === "table" && (
         <div className="flex-1 overflow-auto min-h-0">
           <table className="border-collapse text-xs whitespace-nowrap min-w-max w-full">
             <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
@@ -806,6 +826,21 @@ export function DeliveryTableDialog() {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Map — fills remaining height ───────────────────────────── */}
+      {(!loading || flat.length > 0) && !error && viewMode === "map" && (
+        <div className="flex-1 min-h-0 p-3">
+          <div className="h-full w-full overflow-hidden rounded-xl border border-border/70">
+            {mapPoints.length === 0 ? (
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                No valid coordinates found for the current filters.
+              </div>
+            ) : (
+              <DeliveryMap deliveryPoints={mapPoints} scrollZoom mapStyle="google-streets" markerStyle="ring" />
+            )}
+          </div>
         </div>
       )}
 

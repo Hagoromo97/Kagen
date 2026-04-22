@@ -922,7 +922,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
   useEffect(() => { setShowAllRoutes(false) }, [searchQuery, combinedFilter])
 
   // Only show first 3 route cards when collapsed
-  const displayedRoutes = showAllRoutes ? filteredRoutes : filteredRoutes.slice(0, 4)
+  const displayedRoutes = filteredRoutes
 
   const scrollToCarouselIndex = useCallback((index: number) => {
     const scroller = cardCarouselRef.current
@@ -2292,27 +2292,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
       )}
       {/* Route List */}
       <div className="relative z-20 isolate mx-auto min-h-full max-w-[1440px] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage: `url(${isDark ? bgDark : bgLight})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center top',
-              opacity: isDark ? 0.18 : 0.14,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: isDark
-                ? 'linear-gradient(180deg, hsl(var(--background) / 0.84), hsl(var(--background) / 0.9))'
-                : 'linear-gradient(180deg, hsl(var(--background) / 0.72), hsl(var(--background) / 0.84))',
-            }}
-          />
-        </div>
         {/* Page header */}
         <div className="mb-5 sm:mb-6">
           <div className="mb-1.5 flex items-center gap-2.5 sm:gap-3">
@@ -2533,34 +2512,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         </div>
 
         {/* ── Card list (carousel) ── */}
-        <div ref={cardContainerRef} style={{ width: '100%' }}>
-        {displayedRoutes.length > 1 && (
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="text-[11px] font-medium text-muted-foreground">
-              Card {Math.min(activeCarouselIndex + 1, displayedRoutes.length)} / {displayedRoutes.length}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => scrollToCarouselIndex(activeCarouselIndex - 1)}
-                disabled={activeCarouselIndex <= 0}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground transition-colors hover:text-foreground hover:bg-muted/60 disabled:opacity-45 disabled:cursor-not-allowed"
-                aria-label="Previous card"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollToCarouselIndex(activeCarouselIndex + 1)}
-                disabled={activeCarouselIndex >= displayedRoutes.length - 1}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground transition-colors hover:text-foreground hover:bg-muted/60 disabled:opacity-45 disabled:cursor-not-allowed"
-                aria-label="Next card"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        <div ref={cardContainerRef} className="mt-3 sm:mt-4" style={{ width: '100%' }}>
         <div
           ref={cardCarouselRef}
           style={{
@@ -2646,7 +2598,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                   <div style={{ flex: 1, padding: `${rowGap} ${cardPad} 0`, display: 'flex', flexDirection: 'column', gap: bodyGap, overflow: 'hidden' }}>
 
                     {/* Pin + stop count moved outside header */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.9rem', marginTop: '0.2rem', marginBottom: '0.45rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.9rem', marginTop: '0.35rem', marginBottom: '0.6rem' }}>
                       <button
                         onClick={e => { e.stopPropagation(); togglePin(route) }}
                         title={isPinnedCard ? "Unpin from Home" : "Pin to Home"}
@@ -2686,7 +2638,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                             <span style={{ width: iconSz, height: iconSz, borderRadius: 6, background: `linear-gradient(135deg, ${markerColor}dd, ${markerColor}88)`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: iconFs, fontWeight: 800, flexShrink: 0, boxShadow: `0 1px 3px ${markerColor}22` }}>{i + 1}</span>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, color: 'hsl(var(--foreground))', fontWeight: 600, minWidth: 0 }}>{pt.name}</span>
                             {km !== null && (
-                              <span style={{ fontSize: `calc(${cardFontSm} - 1px)`, fontWeight: 600, color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
+                              <span style={{ fontSize: `calc(${cardFontSm})`, fontWeight: 600, color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
                                 {formatKm(km)}
                               </span>
                             )}
@@ -2717,7 +2669,7 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                     )}
 
                     {/* Divider + delivery type badges */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.55rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginTop: '0.9rem' }}>
                     {route.deliveryPoints.length > 0 && (
                       <div style={{ height: 1, background: 'hsl(var(--border)/0.5)' }} />
                     )}
@@ -2915,7 +2867,8 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                           <span style={{ fontSize: '0.62rem', opacity: 0.6, lineHeight: 1.4 }}>Changes will appear here</span>
                         </div>
                       ) : (
-                        cl.entries.map((entry, i) => (
+                        <>
+                          {cl.entries.map((entry, i) => (
                           <div key={entry.id} style={{ display: 'flex', gap: '0.6rem', paddingBottom: i < cl.entries.length - 1 ? '0.65rem' : 0, marginBottom: i < cl.entries.length - 1 ? '0.65rem' : 0 }}>
                             {/* timeline */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 4 }}>
@@ -2928,25 +2881,26 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
                               <span style={{ fontSize: '0.6rem', color: 'hsl(var(--muted-foreground))', fontWeight: 500 }}>{formatRelative(entry.created_at)}</span>
                             </div>
                           </div>
-                        ))
+                          ))}
+                          {/* Clear Log button — only shown when entries exist */}
+                          <button
+                            onClick={() => setClearLogConfirm(route.id)}
+                            style={{ marginTop: '0.75rem', borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.55rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer', width: '100%', justifyContent: 'center' }}
+                            title={clearLogText.clearAllEntries}
+                          >
+                            <Trash2 style={{ width: 13, height: 13 }} /> Clear Log
+                          </button>
+                        </>
                       )}
                     </div>
 
                     {/* Footer */}
-                    <div style={{ padding: '0.6rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem' }}>
+                    <div style={{ padding: '0.5rem 1rem 0.9rem', borderTop: '1px solid hsl(var(--border)/0.6)', flexShrink: 0 }}>
                       <button
                         onClick={() => setCardPanels(prev => ({ ...prev, [route.id]: { info: false, edit: false } }))}
-                        style={{ flex: 1, borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: `linear-gradient(135deg, ${markerColor}, ${markerColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}40`, letterSpacing: '0.01em' }}
+                        style={{ borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: `linear-gradient(135deg, ${markerColor}, ${markerColor}cc)`, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: `0 3px 10px ${markerColor}40`, letterSpacing: '0.01em', width: '100%' }}
                       >
                         <ArrowDown style={{ width: 11, height: 11, transform: 'rotate(90deg)' }} /> Back
-                      </button>
-                      <button
-                        onClick={() => setClearLogConfirm(route.id)}
-                        disabled={!cl || cl.loading || cl.entries.length === 0}
-                        style={{ flex: 1, borderRadius: 9, fontSize: '0.74rem', fontWeight: 700, padding: '0.45rem 0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', background: !cl || cl.loading || cl.entries.length === 0 ? '#e5e7eb' : '#fee2e2', color: !cl || cl.loading || cl.entries.length === 0 ? '#6b7280' : '#dc2626', border: !cl || cl.loading || cl.entries.length === 0 ? '1px solid #d1d5db' : '1px solid #fca5a5', cursor: !cl || cl.loading || cl.entries.length === 0 ? 'not-allowed' : 'pointer', opacity: 1 }}
-                        title={!cl || cl.loading || cl.entries.length === 0 ? clearLogText.noEntriesToClear : clearLogText.clearAllEntries}
-                      >
-                        <Trash2 style={{ width: 11, height: 11 }} /> Clear
                       </button>
                     </div>
                   </div>
@@ -3934,29 +3888,6 @@ export function RouteList({ variant = 'route-list' }: RouteListProps) {
         })}
         </div>
         </div> {/* end card list */}
-        {/* Show more / show less button */}
-        {filteredRoutes.length > 4 && (
-          <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', paddingTop: '0.5rem', paddingBottom: '0.25rem' }}>
-            <button
-              onClick={() => setShowAllRoutes(prev => !prev)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
-                fontSize: '0.78rem', fontWeight: 700,
-                color: 'hsl(var(--muted-foreground))',
-                background: 'hsl(var(--muted)/0.6)',
-                border: '1.5px dashed hsl(var(--border))',
-                borderRadius: 10, padding: '0.55rem 1.4rem',
-                cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))'; e.currentTarget.style.color = 'hsl(var(--foreground))' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'hsl(var(--muted)/0.6)'; e.currentTarget.style.color = 'hsl(var(--muted-foreground))' }}
-            >
-              {showAllRoutes
-                ? '↑ Show less'
-                : `+ ${filteredRoutes.length - 4} more Route list — click to show all`}
-            </button>
-          </div>
-        )}
 
         {/* No Results Message */}
         {filteredRoutes.length === 0 && (searchQuery || filterRegion !== "all") && (

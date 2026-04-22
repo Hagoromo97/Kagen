@@ -54,12 +54,20 @@ export type AppZoom = "80" | "85" | "90" | "95" | "100" | "105" | "110" | "115" 
 export type TextSize = "13" | "14" | "15" | "16" | "17" | "18" | "20"
 
 const APP_ZOOM_OPTIONS: AppZoom[] = ["80", "85", "90", "95", "100", "105", "110", "115", "120"]
+const TEXT_SIZE_OPTIONS: TextSize[] = ["13", "14", "15", "16", "17", "18", "20"]
 
 function getStoredOrDefaultZoom(): AppZoom {
   const stored = localStorage.getItem("app-zoom")
   if (stored !== null && APP_ZOOM_OPTIONS.includes(stored as AppZoom)) return stored as AppZoom
   localStorage.setItem("app-zoom", "120")
   return "120"
+}
+
+function getStoredOrDefaultTextSize(): TextSize {
+  const stored = localStorage.getItem("text-size")
+  if (stored !== null && TEXT_SIZE_OPTIONS.includes(stored as TextSize)) return stored as TextSize
+  localStorage.setItem("text-size", "14")
+  return "14"
 }
 
 /** Inject a Google Fonts <link> once per googleId */
@@ -84,7 +92,7 @@ export function useTheme() {
     getStoredOrDefaultZoom()
   )
   const [textSize, setTextSize] = useState<TextSize>(() =>
-    (localStorage.getItem("text-size") as TextSize) ?? "14"
+    getStoredOrDefaultTextSize()
   )
   const [eyeComfort, setEyeComfort] = useState<boolean>(() =>
     localStorage.getItem(LS_EYE_COMFORT) === "1"

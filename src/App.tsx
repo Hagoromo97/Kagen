@@ -199,7 +199,7 @@ function QuickActionCard({
       <button
         type="button"
         onClick={() => onNavigate(page)}
-        className="group w-full rounded-2xl border border-border/80 bg-card/75 p-4 text-left shadow-sm hover:bg-card hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+        className="group w-full rounded-[15px] border border-border/80 bg-card/75 p-4 text-left shadow-sm hover:bg-card hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
       >
         <div className="flex items-center gap-2.5 pr-5">
           <Icon className={`size-5 shrink-0 ${iconClass ?? "text-primary"}`} />
@@ -230,7 +230,7 @@ function AddQuickAccessCard({ onClick, label }: { onClick: () => void; label: st
     <button
       type="button"
       onClick={onClick}
-      className="group w-full rounded-2xl border border-dashed border-border/80 bg-card/40 p-4 text-left shadow-sm hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+      className="group w-full rounded-[15px] border border-dashed border-border/80 bg-card/40 p-4 text-left shadow-sm hover:border-primary/60 hover:bg-primary/5 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
     >
       <div className="flex items-center gap-2.5">
         <Plus className="size-5 shrink-0 text-primary" />

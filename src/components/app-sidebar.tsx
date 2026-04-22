@@ -216,6 +216,7 @@ export function AppSidebar({
     onNavigate?.(page)
   }
 
+  const isDark = mode === "dark"
   return (
     <>
     <Sidebar {...props}>
@@ -232,7 +233,7 @@ export function AppSidebar({
                 <img
                   src={fmLogo}
                   alt="FM logo"
-                  className="mx-auto h-[100px] w-[100px] shrink-0 object-contain scale-110"
+                  className="mx-auto h-[80px] w-[80px] shrink-0 object-contain scale-110"
                 />
               </a>
             </SidebarMenuButton>
@@ -294,7 +295,7 @@ export function AppSidebar({
           {mode === "dark"
             ? <Moon className="size-4 shrink-0 theme-accent-indigo" />
             : <Sun  className="size-4 shrink-0 theme-accent-amber" />}
-          <span className="flex-1 text-sm font-medium text-sidebar-foreground/90">
+          <span className="flex-1 text-[15px] font-medium text-sidebar-foreground/90">
             {mode === "dark" ? text.darkMode : text.lightMode}
           </span>
           <span onClick={e => e.stopPropagation()}>
@@ -314,7 +315,7 @@ export function AppSidebar({
           ) : (
             <Pencil className={`size-4 shrink-0 ${isEditMode ? "theme-accent-emerald" : "text-[hsl(var(--accent-emerald)/0.65)]"}`} />
           )}
-          <span className={`flex-1 text-sm font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
+          <span className={`flex-1 text-[15px] font-medium ${isEditMode ? "text-primary" : "text-sidebar-foreground/90"}`}>
             {isEditModeTransitioning ? text.switching : text.editMode}
           </span>
           {!isEditModeTransitioning && (

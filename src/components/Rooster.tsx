@@ -561,6 +561,20 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
   return (
     <div className="flex flex-col flex-1 min-h-0">
 
+      {/* ── Page heading ────────────────────────────────────────────────────── */}
+      <div className="px-4 pt-5 pb-3 shrink-0">
+        <div className="mb-1.5 flex items-center gap-2.5 sm:gap-3">
+          <Users className="size-3.5 shrink-0 text-primary" />
+          <h2 className="text-[13px] font-semibold tracking-tight text-foreground">Rooster</h2>
+        </div>
+        <div className="ml-6 sm:ml-7">
+          <p className="text-[11px] text-foreground/90">
+            Add your shift and manage your team schedule in one place.
+            <span className="ml-1 text-primary font-medium">· Stay organized every day</span>
+          </p>
+        </div>
+      </div>
+
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border shrink-0 bg-card/80 backdrop-blur-sm">
         <div className="flex items-center gap-1 shrink-0">
@@ -606,15 +620,15 @@ export function Rooster({ viewMode: viewModeProp = "week" }: { viewMode?: ViewMo
         </div>
       </div>
 
-      <div className="px-4 py-2 border-b border-border/70 bg-background/70">
+      <div className="px-4 py-2.5 border-b border-border/70 bg-background/70">
         <div className="flex items-center gap-2">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+          <div className="relative w-full max-w-xl">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               value={historyQuery}
               onChange={(event) => setHistoryQuery(event.target.value)}
               placeholder="Search history: staff, route, code, date (YYYY-MM-DD)"
-              className="h-8 pl-8 pr-14 text-[11px]"
+              className="h-10 pl-9 pr-14 text-xs"
             />
             {historyQuery.trim() && (
               <button
