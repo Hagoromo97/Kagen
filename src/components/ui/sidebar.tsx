@@ -158,7 +158,15 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isMobile, state, openMobile, setOpenMobile, setOpen } = useSidebar()
+
+  // Sync sidebar state when mode changes (mobile ↔ desktop)
+  React.useEffect(() => {
+    if (isMobile) {
+      // Switching to mobile: close desktop sidebar
+      setOpen(false)
+    }
+  }, [isMobile, setOpen])
 
   if (collapsible === "none") {
     return (

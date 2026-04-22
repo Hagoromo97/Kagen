@@ -1573,7 +1573,7 @@ function AppContent() {
   useEffect(() => {
     setOpen(false)
     setOpenMobile(false)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [setOpen, setOpenMobile])
 
   useEffect(() => {
     const syncPinnedCount = () => {
