@@ -7,7 +7,6 @@ import { LandingPage } from "@/components/LandingPage"
 import { DeliveryMap } from "@/components/DeliveryMap"
 import { useEditMode } from "@/contexts/EditModeContext"
 import { useTheme } from "@/hooks/use-theme"
-import { MOBILE_BREAKPOINT } from "@/hooks/use-mobile"
 
 const RouteList = lazy(() => import("@/components/RouteList").then(m => ({ default: m.RouteList })))
 const Settings = lazy(() => import("@/components/Settings").then(m => ({ default: m.Settings })))
@@ -1568,8 +1567,7 @@ function AppContent() {
   const { open, openMobile, isMobile, toggleSidebar, setOpen, setOpenMobile } = useSidebar()
   const { mode } = useTheme()
   const isDark = mode === "dark"
-  const isMobileViewport = typeof window !== "undefined" ? window.innerWidth < MOBILE_BREAKPOINT : isMobile
-  const isSidebarActive = (isMobileViewport && openMobile) || (!isMobileViewport && open)
+  const isSidebarActive = (isMobile && openMobile) || (!isMobile && open)
 
   // Close sidebar on initial mount (coming from landing page)
   useEffect(() => {
@@ -1721,7 +1719,7 @@ function AppContent() {
       <AppSidebar onNavigate={handlePageChange} currentPage={currentPage} />
       
       {/* Backdrop for desktop sidebar — only render when not mobile AND open */}
-      {!isMobileViewport && open && (
+      {!isMobile && open && (
         <div
           className="fixed inset-0 z-40 bg-black/45 transition-all duration-350 ease-out backdrop-blur-md pointer-events-auto"
           onClick={toggleSidebar}
